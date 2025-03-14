@@ -6,7 +6,7 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/12 13:41:32 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/03/14 17:59:58 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,19 +141,17 @@ int main(int argc, char **argv)
 		std::cout << "Please execute as ./Webserv \"config_file_name\"!" << std::endl;
 		return (1);
 	}
+	s_config config;
+	s_server serv0;
+	config.server.push_back(serv0);
 	std::string config_variables[7] = {"listen", "host", "server_name", "error_page", "client_max_body_size", "root", "index"};
 	if (parse_config(argv[1], config_variables))
-		return (1);	
+		return (1);
+
 	int my_socket;
 	int	server_fd;
 	struct sockaddr_in servaddr;
 	t_fd_data s_data; // to set select
-
-	if (argc != 2)
-	{
-		std::cout << "Wrong number of arguments ! " << std::endl;
-		return (0);
-	}	
 
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)
