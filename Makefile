@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lchapard <lchapard@student.42lyon.fr>      +#+  +:+       +#+         #
+#    By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/01 16:57:20 by lchapard          #+#    #+#              #
-#    Updated: 2024/08/01 16:57:24 by lchapard         ###   ########.fr        #
+#    Updated: 2025/03/18 13:50:10 by vdomasch         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,7 +20,9 @@ SRCS_DIR = src
 OBJS_DIR = build
 INCLUDE_DIR = includes
 
-SRV_FILES = server
+SRV_FILES = main    \
+			html_request	\
+			Server
 CLIENT_FILES = client
 
 SRCS_C = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(CLIENT_FILES)))
