@@ -6,42 +6,27 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 10:01:15 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/14 17:58:23 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/03/21 15:15:05 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
-#include <iostream>// std::cout
-#include <sys/socket.h> // socket
-#include <strings.h> // bzero
-#include <netinet/in.h> // struct addr
-#include <arpa/inet.h> // inet_addr
-#include <unistd.h> // read & write
-#include <string.h> // strlen
-#include <vector> // vector
+#ifndef WEBSSERV_HPP
+# define WEBSSERV_HPP
 
-#define SERV_PORT 8080
-#define BUFFER_SIZE 200
+# include "HTTPConfig.hpp"
+# include "ServerConfig.hpp"
 
-struct s_server
-{
-	std::string listen;
-	std::string host;
-	std::string server_name;
-	std::string error_page;
-	std::string client_max_body_size;
-	std::string root;
-	std::string index;
-};
-typedef struct s_server		t_server;
+# include <stdio.h>
+# include <iostream>// std::cout
+# include <sys/socket.h> // socket
+# include <strings.h> // bzero
+# include <netinet/in.h> // struct addr
+# include <arpa/inet.h> // inet_addr
+# include <unistd.h> // read & write
+# include <string.h> // strlen
 
-struct s_config
-{
-	// html elements
-	std::vector<s_server> server;
-	// vector of location (inside vector server?)	
-};
-typedef struct s_config		t_config;
+# define SERV_PORT 8080
+# define BUFFER_SIZE 200
 
 struct s_fd_data
 {
@@ -49,3 +34,5 @@ struct s_fd_data
 	fd_set  saved_sockets;	// current sockets
 };
 typedef struct s_fd_data	t_fd_data;
+
+#endif
