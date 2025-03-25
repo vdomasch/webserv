@@ -6,17 +6,18 @@
 /*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/11 11:54:15 by vdomasch         ###   ########.fr       */
+/*   Updated: 2025/03/25 10:19:52 by vdomasch         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "webserv.hpp"
+#include "unistd.h"
 
 int main()
 {
     int sock = 0; long valread;
     struct sockaddr_in serv_addr;
-    const char *hello = "This is what is send from the client";
+    std::string hello = "This is what is send from the client";
     char buffer[1024] = {0};
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -41,9 +42,9 @@ int main()
         printf("\nConnection Failed \n");
         return -1;
     }
-    send(sock , hello , strlen(hello) , 0 );
+    send(sock , hello.c_str() , hello.size(), 0 );
     printf("Hello message sent\n");
-    valread = read( sock , buffer, 1024);
+    valread = read(sock , buffer, 1024);
     printf("%s\n",buffer );
     return 0;
 }

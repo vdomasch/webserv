@@ -1,14 +1,10 @@
 #include "Server.hpp"
 
-Server::Server() {}
+Server::Server(): _server_fd(-1), _max_fd(-1), _client_fd(-1), _running(true) {}
 Server::~Server() {}
 
 int	Server::initialize_server()
 {
-	// Create socket
-	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-		return (perror("cannot create socket"), -1); 
-
 	// Initialize server address
 	bzero(&_servaddr, sizeof(_servaddr));
 	bzero(&_socket_data, sizeof(_socket_data));
@@ -19,11 +15,26 @@ int	Server::initialize_server()
 	//OR 
 	_servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // if to localhost only
 
+	// Create socket
+	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		std::cerr << "Failed to create socket" << std::endl;
+		return (-1);
+	}
+
 	if (bind(_server_fd, (struct sockaddr *)&_servaddr, sizeof(_servaddr)) < 0) // Bind socket to address
-		return (perror("cannot bind to socket"), -1); 
+	{
+		close(_server_fd);
+		std::cerr << "Failed to bind to socket" << std::endl;
+		return (-1);
+	}
 
 	if (listen(_server_fd, 10) < 0) // Listen for incoming connections
-		return (perror("Failed to listen ! "), -1);
+	{
+		close(_server_fd);
+		std::cerr << "Failed to listen" << std::endl;
+		return (-1);
+	}
 	return (_server_fd);
 }
 
@@ -50,6 +61,22 @@ void Server::handle_new_connection()
 	printf("New client connected on socket %d\n", new_socket);
 }
 
+
+std::string	write_response(std::string status_code, std::string status_message, std::string body_size, std::string connection, std::string body, t_browser_request &request)
+{
+	std::string response;
+	response += "HTTP/1.1 " + status_code + " " + status_message + "\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + body_size + "\r\n";
+	response += "Connection: " + connection + "\r\n";
+	if (request.connection == "keep-alive")
+		response += "Keep-Alive: timeout=10, max=1000\r\n";
+	response += "\r\n";
+	response += body;
+
+	return (response);
+}
+
 void	Server::handle_existing_client()
 {
 	t_browser_request request;
@@ -63,7 +90,7 @@ void	Server::handle_existing_client()
 	if (bytes_read == 0)
 	{
 		// Client disconnected
-		printf("Client on socket %d disconnected.\n", _client_fd);
+		std::cout << "Client on socket" << _client_fd << "disconnected.\n" << std::endl;
 		close(_client_fd);
 		FD_CLR(_client_fd, &_socket_data.saved_sockets); // Remove socket from saved_sockets
 
@@ -77,19 +104,17 @@ void	Server::handle_existing_client()
 		// Handle client request
 		buffer[bytes_read] = '\0'; // Null-terminate string
 
-		printf("Received: %s\n", buffer);
-		parse_request(request, buffer, _client_fd);
+		std::cout << "Received: " << buffer << std::endl;
+		parse_request(request, buffer);
 
 		// Check if the client requested to keep the connection alive
-		std::string response = "HTTP/1.1 200 OK\r\nContent-Length: 17\r\nContent-Type: text/plain\r\n";
-		if (strstr(buffer, "Connection: keep-alive"))
-			response += "Connection: keep-alive\r\n";
-		else
-			response += "Connection: close\r\n";
-		response += "\r\nHello from server";
+
+		// Prepare response
+		std::string body = "<DOCTYPE html>\r\n<html>\r\n\t<head>\r\n\t\t<title>Test</title>\r\n\t</head>\r\n\t<body>\r\n\t\t<h1>Hello World!</h1>\r\n\t</body>\r\n</html>";
+		std::string response = write_response("200", "OK", "117", request.connection, body, request);
 
 		// Send the response
-		write(_client_fd, response.c_str(), response.size());
+		send(_client_fd, response.c_str(), response.size(), 0);
 
 		// Close the connection if not keep-alive
 		if (request.connection != "keep-alive")
@@ -100,14 +125,12 @@ void	Server::handle_existing_client()
 				while (_max_fd > 0 && !FD_ISSET(_max_fd, &_socket_data.saved_sockets))
 					_max_fd--;
 		}
-		send(_client_fd, "Hello from server", 17, 0);
 	}
 }
 
 void	Server::run_server()
 {
-	_server_fd = initialize_server(); // Initialize socket
-	if (_server_fd < 0) // Check if socket failed
+	if ((_server_fd = initialize_server()) < 0) // Initialize socket
 		return (perror("Cannot bind to socket"), void());
 
 	FD_ZERO(&_socket_data.saved_sockets); // Initialize the set
@@ -115,10 +138,10 @@ void	Server::run_server()
 	_max_fd = _server_fd; // Start with server_fd as the highest FD
 
 	// Main loop
-	while (true)
+	while (_running)
 	{
 		// Print message
-		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
+		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n" << std::endl;
 		_socket_data.ready_sockets = _socket_data.saved_sockets; // Copy saved_sockets to ready_sockets
 
 		// Check if any socket is ready
