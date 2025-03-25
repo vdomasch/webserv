@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   webserv.h                                          :+:      :+:    :+:   */
+/*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lchapard <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 10:01:15 by lchapard          #+#    #+#             */
-/*   Updated: 2025/02/25 10:01:15 by lchapard         ###   ########.fr       */
+/*   Updated: 2025/03/11 11:22:32 by vdomasch         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,11 @@
 #include <arpa/inet.h> // inet_addr
 #include <unistd.h> //read & write
 #include <string.h> // strlen
+#include <fstream> // std::ofstream
+
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 200
+#define BUFFER_SIZE 1024
 
 struct s_fd_data
 {

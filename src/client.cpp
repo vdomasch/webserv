@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.c                                           :+:      :+:    :+:   */
+/*   client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lchapard <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/02/25 09:57:05 by lchapard         ###   ########.fr       */
+/*   Updated: 2025/03/11 11:54:15 by vdomasch         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ int main()
 {
     int sock = 0; long valread;
     struct sockaddr_in serv_addr;
-    const char *hello = "Hello from client";
+    const char *hello = "This is what is send from the client";
     char buffer[1024] = {0};
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
