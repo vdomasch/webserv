@@ -91,6 +91,8 @@ int main(int argc, char **argv)
 	// 	return (0);
 	// }	
 
+
+	printf("\033[5 qHello\033[0m\n");
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)
 	{
