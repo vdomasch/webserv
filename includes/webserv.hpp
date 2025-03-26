@@ -6,7 +6,7 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 10:01:15 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/21 15:15:05 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/03/25 16:53:26 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,5 +34,8 @@ struct s_fd_data
 	fd_set  saved_sockets;	// current sockets
 };
 typedef struct s_fd_data	t_fd_data;
+
+bool is_keyword(std::string key, std::string pattern);
+
 
 #endif
