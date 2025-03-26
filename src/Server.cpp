@@ -61,22 +61,6 @@ void Server::handle_new_connection()
 	printf("New client connected on socket %d\n", new_socket);
 }
 
-
-std::string	write_response(std::string status_code, std::string status_message, std::string body_size, std::string connection, std::string body, t_browser_request &request)
-{
-	std::string response;
-	response += "HTTP/1.1 " + status_code + " " + status_message + "\r\n";
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + body_size + "\r\n";
-	response += "Connection: " + connection + "\r\n";
-	if (request.connection == "keep-alive")
-		response += "Keep-Alive: timeout=10, max=1000\r\n";
-	response += "\r\n";
-	response += body;
-
-	return (response);
-}
-
 void	Server::handle_existing_client()
 {
 	t_browser_request request;
@@ -110,8 +94,7 @@ void	Server::handle_existing_client()
 		// Check if the client requested to keep the connection alive
 
 		// Prepare response
-		std::string body = "<DOCTYPE html>\r\n<html>\r\n\t<head>\r\n\t\t<title>Test</title>\r\n\t</head>\r\n\t<body>\r\n\t\t<h1>Hello World!</h1>\r\n\t</body>\r\n</html>";
-		std::string response = write_response("200", "OK", "117", request.connection, body, request);
+		std::string response = generate_http_response("200", "OK", request);
 
 		// Send the response
 		send(_client_fd, response.c_str(), response.size(), 0);
@@ -146,7 +129,10 @@ void	Server::run_server()
 
 		// Check if any socket is ready
 		if (select(_max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL) < 0)
-			return (perror("Select failed!"), void());
+		{
+			std::cerr << "Select failed!" << std::endl;
+			return ;
+		}
 
 		// Iterate over all sockets
 		for (_client_fd = 0; _client_fd <= _max_fd; _client_fd++)
