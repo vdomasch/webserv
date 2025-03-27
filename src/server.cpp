@@ -45,6 +45,8 @@ int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 	return (server_fd);
 }
 
+
+
 int accept_connexion(int server_fd, sockaddr_in *servaddr)
 {
 	int	my_socket;
@@ -59,7 +61,7 @@ int accept_connexion(int server_fd, sockaddr_in *servaddr)
 	return (my_socket);
 }
 
-void	analyse_request(char buffer[BUFFER_SIZE])
+void	analyse_request(char buffer[BUFFER_SIZE], bool full)
 {
 	std::string request(buffer);
 	std::string first_line;
@@ -67,13 +69,40 @@ void	analyse_request(char buffer[BUFFER_SIZE])
 	size_t		filename_start;
 	size_t		filename_end;
 
-	first_line = request.substr(0, request.find('\n')); // doesn´t work if curl
-	filename_start = first_line.find_first_of(' ');
-	filename_end = first_line.find_last_of(' ');
-	requested_file = first_line.substr(filename_start, filename_end - filename_start);
-	printf("\033[34m------------------------\n");
-	printf("%s\n",requested_file.c_str() );
-	printf("------------------------\033[0m\n");
+	if (full)
+	{
+		printf("\033[34m------------------------\n");
+		printf("%s\n", buffer);
+		printf("------------------------\033[0m\n");
+	}
+	else
+	{
+
+		first_line = request.substr(0, request.find('\n')); // doesn´t work if curl
+		filename_start = first_line.find_first_of(' ');
+		filename_end = first_line.find_last_of(' ');
+		requested_file = first_line.substr(filename_start, filename_end - filename_start);
+		printf("\033[34m------------------------\n");
+		printf("%s\n",requested_file.c_str() );
+		printf("------------------------\033[0m\n");
+	}
+}
+
+int	handle_client_request(int socket)
+{
+	char buffer[BUFFER_SIZE] = {0};
+	const char *mess = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
+
+	if (read(socket , buffer, BUFFER_SIZE) < 0)
+	{
+		perror("Failed to read ! ");
+		return (-1);
+	}
+	analyse_request(buffer, true);
+	write(socket , mess , strlen(mess));
+	std::cout << "message sent from server !\n" << std::endl;
+	close(socket);
+	return (0);
 }
 
 int main(int argc, char **argv)
@@ -83,16 +112,8 @@ int main(int argc, char **argv)
 	int my_socket;
 	int	server_fd;
 	struct sockaddr_in servaddr;
-	t_fd_data s_data; // to set select
-	(void)argc;
-	// if (argc != 2)
-	// {
-	// 	std::cout << "Wrong number of arguments ! " << std::endl;
-	// 	return (0);
-	// }	
+	t_fd_data s_data; // to set select	
 
-
-	printf("\033[5 qHello\033[0m\n");
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)
 	{
@@ -101,42 +122,41 @@ int main(int argc, char **argv)
 	}
 	FD_ZERO(&s_data.saved_sockets);
 	FD_SET(server_fd, &s_data.saved_sockets);
+	s_data.max_sckt_fd = server_fd;
 	while(42)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
 		s_data.ready_sockets = s_data.saved_sockets;
-		if (select(FD_SETSIZE, &s_data.ready_sockets, NULL, NULL, NULL) < 0)
+		if (select(s_data.max_sckt_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0)
 		{
 			perror("Select failed ! ");
 			return (0);
 		}
 
-		for (int i = 0; i < FD_SETSIZE; i++)
+		for (int i = 0; i <= s_data.max_sckt_fd ; i++)
 		{
 			if (FD_ISSET(i, &s_data.ready_sockets))
 			{
+				printf("\n\033[32m========= i = %d =========\033[0m\n\n", i);
 				if (i == server_fd) // there is a new connection available on the server socket
 				{
-					my_socket = accept_connexion(server_fd, &servaddr);
+					my_socket = accept_connexion(server_fd, &servaddr); // accept the new connection
 					FD_SET(my_socket, &s_data.saved_sockets); //add new connection to current set
+					printf( "i is %d, server_fd is %d, my_socket is %d\n", i, server_fd, my_socket);
+					printf( "request from server_fd : %d\n", my_socket);
+					if (my_socket > s_data.max_sckt_fd) // to set the new max
+						s_data.max_sckt_fd = my_socket;
 				}
 				else
-					printf("Nuhhh uhhh\n");
+				{
+					printf( "request from client %d : \n", i);
+					handle_client_request(i);
+					FD_CLR(i, &s_data.saved_sockets);
+				}
 			}
 		}
-
-				
-		char buffer[BUFFER_SIZE] = {0};
-		const char *mess = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-		if (read(my_socket , buffer, BUFFER_SIZE) < 0)
-		{
-			perror("Failed to read ! ");
-			return (0);
-		}
-		analyse_request(buffer);
-		write(my_socket , mess , strlen(mess));
-		std::cout << "message sent from server !\n" << std::endl;
-		close(my_socket);
+		
+		my_socket = -1;
 	}
-	return (0);
+	return (argc * 0);
 }

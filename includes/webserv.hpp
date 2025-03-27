@@ -28,5 +28,6 @@ struct s_fd_data
 {
 	fd_set  ready_sockets;
 	fd_set  saved_sockets; // current sockets
+	int		max_sckt_fd;
 };
 typedef struct s_fd_data	t_fd_data;
