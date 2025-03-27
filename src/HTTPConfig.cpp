@@ -73,7 +73,7 @@ bool	HTTPConfig::parse_http()
 	std::ifstream infile(_filename.c_str());
 	if (!infile.is_open())
 	{
-		std::cout << "Error, failed to open filename!" << std::endl;
+		std::cerr << "Error, failed to open filename!" << std::endl;
 		return (true);
 	}
 	while (std::getline(infile, line)) {
@@ -83,21 +83,27 @@ bool	HTTPConfig::parse_http()
 
 		if (is_location(key))
 		{
-			std::cout << "location: " << key << std::endl;
-			
+			if (key == "location")
+				std::cout << "location: " << key << std::endl;
 		}
 		else if (is_server(key))
 		{
-			std::cout << "server: " << key << std::endl;
-			//_server_list.push_back(ServerConfig());
-			//_server_list.back().server_config(iss);
+			if (key == "server")
+			{
+				_server_list.push_back(ServerConfig());
+			}
+			else if (!key.empty() && key != "}")
+			{
+				std::cout << "DEBUG server: " << key << std::endl;
+				_server_list[0].parse_server();
+			}
 		}
 		else if (is_http(key))
 		{
-			std::cout << "http: " << key << std::endl;
+			//std::cout << "http: " << key << std::endl;
 			if (set_http_values(iss, key))
 			{
-				std::cerr << "Error: Invalid keyword" << std::endl;
+				//std::cerr << "Error: Invalid keyword" << std::endl;
 				return 1;
 			}
 		}
@@ -114,13 +120,13 @@ bool	is_error_page_code(std::string code)
 {
 	int int_code = atoi(code.c_str());
 
-	if (code.find(".html") != std::string::npos)
-		return false;
+	/*if (code.find(".html") != std::string::npos)
+		return false;*/
 	if (code.length() != 3)
 		;
 	else if (int_code >= 400 && int_code <= 599)
 		return true;
-	std::cerr << "Error: Invalid error_page_code: '" << code << "'!" << std::endl;
+	//std::cerr << "Error: Invalid error_page_code: '" << code << "'!" << std::endl;
 	return false;
 }
 
@@ -131,12 +137,38 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	if (key == "client_max_body_size")
 	{
 		iss >> value;
-		while (value.at(value.length() - 1) == ';')
-			value.erase(value.length() - 1);
+		value = clean_semicolon(value);
 		_map_http[key] = value;
     }
 	else if (key == "error_page")
 	{
+		std::vector<std::string> code_numbers;
+		std::string error_code;
+		
+		iss >> error_code;
+		while (!error_code.empty())
+		{
+			if (is_error_page_code(error_code))
+				code_numbers.push_back(error_code);
+			else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
+				break ;
+			else
+			{
+				std::cerr << "Error: error_page need error numbers before path!" << std::endl;
+				return 1;
+			}
+			iss >> error_code;
+		}
+		while (!code_numbers.empty())
+		{
+			error_code = clean_semicolon(error_code);
+			_map_http[code_numbers.back()] = error_code;
+			code_numbers.pop_back();
+		}
+
+
+
+		/*
 		std::vector<std::string> code_number;
 		std::string error_code_path;
 		
@@ -148,14 +180,18 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 		}
 		while (!code_number.empty())
 		{
+			error_code_path = clean_semicolon(error_code_path);
 			_map_http[code_number.back()] = error_code_path;
 			code_number.pop_back();
-		}
+		}*/
 	}
 	else if (is_keyword(key, "http"))
 		;
 	else
+	{
+		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
 		return 1;
+	}
 	return 0;
 }
 
@@ -164,6 +200,13 @@ bool	HTTPConfig::is_http_variable(std::string key)
 	if (key == "error_page")
 		return true;
 	return false;
+}
+
+std::string	HTTPConfig::clean_semicolon(std::string text)
+{
+	while (text.at(text.length() - 1) == ';')
+		text.erase(text.length() - 1);
+	return text;
 }
 
 void	HTTPConfig::set_filename(std::string filename)

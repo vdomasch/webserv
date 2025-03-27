@@ -67,7 +67,7 @@ std::string	ServerConfig::copy_content(std::string filename)
 	std::ifstream infile(filename.c_str());
 	if (!infile.is_open())
 	{
-		std::cout << "Error, failed to open filename!" << std::endl;
+		std::cerr << "Error, failed to open filename!" << std::endl;
 		return ("NULL");
 	}
 	while(infile)
@@ -80,7 +80,7 @@ std::string	ServerConfig::copy_content(std::string filename)
 	}
 	if (_content.empty())
 	{
-		std::cout << "Config file is empty!" << std::endl;
+		std::cerr << "Config file is empty!" << std::endl;
 		return ("NULL");
 	}
 	std::cout << _content << std::endl;
@@ -95,4 +95,14 @@ bool	ServerConfig::server_config(std::string filename)
 	if (!copy_variable_values())
 		return true;
 	return false;
+}
+
+void	ServerConfig::parse_server()
+{
+	_listen += "55";
+}
+
+void	ServerConfig::show()
+{
+	std::cout << _listen << std::endl;
 }

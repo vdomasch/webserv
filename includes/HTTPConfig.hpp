@@ -33,6 +33,8 @@ class HTTPConfig
 		bool is_server(std::string key);
 		bool is_location(std::string key);
 
+		std::string clean_semicolon(std::string text);
+
 };
 
 #endif

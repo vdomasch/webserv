@@ -6,7 +6,7 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/26 12:56:04 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/03/27 15:02:42 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		std::cout << "Please execute as ./Webserv \"config_file_name\"!" << std::endl;
+		std::cerr << "Please execute as ./Webserv \"config_file_name\"!" << std::endl;
 		return (1);
 	}
 	std::string config_variables[7] = {"listen", "host", "server_name", "error_page", "client_max_body_size", "root", "index"};
