@@ -2,7 +2,7 @@
 
 ServerConfig::ServerConfig() {
 	_server_directives[0] = "listen";
-	_server_directives[1] = "host";
+	_server_directives[1] = "host"; // INVALID?
 	_server_directives[2] = "server_name";
 	_server_directives[3] = "error_page";
 	_server_directives[4] = "client_max_body_size";
@@ -61,7 +61,7 @@ void	ServerConfig::show()
 bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 {
 	std::string value;
-
+	
 	if (key == "error_page")
 	{
 		std::vector<std::string> code_numbers;
@@ -90,7 +90,20 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	}
 	else if (key == "listen")
 	{
-		std::cout << "DEBUG: do server " << key << std::endl; 
+		std::string	port_code;
+		iss >> port_code;
+		while (!port_code.empty())
+		{
+			if (port_code.find(";") != std::string::npos)
+			{
+				port_code = clean_semicolon(port_code);
+				_listen_ports.push_back(port_code);
+				break ;
+			}
+			else
+				_listen_ports.push_back(port_code);
+			iss >> port_code;
+		}
 	}
 	else if (is_server_variable(key))
 	{

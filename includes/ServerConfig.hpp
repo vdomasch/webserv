@@ -23,6 +23,7 @@ class ServerConfig
 
 	private:
 		std::map<std::string, std::string> _map_server;
+		std::vector<std::string> _listen_ports;
 		std::string _server_directives[23];
 
 		bool	is_server_variable(std::string key);
