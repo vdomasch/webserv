@@ -6,7 +6,7 @@
 #    By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/01 16:57:20 by lchapard          #+#    #+#              #
-#    Updated: 2025/03/21 15:43:15 by bhumeau          ###   ########.fr        #
+#    Updated: 2025/03/28 15:16:14 by bhumeau          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,8 @@ INCLUDE_DIR = includes
 
 SRV_FILES = server			\
 			ServerConfig	\
-			HTTPConfig
+			HTTPConfig		\
+			parsing_utils
 
 CLIENT_FILES = client
 

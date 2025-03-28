@@ -1,108 +1,109 @@
 #include "ServerConfig.hpp"
 
-ServerConfig::ServerConfig(): _listen("UNSET"), _host("UNSET"), _server_name("UNSET"), _error_page("UNSET"), _client_max_body_size("UNSET"), _root("UNSET"), _index("UNSET"), _content("") {
-	_congif_values[0] = &_listen;
-	_congif_values[1] = &_host;
-	_congif_values[2] = &_server_name;
-	_congif_values[3] = &_error_page;
-	_congif_values[4] = &_client_max_body_size;
-	_congif_values[5] = &_root;
-	_congif_values[6] = &_index;
-	_config_variables[0] = "listen";
-	_config_variables[1] = "host";
-	_config_variables[2] = "server_name";
-	_config_variables[3] = "error_page";
-	_config_variables[4] = "client_max_body_size";
-	_config_variables[5] = "root";
-	_config_variables[6] = "index";
+ServerConfig::ServerConfig() {
+	_server_directives[0] = "listen";
+	_server_directives[1] = "host";
+	_server_directives[2] = "server_name";
+	_server_directives[3] = "error_page";
+	_server_directives[4] = "client_max_body_size";
+	_server_directives[5] = "root";
+	_server_directives[6] = "index";
+	_server_directives[6] = "listen";
+	_server_directives[7] = "host";
+	_server_directives[8] = "server_name";
+	_server_directives[9] = "error_page";
+	_server_directives[10] = "client_max_body_size";
+	_server_directives[11] = "root";
+	_server_directives[12] = "index";
+	_server_directives[13] = "alias";
+	_server_directives[14] = "autoindex";
+	_server_directives[15] = "allow_methods";
+	_server_directives[16] = "cgi_path";
+	_server_directives[17] = "cgi_ext";
+	_server_directives[18] = "return";
+	_server_directives[19] = "rewrite";
+	_server_directives[20] = "access_log";
+	_server_directives[21] = "error_log";
+	_server_directives[22] = "keepalive_timeout";
 }
+
 ServerConfig::~ServerConfig() {}
 
-//ServerConfig::ServerConfig(const ServerConfig& param)
-//{
-//}
-
-std::string ServerConfig::find_in_config_file(std::string variable_name)
+bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 {
-	std::size_t i = 0;
-	i = _content.find(variable_name);
-	if (i != _content.rfind(variable_name))
-		return ("-1");
-	if (i == std::string::npos)
-		return ("unset");
-	i += variable_name.length();
-	std::string res;
-	while (_content[i] && _content[i] != ';')
+	for (int i = 0; i < 23; i++)
 	{
-		res.push_back(_content.at(i));
-		i++;
-	}
-	return (res);
-}
-
-bool	ServerConfig::copy_variable_values()
-{
-	for (int i = 0; i < 7; i++)
-	{
-		*_congif_values[i] = find_in_config_file(_config_variables[i]);
-		std::cout << _config_variables[i] << " = " << _congif_values[i] << std::endl;
-		if (*_congif_values[i] == "unset")
+		//std::cout << "DEBUG: key = " << key << " i = " << _server_directives[i] << std::endl;
+		if (key == _server_directives[i])
 		{
-			std::cout << _config_variables[i] << " not set in config file!" << std::endl;
-			return (true);
-		}
-		if (*_congif_values[i] == "-1")
-		{
-			std::cout << _config_variables[i] << " set more than once in config file!" << std::endl;
-			return (true);
+			return 0;
 		}
 	}
+	std::cerr << "Error: Invalid keyword:" << key << std::endl;
+	iss >> key;
+	return 1;
+
+}
+
+bool	ServerConfig::is_server_variable(std::string key)
+{
+	for (int i = 0; i < 23; i++)
+		if (key == _server_directives[i])
+			return true;
 	return false;
-}
-
-std::string	ServerConfig::copy_content(std::string filename)
-{
-	//std::string content;
-	std::string line;
-	std::ifstream infile(filename.c_str());
-	if (!infile.is_open())
-	{
-		std::cerr << "Error, failed to open filename!" << std::endl;
-		return ("NULL");
-	}
-	while(infile)
-	{
-		std::getline(infile, line);
-		if(!infile)
-			break;
-		_content += line + '\n';
-		line.clear();
-	}
-	if (_content.empty())
-	{
-		std::cerr << "Config file is empty!" << std::endl;
-		return ("NULL");
-	}
-	std::cout << _content << std::endl;
-	return (_content);
-}
-
-bool	ServerConfig::server_config(std::string filename)
-{
-	std::string content = copy_content(filename);
-	if (content == "NULL")
-		return true;
-	if (!copy_variable_values())
-		return true;
-	return false;
-}
-
-void	ServerConfig::parse_server()
-{
-	_listen += "55";
 }
 
 void	ServerConfig::show()
 {
-	std::cout << _listen << std::endl;
+	std::cout << _server_directives[0] << std::endl;
+}
+
+bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
+{
+	std::string value;
+
+	if (key == "error_page")
+	{
+		std::vector<std::string> code_numbers;
+		std::string error_code;
+		
+		iss >> error_code;
+		while (!error_code.empty())
+		{
+			if (is_error_page_code(error_code))
+				code_numbers.push_back(error_code);
+			else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
+				break ;
+			else
+			{
+				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
+				return 1;
+			}
+			iss >> error_code;
+		}
+		while (!code_numbers.empty())
+		{
+			error_code = clean_semicolon(error_code);
+			_map_server[code_numbers.back()] = error_code;
+			code_numbers.pop_back();
+		}
+	}
+	else if (key == "listen")
+	{
+		std::cout << "DEBUG: do server " << key << std::endl; 
+	}
+	else if (is_server_variable(key))
+	{
+		iss >> value;
+		value = clean_semicolon(value);
+		_map_server[key] = value;
+    }
+	else if (is_keyword(key, "location"))
+		;
+	else
+	{
+		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		return 1;
+	}
+	return 0;
 }
