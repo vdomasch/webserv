@@ -62,7 +62,8 @@ bool HTTPConfig::is_location(std::string key)
 
 bool	HTTPConfig::parse_http()
 {
-	unsigned int server_number = 0;
+	int	server_number = 0;
+	int	location_number = -1;
 
 	std::string line;
 	std::ifstream infile(_filename.c_str());
@@ -79,7 +80,21 @@ bool	HTTPConfig::parse_http()
 		if (is_location(key))
 		{
 			if (key == "location")
-				std::cout << std::endl << "location: " << key << std::endl;
+			{
+				location_number++;
+				if (!is_location_valid(iss))
+				{
+					std::cerr << "Error: location has no path!" << std::endl;
+					return 1;
+				}
+				iss >> key;
+				_server_list[server_number].add_location(key, location_number);
+			}
+			else if (!key.empty() && key != "}")
+			{
+				if (_server_list[server_number].select_current_location(iss, key, location_number))
+					return 1;
+			}
 		}
 		else if (is_server(key))
 		{
@@ -169,4 +184,18 @@ bool	HTTPConfig::is_http_variable(std::string key)
 void	HTTPConfig::set_filename(std::string filename)
 {
 	_filename = filename;
+}
+
+bool	HTTPConfig::is_location_valid(std::istringstream &iss)
+{
+	std::string str = iss.str();
+    std::istringstream iss_copy(str);
+	std::string key;
+
+	unsigned int count = 1;
+	while (iss_copy >> key)
+		count++;
+	if (count < 3)
+		return false;
+	return true;
 }

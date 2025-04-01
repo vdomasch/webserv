@@ -6,7 +6,7 @@
 #    By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/01 16:57:20 by lchapard          #+#    #+#              #
-#    Updated: 2025/03/28 15:16:14 by bhumeau          ###   ########.fr        #
+#    Updated: 2025/03/31 11:23:30 by bhumeau          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,8 +21,9 @@ OBJS_DIR = build
 INCLUDE_DIR = includes
 
 SRV_FILES = server			\
-			ServerConfig	\
 			HTTPConfig		\
+			ServerConfig	\
+			LocationConfig	\
 			parsing_utils
 
 CLIENT_FILES = client

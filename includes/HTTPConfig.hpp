@@ -24,12 +24,12 @@ class HTTPConfig
 		bool		_is_server;
 		bool		_is_location;
 
-		bool set_http_values(std::istringstream &iss, std::string key);
-		bool is_http(std::string key);
-		bool is_http_variable(std::string key);
-		bool is_server(std::string key);
-		bool is_location(std::string key);
-
+		bool	set_http_values(std::istringstream &iss, std::string key);
+		bool	is_http(std::string key);
+		bool	is_http_variable(std::string key);
+		bool	is_server(std::string key);
+		bool	is_location(std::string key);
+		bool	is_location_valid(std::istringstream &iss);
 };
 
 #endif

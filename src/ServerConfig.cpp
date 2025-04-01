@@ -35,9 +35,7 @@ bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 	{
 		//std::cout << "DEBUG: key = " << key << " i = " << _server_directives[i] << std::endl;
 		if (key == _server_directives[i])
-		{
 			return 0;
-		}
 	}
 	std::cerr << "Error: Invalid keyword:" << key << std::endl;
 	iss >> key;
@@ -60,53 +58,50 @@ void	ServerConfig::show()
 
 bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 {
-	std::string value;
-	
 	if (key == "error_page")
 	{
 		std::vector<std::string> code_numbers;
-		std::string error_code;
-		
-		iss >> error_code;
-		while (!error_code.empty())
+
+		iss >> key;
+		while (!key.empty())
 		{
-			if (is_error_page_code(error_code))
-				code_numbers.push_back(error_code);
-			else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
+			if (is_error_page_code(key))
+				code_numbers.push_back(key);
+			else if (key.find(".html") != std::string::npos && !code_numbers.empty())
 				break ;
 			else
 			{
 				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
 				return 1;
 			}
-			iss >> error_code;
+			iss >> key;
 		}
 		while (!code_numbers.empty())
 		{
-			error_code = clean_semicolon(error_code);
-			_map_server[code_numbers.back()] = error_code;
+			key = clean_semicolon(key);
+			_map_server[code_numbers.back()] = key;
 			code_numbers.pop_back();
 		}
 	}
 	else if (key == "listen")
 	{
-		std::string	port_code;
-		iss >> port_code;
-		while (!port_code.empty())
+		iss >> key;
+		while (!key.empty())
 		{
-			if (port_code.find(";") != std::string::npos)
+			if (key.find(";") != std::string::npos)
 			{
-				port_code = clean_semicolon(port_code);
-				_listen_ports.push_back(port_code);
+				key = clean_semicolon(key);
+				_listen_ports.push_back(key);
 				break ;
 			}
 			else
-				_listen_ports.push_back(port_code);
-			iss >> port_code;
+				_listen_ports.push_back(key);
+			iss >> key;
 		}
 	}
 	else if (is_server_variable(key))
 	{
+		std::string value;
 		iss >> value;
 		value = clean_semicolon(value);
 		_map_server[key] = value;
@@ -118,5 +113,18 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
 		return 1;
 	}
+	return 0;
+}
+
+void	ServerConfig::add_location(std::string key, int location_number)
+{
+	_location_list.push_back(LocationConfig());
+	_location_list[location_number].set_path(key);
+}
+
+bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key, int location_number)
+{
+	if (_location_list[location_number].parse_location(iss, key))
+		return 1;
 	return 0;
 }
