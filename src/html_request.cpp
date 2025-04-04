@@ -6,7 +6,7 @@
 /*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 09:47:18 by vdomasch          #+#    #+#             */
-/*   Updated: 2025/03/25 10:34:11 by vdomasch         ###   ########.fr       */
+/*   Updated: 2025/04/03 13:51:29 by vdomasch         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ void	parse_request(t_browser_request &request, char *buffer)
 				if (found != std::string::npos)
 				{
 					std::string value = line.substr(found + compare[i].length() + 2);
-					std::cout << "Value: " << value << std::endl;
 					switch (i)
 					{
 						case 0:

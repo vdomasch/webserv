@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <map>
 
 Server::Server(): _server_fd(-1), _max_fd(-1), _client_fd(-1), _running(true) {}
 Server::~Server() {}
@@ -63,18 +64,19 @@ void Server::handle_new_connection()
 
 void	Server::handle_existing_client()
 {
-	t_browser_request request;
+	std::cout << "\n\033[32m++ Handling existing client ++\033[0m\n" << std::endl;
+	std::map<int , t_browser_request> request;
 	// Handle existing client
 	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read = recv(_client_fd, buffer, BUFFER_SIZE, 0);
 
 	//std::cout << "Bytes read: " << bytes_read << std::endl;
-	request.bytes_read = bytes_read;
+	request[_client_fd].bytes_read = bytes_read;
 
-	if (bytes_read == 0)
+	if (request[_client_fd].connection != "keep-alive" && bytes_read == 0)
 	{
 		// Client disconnected
-		std::cout << "Client on socket" << _client_fd << "disconnected.\n" << std::endl;
+		std::cout << "Client on socket " << _client_fd << " disconnected.\n" << std::endl;
 		close(_client_fd);
 		FD_CLR(_client_fd, &_socket_data.saved_sockets); // Remove socket from saved_sockets
 
@@ -89,21 +91,24 @@ void	Server::handle_existing_client()
 		buffer[bytes_read] = '\0'; // Null-terminate string
 
 		std::cout << "Received: " << buffer << std::endl;
-		parse_request(request, buffer);
+		parse_request(request[_client_fd], buffer);
 
 		// Check if the client requested to keep the connection alive
 
 		// Prepare response
-		std::string response = generate_http_response("200", "OK", request);
+		std::string response = generate_http_response("200", "OK", request[_client_fd]);
 
 		// Send the response
 		send(_client_fd, response.c_str(), response.size(), 0);
 
 		// Close the connection if not keep-alive
-		if (request.connection != "keep-alive")
+		std::cout << request[_client_fd].connection << std::endl;
+		if (static_cast<std::string>(request[_client_fd].connection) /*static_cast<std::string>("keep-alive")*/ != "keep-alive")
 		{
+			std::cout << "CAN'T NOT STOP Closing connection on socket " << _client_fd << std::endl;
 			close(_client_fd);
 			FD_CLR(_client_fd, &_socket_data.saved_sockets);
+			request.erase(_client_fd);
 			if (_client_fd == _max_fd)
 				while (_max_fd > 0 && !FD_ISSET(_max_fd, &_socket_data.saved_sockets))
 					_max_fd--;
