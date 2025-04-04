@@ -13,12 +13,13 @@ bool HTTPConfig::is_http(std::string key)
 	if (key == "}" && _is_http)
 	{
 		_is_http = false;
-		//std::cout << "close http" << std::endl;
 		return true;
 	}
 	if (_is_server || _is_location)
 		return false;
-	if (key == "http" || _is_http)
+	if (key == "http" && _is_http)
+		return false;
+	else if (key == "http" || _is_http)
 	{
 		_is_http = true;
 		return true;
@@ -31,10 +32,11 @@ bool HTTPConfig::is_server(std::string key)
 	if (key == "}" && _is_server)
 	{
 		_is_server = false;
-		//std::cout << "close server" << std::endl;
 		return true;
 	}
 	if (_is_location)
+		return false;
+	if (key == "server" && _is_server)
 		return false;
 	if (key == "server" || _is_server)
 	{
@@ -49,9 +51,10 @@ bool HTTPConfig::is_location(std::string key)
 	if (key == "}" && _is_location)
 	{
 		_is_location = false;
-		//std::cout << "close location" << std::endl;
 		return true;
 	}
+	if (key == "location" && _is_location)
+		return false;
 	if (key == "location" || _is_location)
 	{
 		_is_location = true;
@@ -100,6 +103,7 @@ bool	HTTPConfig::parse_http()
 		{
 			if (key == "server")
 			{
+				
 				_server_list.push_back(ServerConfig());
 			}
 			else if (!key.empty() && key != "}")
@@ -112,10 +116,9 @@ bool	HTTPConfig::parse_http()
 		}
 		else if (is_http(key))
 		{
-			//std::cout << "http: " << key << std::endl;
 			if (set_http_values(iss, key))
 			{
-				//std::cerr << "Error: Invalid keyword" << std::endl;
+				std::cerr << "Error: Invalid keyword" << std::endl;
 				return 1;
 			}
 		}
@@ -165,10 +168,13 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 		}
 	}
 	else if (is_keyword(key, "http"))
-		;
+	{
+		if (iss >> key && key != "{")
+			return 1;
+	}
 	else
 	{
-		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		//std::cerr << "Error: Invalid keyword: " << key << std::endl; 
 		return 1;
 	}
 	return 0;
@@ -192,7 +198,7 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
     std::istringstream iss_copy(str);
 	std::string key;
 
-	unsigned int count = 1;
+	unsigned int count = 0;
 	while (iss_copy >> key)
 		count++;
 	if (count < 3)

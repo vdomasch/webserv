@@ -33,11 +33,10 @@ bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 {
 	for (int i = 0; i < 23; i++)
 	{
-		//std::cout << "DEBUG: key = " << key << " i = " << _server_directives[i] << std::endl;
 		if (key == _server_directives[i])
 			return 0;
 	}
-	std::cerr << "Error: Invalid keyword:" << key << std::endl;
+	std::cerr << "Error: Invalid keyword: " << key << std::endl;
 	iss >> key;
 	return 1;
 
