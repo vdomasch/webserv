@@ -22,7 +22,14 @@ int	Server::initialize_server()
 		std::cerr << "Failed to create socket" << std::endl;
 		return (-1);
 	}
+	int opt = 1;
 
+	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+	{
+		std::cout << "Failed to set socket options" << std::endl;
+	}
+	
+	
 	if (bind(_server_fd, (struct sockaddr *)&_servaddr, sizeof(_servaddr)) < 0) // Bind socket to address
 	{
 		close(_server_fd);
