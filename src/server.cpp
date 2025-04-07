@@ -61,19 +61,56 @@ int accept_connexion(int server_fd, sockaddr_in *servaddr)
 	return (my_socket);
 }
 
-void	analyse_request(char buffer[BUFFER_SIZE], bool full)
+char	find_method_name(std::string request_string)
+{
+	std::string method;
+	int			i;
+
+	method = request_string.substr(0, request_string.find(' '));
+
+	std::string	(method_dictionary[4]) = {"GET", "POST", "DELETE", "PUT"};
+
+	i = -1;
+	while(++i < 4)
+	{
+		if (method == method_dictionary[i])
+			break ;
+	}
+
+	
+	switch (i)
+	{
+	case 0:
+		return ('G');
+	case 1:
+		return ('P');
+	case 2:
+		return ('P');
+	case 3:
+		return ('U');
+	default:
+		return ('G');
+	}
+
+}
+
+char	analyse_request(char buffer[BUFFER_SIZE], bool full)
 {
 	std::string request(buffer);
 	std::string first_line;
 	std::string requested_file;
+	char		method_name;
 	size_t		filename_start;
 	size_t		filename_end;
+
+	method_name = find_method_name(request);
 
 	if (full)
 	{
 		printf("\033[34m------------------------\n");
 		printf("%s\n", buffer);
 		printf("------------------------\033[0m\n");
+		return ('n');
 	}
 	else
 	{
@@ -85,20 +122,26 @@ void	analyse_request(char buffer[BUFFER_SIZE], bool full)
 		printf("\033[34m------------------------\n");
 		printf("%s\n",requested_file.c_str() );
 		printf("------------------------\033[0m\n");
+		return ('n');
 	}
 }
 
 int	handle_client_request(int socket)
 {
 	char buffer[BUFFER_SIZE] = {0};
-	const char *mess = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
-
+	
+	//Receive the new message : 
 	if (read(socket , buffer, BUFFER_SIZE) < 0)
 	{
 		perror("Failed to read ! ");
 		return (-1);
 	}
-	analyse_request(buffer, true);
+	analyse_request(buffer, true); // decide hoz to interpret the request
+	
+	//Sending a response : 
+
+	//const char *mess = "HTTP/1.1 200 OK\nContent-Type: text/plain Content-Length: 12\n\n <html>\n<body>\n Hey ! <form method=\"GET\"> <input type=text name=\"birthyear\"> <input type=submit name=press value=\"OK\"> </form></body>\n</html>\n";
+	const char *mess = "HTTP/1.1 200 OK\nContent-Type: text/html\r\n\r\n\n<html>\n<body>\n Hey ! <form method=\"POST\"> <input type=text name=\"birthyear\"> <input type=submit name=press value=\"OK\"> </form></body>\n</html>\n";
 	write(socket , mess , strlen(mess));
 	std::cout << "message sent from server !\n" << std::endl;
 	close(socket);
