@@ -50,11 +50,6 @@ bool	ServerConfig::is_server_variable(std::string key)
 	return false;
 }
 
-void	ServerConfig::show()
-{
-	std::cout << _server_directives[0] << std::endl;
-}
-
 bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 {
 	if (key == "error_page")
@@ -91,10 +86,14 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 			{
 				key = clean_semicolon(key);
 				_listen_ports.push_back(key);
+				_map_server["listen"] = key;
 				break ;
 			}
 			else
+			{
 				_listen_ports.push_back(key);
+				_map_server["listen"] = key;
+			}
 			iss >> key;
 		}
 	}
@@ -126,4 +125,24 @@ bool	ServerConfig::select_current_location(std::istringstream &iss, std::string 
 	if (_location_list[location_number].parse_location(iss, key))
 		return 1;
 	return 0;
+}
+
+unsigned int	ServerConfig::get_port_number()
+{
+	return (atol(_listen_ports[0].c_str()));
+}
+
+std::string ServerConfig::DEBUG_test()
+{
+	std::string str = "DEBUG: ";
+	for (std::map<std::string, std::string>::iterator it = _map_server.begin(); it != _map_server.end(); ++it)
+	{
+		str += it->first + ": " + it->second + "\n";
+	}
+	return str;
+}
+
+void	ServerConfig::show()
+{
+	std::cout << _server_directives[0] << std::endl;
 }

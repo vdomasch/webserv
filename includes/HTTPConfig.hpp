@@ -15,9 +15,10 @@ class HTTPConfig
 
 		bool parse_http();
 		void set_filename(std::string filename);
+		void DEBUG_HTTP_show();
 	private:
 		std::map<std::string, std::string> _map_http;
-		std::vector<ServerConfig> _server_list;
+		std::map<unsigned int, ServerConfig> _server_list;
 
 		std::string _filename;
 		bool		_is_http;

@@ -6,7 +6,7 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/04/04 11:10:47 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/04/07 15:10:15 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ std::string	clean_semicolon(std::string text)
 
 bool is_keyword(std::string key, std::string pattern)
 {
-	if (key == pattern/* || key == "{"*/ || key.empty() || key == "}")
+	if (key == pattern || key.empty() || key == "}")
 		return (true);
 	return (false);
 }
