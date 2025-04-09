@@ -139,7 +139,7 @@ std::string	ServerConfig::get_string_port_number()
 
 std::string ServerConfig::DEBUG_test()
 {
-	std::string str = "DEBUG: ";
+	std::string str("DEBUG: \n");
 	for (std::map<std::string, std::string>::iterator it = _map_server.begin(); it != _map_server.end(); ++it)
 	{
 		str += it->first + ": " + it->second + "\n";
