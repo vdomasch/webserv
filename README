@@ -1,6 +1,1 @@
 TO DO:
-Verifier si deux servers ont le meme port, si oui QUE FAIRE?????
-	-> le faire au niveau de HTTPConfig lors de l'assignation dans le vector de server
-
-ligne 122 HTTPConfig, passer la condition du else if dans une fonction qui verifie en plus:
-	-> port server default name vs current server name
