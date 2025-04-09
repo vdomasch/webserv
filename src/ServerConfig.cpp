@@ -167,6 +167,11 @@ std::string	ServerConfig::get_string_port_number()
 	return (_map_server["listen"]);
 }
 
+std::string	ServerConfig::get_string_port_number()
+{
+	return (_listen_ports[0]);
+}
+
 std::string ServerConfig::DEBUG_test()
 {
 	std::string str("DEBUG function: \n");
