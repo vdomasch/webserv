@@ -132,6 +132,11 @@ unsigned int	ServerConfig::get_port_number()
 	return (atol(_listen_ports[0].c_str()));
 }
 
+std::string	ServerConfig::get_string_port_number()
+{
+	return (_listen_ports[0]);
+}
+
 std::string ServerConfig::DEBUG_test()
 {
 	std::string str = "DEBUG: ";
@@ -145,4 +150,14 @@ std::string ServerConfig::DEBUG_test()
 void	ServerConfig::show()
 {
 	std::cout << _server_directives[0] << std::endl;
+}
+
+std::string ServerConfig::get_server_name()
+{
+	return _map_server["server_name"];
+}
+
+std::map<std::string, std::string> ServerConfig::get_map_server()
+{
+	return _map_server;
 }

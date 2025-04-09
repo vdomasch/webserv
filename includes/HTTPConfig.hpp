@@ -18,7 +18,7 @@ class HTTPConfig
 		void DEBUG_HTTP_show();
 	private:
 		std::map<std::string, std::string> _map_http;
-		std::map<unsigned int, ServerConfig> _server_list;
+		std::map<std::string, ServerConfig> _server_list;
 
 		std::string _filename;
 		bool		_is_http;
@@ -31,6 +31,7 @@ class HTTPConfig
 		bool	is_server(std::string key);
 		bool	is_location(std::string key);
 		bool	is_location_valid(std::istringstream &iss);
+		bool	are_mandatory_directives_missing(ServerConfig &server_temp);
 };
 
 #endif

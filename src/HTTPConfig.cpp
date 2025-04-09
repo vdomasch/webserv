@@ -66,7 +66,6 @@ bool HTTPConfig::is_location(std::string key)
 bool	HTTPConfig::parse_http()
 {
 	ServerConfig server_temp;
-	//int	server_number = 0;
 	int	location_number = -1;
 
 	std::string line;
@@ -116,7 +115,17 @@ bool	HTTPConfig::parse_http()
 			}
 			else if (key == "}")
 			{
-				_server_list[server_temp.get_port_number()] = server_temp;
+				if (are_mandatory_directives_missing(server_temp))
+					return 1;
+				else if (_server_list.find(server_temp.get_string_port_number()) == _server_list.end())
+					_server_list[server_temp.get_string_port_number()] = server_temp;
+				else if (_server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != _server_list.end())
+				{
+					std::cerr << "Error: Server name already exists!" << std::endl;
+					return 1;
+				}
+				else
+					_server_list[server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()] = server_temp;
 			}
 		}
 		else if (is_http(key))
@@ -215,10 +224,31 @@ void	HTTPConfig::DEBUG_HTTP_show()
 {
 	std::cout << "DEBUG: show everything contained in servers" << std::endl;
 	std::cout << std::endl;
-	for (std::map<unsigned int, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+	for (std::map<std::string, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
 	{
 		std::cout << "Server port: " << it->first << std::endl;
 		std::cout << it->second.DEBUG_test() << std::endl;
 	}
 
+}
+
+bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
+{
+	std::map<std::string, std::string> server_map = server_temp.get_map_server();
+	if (server_map.find("listen") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'listen' missing!" << std::endl;
+		return true;
+	}
+	if (server_map.find("index") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'index' missing!" << std::endl;
+		return true;
+	}
+	if (server_map.find("root") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'root' missing!" << std::endl;
+		return true;
+	}
+	return false;
 }
