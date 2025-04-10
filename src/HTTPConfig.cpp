@@ -63,21 +63,6 @@ bool HTTPConfig::is_location(std::string key)
 	return false;
 }
 
-static bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_list, ServerConfig &server_temp)
-{
-	if (server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != server_list.end())
-	{
-		std::cerr << "Error: Server name already exists for this port" << std::endl;
-		return true;
-	}
-	else if (server_list[server_temp.get_string_port_number()].get_server_name() == server_temp.get_server_name())
-	{
-		std::cerr << "Error: Server name already exists for this port" << std::endl;
-		return true;
-	}
-	return false;
-}
-
 bool	HTTPConfig::parse_http()
 {
 	ServerConfig server_temp;
@@ -132,7 +117,9 @@ bool	HTTPConfig::parse_http()
 			{
 				if (are_mandatory_directives_missing(server_temp))
 					return 1;
-				else if (_server_list.find(server_temp.get_string_port_number()) == _server_list.end())
+				if (server_temp.duplicate_server(_server_list))
+					return 1;
+				if (_server_list.find(server_temp.get_string_port_number()) == _server_list.end())
 					_server_list[server_temp.get_string_port_number()] = server_temp;
 				else if (is_server_name_already_used(_server_list, server_temp))
 					return 1;
@@ -241,7 +228,6 @@ void	HTTPConfig::DEBUG_HTTP_show()
 		std::cout << "Server port: " << it->first << std::endl;
 		std::cout << it->second.DEBUG_test() << std::endl;
 	}
-
 }
 
 bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)

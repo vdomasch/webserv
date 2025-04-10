@@ -6,11 +6,12 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/04/07 15:10:15 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/04/10 13:15:22 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/parsing_utils.hpp"
+# include "parsing_utils.hpp"
+# include "ServerConfig.hpp"
 
 std::string	clean_semicolon(std::string text)
 {
@@ -34,5 +35,20 @@ bool	is_error_page_code(std::string code)
 		;
 	else if (int_code >= 400 && int_code <= 599)
 		return true;
+	return false;
+}
+
+bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_list, ServerConfig &server_temp)
+{
+	if (server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != server_list.end())
+	{
+		std::cerr << "Error: Server name already exists for this port" << std::endl;
+		return true;
+	}
+	else if (server_list[server_temp.get_string_port_number()].get_server_name() == server_temp.get_server_name())
+	{
+		std::cerr << "Error: Server name already exists for this port" << std::endl;
+		return true;
+	}
 	return false;
 }
