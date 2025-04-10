@@ -1,6 +1,7 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 
+
 int main(int argc, char **argv)
 {
 	if (argc != 2)
@@ -13,7 +14,7 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
-
+		
 	try {
 		Server server;
 
