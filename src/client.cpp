@@ -6,11 +6,15 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/18 13:44:44 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/04/10 15:47:58 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "webserv.hpp"
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
 
 int main()
 {

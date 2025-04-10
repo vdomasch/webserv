@@ -6,11 +6,11 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/04/10 13:36:29 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/04/10 15:07:47 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/webserv.hpp"
+# include "webserv.hpp"
 
 int main(int argc, char **argv)
 {

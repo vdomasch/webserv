@@ -6,11 +6,11 @@
 #    By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/01 16:57:20 by lchapard          #+#    #+#              #
-#    Updated: 2025/03/31 11:23:30 by bhumeau          ###   ########.fr        #
+#    Updated: 2025/04/10 16:10:39 by bhumeau          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME_S = server
+NAME_S = webserv
 NAME_C = client
 
 CC = c++
@@ -20,7 +20,7 @@ SRCS_DIR = src
 OBJS_DIR = build
 INCLUDE_DIR = includes
 
-SRV_FILES = server			\
+SRV_FILES = main			\
 			HTTPConfig		\
 			ServerConfig	\
 			LocationConfig	\
