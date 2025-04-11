@@ -1,7 +1,8 @@
-#include "Server.hpp"
+#include "./vinc_includes/Server.hpp"
+#include "HTTPConfig.hpp"
 #include <map>
 
-Server::Server(): _server_fd(-1), _max_fd(-1), _client_fd(-1), _running(true) {}
+Server::Server(): _server_fd(-1), _client_fd(-1) {}
 Server::~Server() {}
 
 int	Server::initialize_server()
@@ -37,7 +38,7 @@ int	Server::initialize_server()
 		return (-1);
 	}
 
-	if (listen(_server_fd, 10) < 0) // Listen for incoming connections
+	if (listen(_server_fd, SOMAXCONN) < 0) // Listen for incoming connections
 	{
 		close(_server_fd);
 		std::cerr << "Failed to listen" << std::endl;
@@ -123,7 +124,7 @@ void	Server::handle_existing_client()
 	}
 }
 
-void	Server::run_server()
+void	Server::run_server(HTTPConfig &http_config)
 {
 	if ((_server_fd = initialize_server()) < 0) // Initialize socket
 		return (perror("Cannot bind to socket"), void());

@@ -6,7 +6,7 @@
 #    By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/01 16:57:20 by lchapard          #+#    #+#              #
-#    Updated: 2025/03/18 13:50:10 by vdomasch         ###   ########.fr        #
+#    Updated: 2025/04/07 15:37:21 by vdomasch         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,9 +20,13 @@ SRCS_DIR = src
 OBJS_DIR = build
 INCLUDE_DIR = includes
 
-SRV_FILES = main    \
-			html_request	\
+SRV_FILES = main			\
+			HTTPConfig		\
+			ServerConfig	\
+			LocationConfig	\
+			parsing_utils	\
 			Server
+
 CLIENT_FILES = client
 
 SRCS_C = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(CLIENT_FILES)))

@@ -6,7 +6,7 @@
 /*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/25 10:19:52 by vdomasch         ###   ########.fr       */
+/*   Updated: 2025/04/07 15:29:00 by vdomasch         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,5 +46,6 @@ int main()
     printf("Hello message sent\n");
     valread = read(sock , buffer, 1024);
     printf("%s\n",buffer );
+	(void)valread;
     return 0;
 }
