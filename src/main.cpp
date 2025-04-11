@@ -1,17 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/04/08 11:23:17 by vdomasch         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "webserv.hpp"
-
 #include "Server.hpp"
 
 int main(int argc, char **argv)
@@ -37,5 +24,6 @@ int main(int argc, char **argv)
 		std::cerr << "Error: Server creation failed." << std::endl;
 		return (1);
 	}
+	//http_config.DEBUG_HTTP_show();
 	return (0);
 }

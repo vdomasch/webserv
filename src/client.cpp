@@ -1,17 +1,7 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   client.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: vdomasch <vdomasch@student.42lyon.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/04/07 15:29:00 by vdomasch         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "webserv.hpp"
-#include "unistd.h"
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 int main()
 {
