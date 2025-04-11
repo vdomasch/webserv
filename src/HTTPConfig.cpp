@@ -66,6 +66,7 @@ bool HTTPConfig::is_location(std::string key)
 bool	HTTPConfig::parse_http()
 {
 	ServerConfig server_temp;
+
 	int	location_number = -1;
 
 	std::string line;
