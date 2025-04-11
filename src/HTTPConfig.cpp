@@ -72,7 +72,7 @@ bool	HTTPConfig::parse_http()
 	std::ifstream infile(_filename.c_str());
 	if (!infile.is_open())
 	{
-		std::cerr << "Error, failed to open filename!" << std::endl;
+		std::cerr << "Error: Failed to open filename '" << _filename.c_str() << "'!" << std::endl;
 		return (true);
 	}
 	while (std::getline(infile, line)) {
@@ -87,7 +87,7 @@ bool	HTTPConfig::parse_http()
 				location_number++;
 				if (!is_location_valid(iss))
 				{
-					std::cerr << "Error: location has no path!" << std::endl;
+					std::cerr << "Error: Keyword location has no path!" << std::endl;
 					return 1;
 				}
 				iss >> key;
@@ -131,7 +131,7 @@ bool	HTTPConfig::parse_http()
 		{
 			if (set_http_values(iss, key))
 			{
-				std::cerr << "Error: Invalid keyword" << std::endl;
+				//std::cerr << "Error: Invalid keyword '" << key << "'!" << std::endl;
 				return 1;
 			}
 		}
@@ -140,6 +140,11 @@ bool	HTTPConfig::parse_http()
 			std::cerr << "Error: Element declared incorrectly!" << std::endl;
 			return 1;
 		}
+	}
+	if (_server_list.empty())
+	{
+		std::cerr << "Error: File '" << _filename.c_str() << "' is empty!" << std::endl;
+		return 1;
 	}
 	return 0;
 }
@@ -168,7 +173,7 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 				break ;
 			else
 			{
-				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
+				std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
 				return 1;
 			}
 			iss >> error_code;
@@ -235,17 +240,17 @@ bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
 	std::map<std::string, std::string> server_map = server_temp.get_map_server();
 	if (server_map.find("listen") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'listen' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'listen' missing!" << std::endl;
 		return true;
 	}
 	if (server_map.find("index") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'index' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'index' missing!" << std::endl;
 		return true;
 	}
 	if (server_map.find("root") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'root' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'root' missing!" << std::endl;
 		return true;
 	}
 	return false;

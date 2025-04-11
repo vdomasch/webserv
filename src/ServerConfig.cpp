@@ -43,7 +43,7 @@ bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 		if (key == _server_directives[i])
 			return 0;
 	}
-	std::cerr << "Error: Invalid keyword: " << key << std::endl;
+	std::cerr << "Error: Invalid keyword '" << key << "'!" << std::endl;
 	iss >> key;
 	return 1;
 
@@ -72,7 +72,7 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 				break ;
 			else
 			{
-				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
+				std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
 				return 1;
 			}
 			iss >> key;
@@ -90,14 +90,17 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 			iss >> key;
 		else
 		{
-			std::cerr << "Error: listen need a port number!" << std::endl;
+			std::cerr << "Error: Keyword Listen needs a port number!" << std::endl;
 			return 1;
 		}
 		while (!key.empty())
 		{
 			if (key.find(";") != std::string::npos)
 			{
+				std::cout << "DEBUG 1" << std::endl;
 				key = clean_semicolon(key);
+				std::cout << "DEBUG 2" << std::endl;
+				
 				_listen_ports.push_back(key);
 				_map_server["listen"] = _listen_ports.begin()->c_str();
 				break ;
@@ -112,7 +115,7 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 				iss >> key;
 			else
 			{
-				std::cerr << "Error: semicolon missing for keyword: listen" << std::endl;
+				std::cerr << "Error: Semicolon is missing for keyword: listen" << std::endl;
 				return 1;
 			}
 		}
@@ -128,11 +131,11 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		}
 		else
 		{
-			std::cerr << "Error: semicolon missing for keyword: " << key << std::endl;
+			std::cerr << "Error: Semicolon is missing for keyword: " << key << std::endl;
 			return 1;
 		}
 		if (!iss.eof())
-			std::cerr << "Error: too many values for keyword: " << key << std::endl;
+			std::cerr << "Error: Too many values for keyword: " << key << std::endl;
     }
 	else if (!is_keyword(key, "location"))
 		;

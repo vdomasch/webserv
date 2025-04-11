@@ -44,7 +44,7 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 				break ;
 			else
 			{
-				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
+				std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
 				return 1;
 			}
 			iss >> key;
@@ -61,11 +61,11 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		while (iss >> key)
 		{
 			key = clean_semicolon(key);
-			if (key == "POST" || key == "GET")
+			if (key == "POST" || key == "GET" || key == "DELETE")
 				_map_location[key] = "true";
 			else
 			{
-				std::cerr << "Error: Invalid keyword: " << key << std::endl;
+				std::cerr << "Error: Invalid allow_methods value '" << key << "'!" << std::endl;
 				return 1;
 			}
 		}

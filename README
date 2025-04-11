@@ -1,2 +1,6 @@
 TO DO:
 Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
+
+segfault dans server si :
+listen ; (clean_semicolon en bool et proteger si que des ';')
+verifier pour tous les keywords avec en value, uniquement ';' (doit surement faire pareil)
