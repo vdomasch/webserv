@@ -65,7 +65,7 @@ bool HTTPConfig::is_location(std::string key)
 
 bool	HTTPConfig::parse_http()
 {
-	int	server_number = 0;
+	ServerConfig server_temp;
 	int	location_number = -1;
 
 	std::string line;
@@ -91,11 +91,11 @@ bool	HTTPConfig::parse_http()
 					return 1;
 				}
 				iss >> key;
-				_server_list[server_number].add_location(key, location_number);
+				server_temp.add_location(key, location_number);
 			}
 			else if (!key.empty() && key != "}")
 			{
-				if (_server_list[server_number].select_current_location(iss, key, location_number))
+				if (server_temp.select_current_location(iss, key, location_number))
 					return 1;
 			}
 		}
@@ -103,15 +103,28 @@ bool	HTTPConfig::parse_http()
 		{
 			if (key == "server")
 			{
-				
-				_server_list.push_back(ServerConfig());
+				server_temp = ServerConfig();
+				location_number = -1;
 			}
 			else if (!key.empty() && key != "}")
 			{
-				if (_server_list[server_number].parse_server(iss, key))
+				if (server_temp.parse_server(iss, key))
 					return 1;
-				if (_server_list[server_number].set_server_values(iss, key))
+				if (server_temp.set_server_values(iss, key))
 					return 1;
+			}
+			else if (key == "}")
+			{
+				if (are_mandatory_directives_missing(server_temp))
+					return 1;
+				if (server_temp.duplicate_server(_server_list))
+					return 1;
+				if (_server_list.find(server_temp.get_string_port_number()) == _server_list.end())
+					_server_list[server_temp.get_string_port_number()] = server_temp;
+				else if (is_server_name_already_used(_server_list, server_temp))
+					return 1;
+				else
+					_server_list[server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()] = server_temp;
 			}
 		}
 		else if (is_http(key))
@@ -204,4 +217,36 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 	if (count < 3)
 		return false;
 	return true;
+}
+
+void	HTTPConfig::DEBUG_HTTP_show()
+{
+	std::cout << "DEBUG: show everything contained in servers" << std::endl;
+	std::cout << std::endl;
+	for (std::map<std::string, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+	{
+		std::cout << "Server port: " << it->first << std::endl;
+		std::cout << it->second.DEBUG_test() << std::endl;
+	}
+}
+
+bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
+{
+	std::map<std::string, std::string> server_map = server_temp.get_map_server();
+	if (server_map.find("listen") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'listen' missing!" << std::endl;
+		return true;
+	}
+	if (server_map.find("index") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'index' missing!" << std::endl;
+		return true;
+	}
+	if (server_map.find("root") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory directive 'root' missing!" << std::endl;
+		return true;
+	}
+	return false;
 }

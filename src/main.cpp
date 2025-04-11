@@ -6,11 +6,11 @@
 /*   By: bhumeau <bhumeau@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/25 09:57:04 by lchapard          #+#    #+#             */
-/*   Updated: 2025/03/27 15:02:42 by bhumeau          ###   ########.fr       */
+/*   Updated: 2025/04/10 15:07:47 by bhumeau          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/webserv.hpp"
+# include "webserv.hpp"
 
 int main(int argc, char **argv)
 {
@@ -24,5 +24,6 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
+	//http_config.DEBUG_HTTP_show();
 	return (0);
 }

@@ -1,4 +1,4 @@
 .vscode
-server
-client
 build
+client
+webserv

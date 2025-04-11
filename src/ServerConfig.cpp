@@ -2,7 +2,7 @@
 
 ServerConfig::ServerConfig() {
 	_server_directives[0] = "listen";
-	_server_directives[1] = "host"; // INVALID?
+	_server_directives[1] = "host";
 	_server_directives[2] = "server_name";
 	_server_directives[3] = "error_page";
 	_server_directives[4] = "client_max_body_size";
@@ -27,6 +27,13 @@ ServerConfig::ServerConfig() {
 	_server_directives[22] = "keepalive_timeout";
 }
 
+ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
+{
+	_map_server = param._map_server;
+	_location_list = param._location_list;
+	_map_server["listen"] = port;
+}
+
 ServerConfig::~ServerConfig() {}
 
 bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
@@ -48,11 +55,6 @@ bool	ServerConfig::is_server_variable(std::string key)
 		if (key == _server_directives[i])
 			return true;
 	return false;
-}
-
-void	ServerConfig::show()
-{
-	std::cout << _server_directives[0] << std::endl;
 }
 
 bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
@@ -84,28 +86,55 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	}
 	else if (key == "listen")
 	{
-		iss >> key;
+		if (!iss.eof())
+			iss >> key;
+		else
+		{
+			std::cerr << "Error: listen need a port number!" << std::endl;
+			return 1;
+		}
 		while (!key.empty())
 		{
 			if (key.find(";") != std::string::npos)
 			{
 				key = clean_semicolon(key);
 				_listen_ports.push_back(key);
+				_map_server["listen"] = _listen_ports.begin()->c_str();
 				break ;
 			}
 			else
+			{
 				_listen_ports.push_back(key);
-			iss >> key;
+				_map_server["listen"] = _listen_ports.begin()->c_str();
+			}
+			key.empty();
+			if (!iss.eof())
+				iss >> key;
+			else
+			{
+				std::cerr << "Error: semicolon missing for keyword: listen" << std::endl;
+				return 1;
+			}
 		}
 	}
 	else if (is_server_variable(key))
 	{
 		std::string value;
 		iss >> value;
-		value = clean_semicolon(value);
-		_map_server[key] = value;
+		if (value.at(value.length() - 1) == ';')
+		{
+			value = clean_semicolon(value);
+			_map_server[key] = value;
+		}
+		else
+		{
+			std::cerr << "Error: semicolon missing for keyword: " << key << std::endl;
+			return 1;
+		}
+		if (!iss.eof())
+			std::cerr << "Error: too many values for keyword: " << key << std::endl;
     }
-	else if (is_keyword(key, "location"))
+	else if (!is_keyword(key, "location"))
 		;
 	else
 	{
@@ -125,5 +154,56 @@ bool	ServerConfig::select_current_location(std::istringstream &iss, std::string 
 {
 	if (_location_list[location_number].parse_location(iss, key))
 		return 1;
+	return 0;
+}
+
+unsigned int	ServerConfig::get_port_number()
+{
+	return (atol(_map_server["listen"].c_str()));
+}
+
+std::string	ServerConfig::get_string_port_number()
+{
+	return (_map_server["listen"]);
+}
+
+std::string ServerConfig::DEBUG_test()
+{
+	std::string str("DEBUG function: \n");
+	for (std::map<std::string, std::string>::iterator it = _map_server.begin(); it != _map_server.end(); ++it)
+	{
+		str += it->first + ": " + it->second + "\n";
+	}
+	return str;
+}
+
+void	ServerConfig::show()
+{
+	std::cout << _server_directives[0] << std::endl;
+}
+
+std::string ServerConfig::get_server_name()
+{
+	return _map_server["server_name"];
+}
+
+std::map<std::string, std::string> ServerConfig::get_map_server()
+{
+	return _map_server;
+}
+
+bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_list)
+{
+	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)
+	{
+		ServerConfig server_temp = ServerConfig(*this, *it);
+		if (server_list.find(server_temp.get_string_port_number()) == server_list.end())
+			server_list[server_temp.get_string_port_number()] = server_temp;
+		else if (is_server_name_already_used(server_list, server_temp))
+			return 1;
+		else
+			server_list[server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()] = server_temp;
+	}
+	_listen_ports.clear();
 	return 0;
 }

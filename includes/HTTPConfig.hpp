@@ -2,10 +2,6 @@
 # define HTTPCONFIG_HPP
 
 # include "ServerConfig.hpp"
-# include "parsing_utils.hpp"
-# include <iostream>
-# include <vector>
-# include <map>
 
 class HTTPConfig
 {
@@ -15,9 +11,10 @@ class HTTPConfig
 
 		bool parse_http();
 		void set_filename(std::string filename);
+		void DEBUG_HTTP_show();
 	private:
 		std::map<std::string, std::string> _map_http;
-		std::vector<ServerConfig> _server_list;
+		std::map<std::string, ServerConfig> _server_list;
 
 		std::string _filename;
 		bool		_is_http;
@@ -30,6 +27,7 @@ class HTTPConfig
 		bool	is_server(std::string key);
 		bool	is_location(std::string key);
 		bool	is_location_valid(std::istringstream &iss);
+		bool	are_mandatory_directives_missing(ServerConfig &server_temp);
 };
 
 #endif
