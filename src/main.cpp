@@ -14,17 +14,10 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
-		
-	try {
-		Server server;
-
-		server.run_server(http_config);
-	}
-	catch (...)
-	{
-		std::cerr << "Error: Server creation failed." << std::endl;
-		return (1);
-	}
 	//http_config.DEBUG_HTTP_show();
+		
+	Server server;
+
+	server.run_server(http_config);
 	return (0);
 }

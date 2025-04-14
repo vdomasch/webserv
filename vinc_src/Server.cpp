@@ -7,43 +7,6 @@ Server::~Server() {}
 
 int	Server::initialize_server()
 {
-	// Initialize server address
-	bzero(&_servaddr, sizeof(_servaddr));
-	bzero(&_socket_data, sizeof(_socket_data));
-
-	_servaddr.sin_family = AF_INET; // IPv4
-	_servaddr.sin_port = htons(SERV_PORT); // Port
-	//servaddr->sin_addr.s_addr = htonl(INADDR_ANY); // bind to all ports
-	//OR 
-	_servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // if to localhost only
-
-	// Create socket
-	if ((_server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cerr << "Failed to create socket" << std::endl;
-		return (-1);
-	}
-	int opt = 1;
-
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
-	{
-		std::cout << "Failed to set socket options" << std::endl;
-	}
-	
-	
-	if (bind(_server_fd, (struct sockaddr *)&_servaddr, sizeof(_servaddr)) < 0) // Bind socket to address
-	{
-		close(_server_fd);
-		std::cerr << "Failed to bind to socket" << std::endl;
-		return (-1);
-	}
-
-	if (listen(_server_fd, SOMAXCONN) < 0) // Listen for incoming connections
-	{
-		close(_server_fd);
-		std::cerr << "Failed to listen" << std::endl;
-		return (-1);
-	}
 	return (_server_fd);
 }
 

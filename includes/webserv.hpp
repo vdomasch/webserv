@@ -9,7 +9,8 @@
 typedef struct s_fd_data
 {
 	fd_set  ready_sockets;
-	fd_set  saved_sockets;	// current sockets
+	fd_set  saved_sockets;
+	int		max_fd;
 }	t_fd_data;
 
 #endif

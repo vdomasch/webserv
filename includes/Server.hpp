@@ -17,9 +17,11 @@ class Server
 		int			_server_fd;		// to store server socket
 		int			_client_fd;
 		t_fd_data	_socket_data;	// to keep track of all active sockets
-		sockaddr_in	_servaddr;		// to store server address
 
-		int		initialize_server(HTTPConfig &http_config);
+		std::map<int, int>	_port_socket_map;
+
+		int		initialize_server(ServerConfig &server);
+		
 		//void	handle_new_connection();
 		//void	handle_existing_client();
 };
