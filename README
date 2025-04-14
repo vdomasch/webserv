@@ -1,3 +1,20 @@
 TO DO:
-Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
+
+error_page
+	Verifier si la page d'erreur est deja set (at current level)
+	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
+	Location:
+		error_page doesn't return error when ';' is missing
+
+listen
+	verifier si les valeurs de port sont valides
+
+host
+	Verifier si les ip sont valides
+
+autoindex
+	accepter uniquement on/off ?
+
+location
+	Verifier que le path commence bien par un '/'
 
