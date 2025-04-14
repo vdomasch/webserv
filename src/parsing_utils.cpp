@@ -5,7 +5,10 @@ bool	is_valid_to_clean_semicolon(std::string key)
 {
 	if (key.find_first_not_of(";") == std::string::npos)
 	{
-		std::cerr << "Error: Invalid value '" << key << "' !" << std::endl;
+		if (key.empty())
+			std::cerr << "Error: Empty value!" << std::endl;
+		else
+			std::cerr << "Error: Invalid value '" << key << "' !" << std::endl;
 		return false;
 	}
 	return true;
