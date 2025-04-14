@@ -97,9 +97,9 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		{
 			if (key.find(";") != std::string::npos)
 			{
-				std::cout << "DEBUG 1" << std::endl;
+				if (!is_valid_to_clean_semicolon(key))
+					return 1;
 				key = clean_semicolon(key);
-				std::cout << "DEBUG 2" << std::endl;
 				
 				_listen_ports.push_back(key);
 				_map_server["listen"] = _listen_ports.begin()->c_str();
@@ -124,6 +124,8 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	{
 		std::string value;
 		iss >> value;
+		if (!is_valid_to_clean_semicolon(value))
+			return 1;
 		if (value.at(value.length() - 1) == ';')
 		{
 			value = clean_semicolon(value);

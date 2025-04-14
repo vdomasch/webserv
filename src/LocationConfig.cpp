@@ -60,6 +60,8 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	{
 		while (iss >> key)
 		{
+			if (!is_valid_to_clean_semicolon(key))
+				return 1;
 			key = clean_semicolon(key);
 			if (key == "POST" || key == "GET" || key == "DELETE")
 				_map_location[key] = "true";
@@ -74,6 +76,8 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	{
 		std::string value;
 		iss >> value;
+		if (!is_valid_to_clean_semicolon(value))
+			return 1;
 		value = clean_semicolon(value);
 		_map_location[key] = value;
 	}

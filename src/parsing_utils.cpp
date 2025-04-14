@@ -1,6 +1,16 @@
 # include "parsing_utils.hpp"
 # include "ServerConfig.hpp"
 
+bool	is_valid_to_clean_semicolon(std::string key)
+{
+	if (key.find_first_not_of(";") == std::string::npos)
+	{
+		std::cerr << "Error: Invalid value '" << key << "' !" << std::endl;
+		return false;
+	}
+	return true;
+}
+
 std::string	clean_semicolon(std::string text)
 {
 	while (text.at(text.length() - 1) == ';')

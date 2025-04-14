@@ -156,6 +156,8 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	if (key == "client_max_body_size")
 	{
 		iss >> value;
+		if (!is_valid_to_clean_semicolon(value))
+					return 1;
 		value = clean_semicolon(value);
 		_map_http[key] = value;
     }
@@ -192,7 +194,7 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	}
 	else
 	{
-		//std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
 		return 1;
 	}
 	return 0;
