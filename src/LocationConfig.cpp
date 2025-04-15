@@ -72,6 +72,21 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 			}
 		}
 	}
+	else if (key == "autoindex")
+	{
+		std::string value;
+		iss >> value;
+		if (!is_valid_to_clean_semicolon(value))
+			return 1;
+		value = clean_semicolon(value);
+		if (value == "on" || value == "off")
+			_map_location[key] = value;
+		else
+		{
+			std::cerr << "Error: Invalid autoindex value '" << value << "'!" << std::endl;
+			return 1;
+		}
+	}
 	else
 	{
 		std::string value;

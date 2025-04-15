@@ -12,9 +12,6 @@ listen
 host
 	Verifier si les ip sont valides
 
-autoindex
-	accepter uniquement on/off ?
-
 location
 	Verifier que le path commence bien par un '/'
 
