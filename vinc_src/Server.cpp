@@ -13,24 +13,24 @@ int	Server::initialize_server()
 void Server::handle_new_connection()
 {
 	// Accept new connection
-	socklen_t addr_len = sizeof(_servaddr);
-	int new_socket = accept(_server_fd, (struct sockaddr *)&_servaddr, &addr_len);
+	//socklen_t addr_len = sizeof(_servaddr);
+	//int new_socket = accept(_server_fd, (struct sockaddr *)&_servaddr, &addr_len);
 	// Check if accept failed
-	if (new_socket < 0)
-		return (perror("Failed to accept connection"), void());
+	//if (new_socket < 0)
+	//	return (perror("Failed to accept connection"), void());
 	
 	// Check if we have space for new socket
-	if (new_socket >= FD_SETSIZE)
-	{
-		close(new_socket);
-		fprintf(stderr, "Too many connections!\n");
-		return ;
-	}
+	//if (new_socket >= FD_SETSIZE)
+	//{
+	//	close(new_socket);
+	//	fprintf(stderr, "Too many connections!\n");
+	//	return ;
+	//}
 	
-	FD_SET(new_socket, &_socket_data.saved_sockets); // Add new socket to saved_sockets
-	if (new_socket > _max_fd) // Update max_fd
-		_max_fd = new_socket;
-	printf("New client connected on socket %d\n", new_socket);
+	//FD_SET(new_socket, &_socket_data.saved_sockets); // Add new socket to saved_sockets
+	//if (new_socket > _max_fd) // Update max_fd
+	//	_max_fd = new_socket;
+	//printf("New client connected on socket %d\n", new_socket);
 }
 
 void	Server::handle_existing_client()
