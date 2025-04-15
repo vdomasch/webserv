@@ -87,7 +87,7 @@ bool	HTTPConfig::parse_http()
 				location_number++;
 				if (!is_location_valid(iss))
 				{
-					std::cerr << "Error: Keyword location has no path!" << std::endl;
+					//std::cerr << "Error: Keyword location has no path!" << std::endl;
 					return 1;
 				}
 				iss >> key;
@@ -220,9 +220,19 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 
 	unsigned int count = 0;
 	while (iss_copy >> key)
+	{
+		if (count == 1 && key.at(0) != '/')
+		{
+			std::cerr << "Error: Keyword location path must start with '/'!" << std::endl;
+			return false;
+		}
 		count++;
+	}
 	if (count < 3)
+	{
+		std::cerr << "Error: Keyword location has no path!" << std::endl;
 		return false;
+	}
 	return true;
 }
 

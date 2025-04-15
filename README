@@ -1,5 +1,7 @@
 TO DO:
 
+/!\ aucun des keywords n'est verifie s'il est appele plusieurs fois sur les memes valeurs /!\
+
 error_page
 	Verifier si la page d'erreur est deja set (at current level)
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
@@ -11,7 +13,3 @@ listen
 
 host
 	Verifier si les ip sont valides
-
-location
-	Verifier que le path commence bien par un '/'
-
