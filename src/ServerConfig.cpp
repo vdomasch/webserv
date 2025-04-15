@@ -135,6 +135,74 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 			return 1;
 		}
 	}
+	else if (key == "host")
+	{
+		std::string value;
+		iss >> value;
+		std::string ip_1;
+		std::string ip_2;
+		std::string ip_3;
+
+		if (value.empty())
+		{
+			std::cerr << "Error: Keyword host needs a value!" << std::endl;
+			return 1;
+		}
+		if (value.at(value.length() - 1) != ';')
+		{
+			std::cerr << "Error: Semicolon is missing for keyword: host" << std::endl;
+			return 1;
+		}
+		if (!is_valid_to_clean_semicolon(value))
+			return 1;
+		value = clean_semicolon(value);
+		if (value.find("127.") != 0)
+		{
+			std::cerr << "Error: Invalid host value '" << value << "', must start by '127.'!" << std::endl;
+			return 1;
+		}
+		value.erase(0, 4);
+		if (value.find(".") == std::string::npos)
+		{
+			std::cerr << "Error '.' is missing!" << std::endl;
+			return 1;
+		}
+		ip_1.assign(value, 0, value.find("."));
+		value.erase(0, value.find(".") + 1);
+		if (value.find(".") == std::string::npos)
+		{
+			std::cerr << "Error '.' is missing!" << std::endl;
+			return 1;
+		}
+		ip_2.assign(value, 0, value.find("."));
+		value.erase(0, value.find(".") + 1);
+		ip_3.assign(value);
+		if (ip_1.find_first_not_of("0123456789") != std::string::npos || ip_2.find_first_not_of("0123456789") != std::string::npos || ip_3.find_first_not_of("0123456789") != std::string::npos)
+		{
+			std::cerr << "Error: Invalid host value, only numbers are allowed!" << std::endl;
+			return 1;
+		}
+		if (ip_1.length() > 3 || ip_2.length() > 3 || ip_3.length() > 3 || ip_1.length() == 0 || ip_2.length() == 0 || ip_3.length() == 0)
+		{
+			std::cerr << "Error: Invalid host value, range is from 0 to 255!" << std::endl;
+			return 1;
+		}
+		if (atol(ip_1.c_str()) > 255 || atol(ip_2.c_str()) > 255 || atol(ip_3.c_str()) > 255)
+		{
+			std::cerr << "Error: Invalid host value, range is from 0 to 255!" << std::endl;
+			return 1;
+		}
+		if (ip_1 == "0" && ip_2 == "0" && ip_3 == "0")
+		{
+			std::cerr << "Error: Invalid host value, 127.0.0.0 isn't allowed!" << std::endl;
+			return 1;
+		}
+		if (ip_1 == "255" && ip_2 == "255" && ip_3 == "255")
+		{
+			std::cerr << "Error: Invalid host value, 127.255.255.255 isn't allowed!" << std::endl;
+			return 1;
+		}
+	}
 	else if (is_server_variable(key))
 	{
 		std::string value;

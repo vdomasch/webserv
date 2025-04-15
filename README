@@ -10,6 +10,3 @@ error_page
 
 listen
 	verifier si les valeurs de port sont valides
-
-host
-	Verifier si les ip sont valides
