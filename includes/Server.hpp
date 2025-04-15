@@ -22,8 +22,6 @@ class Server
 
 		int		initialize_server(ServerConfig &server);
 		
-		//void	handle_new_connection();
-		//void	handle_existing_client();
 };
 
 #endif

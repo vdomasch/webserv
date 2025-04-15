@@ -91,6 +91,10 @@ void	Server::run_server(HTTPConfig &http_config)
 				return ;
 			}
 			_port_socket_map[server.get_port_number()] = server_socket;
+			FD_ZERO(&_socket_data.saved_sockets);
+			FD_SET(server_socket, &_socket_data.saved_sockets);
+			if (server_socket > _socket_data.max_fd)
+				_socket_data.max_fd = server_socket;
 		}
 	}
 
@@ -98,6 +102,50 @@ void	Server::run_server(HTTPConfig &http_config)
 	
 	while (g_running)
 	{
+		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n" << std::endl;
+		_socket_data.ready_sockets = _socket_data.saved_sockets;
+
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL) < 0)
+		{
+			std::cerr << "Select failed!" << std::endl;
+			return ;
+		}
+
+		for (int i = 0; i <= _socket_data.max_fd; i++)
+		{
+			int client_socket;
+			if (FD_ISSET(i, &_socket_data.ready_sockets))
+			{
+				if (i == _server_fd) // New connection
+				{
+					socklen_t addr_len = sizeof(_servaddr);
+					client_socket = accept(_server_fd, NULL, NULL);
+					if (client_socket < 0)
+					{
+						std::cerr << "Failed to accept new connection" << std::endl;
+						continue;
+					}
+					if (client_socket > FD_SETSIZE)
+					{
+						std::cerr << "Too many connections" << std::endl;
+						close(client_socket);
+						continue;
+					}
+					FD_SET(client_socket, &_socket_data.ready_sockets);
+					if (client_socket > _socket_data.max_fd)
+						_socket_data.max_fd = client_socket;
+				}
+				else if (FD_ISSET(client_socket, &_socket_data.saved_sockets))
+				{
+					//handle_client_request(i);
+				}
+				else
+				{
+					std::cerr << "Unknown socket activity" << std::endl;
+				}
+			}
+		}
+
 		static_cast<void>(http_config);
 	}
 }

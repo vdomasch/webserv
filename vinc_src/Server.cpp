@@ -118,9 +118,9 @@ void	Server::run_server(HTTPConfig &http_config)
 			{
 				// Check if new connection
 				if (_client_fd == _server_fd) // New connection
-					handle_new_connection();
+					;
 				else // Existing client
-					handle_existing_client();
+					;
 			}
 		}
 	}
