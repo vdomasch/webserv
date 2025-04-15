@@ -46,7 +46,6 @@ bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 	std::cerr << "Error: Invalid keyword '" << key << "'!" << std::endl;
 	iss >> key;
 	return 1;
-
 }
 
 bool	ServerConfig::is_server_variable(std::string key)
@@ -86,33 +85,43 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	}
 	else if (key == "listen")
 	{
+		std::string value;
 		if (!iss.eof())
-			iss >> key;
+			iss >> value;
 		else
 		{
-			std::cerr << "Error: Keyword Listen needs a port number!" << std::endl;
+			std::cerr << "Error: Keyword listen needs a port number!" << std::endl;
 			return 1;
 		}
-		while (!key.empty())
+		while (!value.empty())
 		{
-			if (key.find(";") != std::string::npos)
+			if (value.find_first_not_of("0123456789;") != std::string::npos)
 			{
-				if (!is_valid_to_clean_semicolon(key))
+				std::cerr << "Error: value '" << value << "' is invalid for keyword listen" << std::endl;
+				return 1;
+			}
+			if (value.length() > 6 || atol(value.c_str()) > 65535 || atol(value.c_str()) < 1024)
+			{
+				std::cerr << "Error: value '" << value << "' is invalid for keyword listen" << std::endl;
+				return 1;
+			}
+			if (value.find(";") != std::string::npos)
+			{
+				if (!is_valid_to_clean_semicolon(value))
 					return 1;
-				key = clean_semicolon(key);
-				
-				_listen_ports.push_back(key);
+				value = clean_semicolon(value);
+				_listen_ports.push_back(value);
 				_map_server["listen"] = _listen_ports.begin()->c_str();
 				break ;
 			}
 			else
 			{
-				_listen_ports.push_back(key);
+				_listen_ports.push_back(value);
 				_map_server["listen"] = _listen_ports.begin()->c_str();
 			}
-			key.empty();
+			value.empty();
 			if (!iss.eof())
-				iss >> key;
+				iss >> value;
 			else
 			{
 				std::cerr << "Error: Semicolon is missing for keyword: listen" << std::endl;
