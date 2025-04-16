@@ -11,7 +11,7 @@ ServerConfig::ServerConfig() {
 	_server_directives[6] = "listen";
 	_server_directives[7] = "host";
 	_server_directives[8] = "server_name";
-	_server_directives[9] = "error_page";
+	_server_directives[9] = "error_page"; //WTF
 	_server_directives[10] = "client_max_body_size";
 	_server_directives[11] = "root";
 	_server_directives[12] = "index";

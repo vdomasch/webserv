@@ -155,6 +155,11 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 
 	if (key == "client_max_body_size")
 	{
+		if (_map_http["client_max_body_size"] != "UNSET")
+		{
+			std::cerr << "Error: Keyword client_max_body_size already set!" << std::endl;
+			return 1;
+		}
 		iss >> value;
 		if (!is_valid_to_clean_semicolon(value))
 					return 1;
@@ -182,6 +187,11 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 		}
 		while (!code_numbers.empty())
 		{
+			if (!_map_http[code_numbers.back()].empty())
+			{
+				std::cerr << "Error: Keyword error_page already set for code " << code_numbers.back() << "!" << std::endl;
+				return 1;
+			}
 			error_code = clean_semicolon(error_code);
 			_map_http[code_numbers.back()] = error_code;
 			code_numbers.pop_back();
