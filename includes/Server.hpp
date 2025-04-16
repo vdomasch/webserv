@@ -21,6 +21,10 @@ class Server
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void	update_max_fd(int fd);
+		void	close_msg(int fd, const std::string &message, int err);
+		void	running_loop(HTTPConfig &http_config, sockaddr_in &servaddr);
+		bool	is_server_socket(int fd);
+		void	shutdown_all_sockets();
 };
 
 #endif
