@@ -2,7 +2,6 @@
 
 HTTPConfig::HTTPConfig(): _is_http(false), _is_server(false), _is_location(false)
 {
-	_map_http["error_page"] = "UNSET";
 	_map_http["client_max_body_size"] = "UNSET";
 }
 

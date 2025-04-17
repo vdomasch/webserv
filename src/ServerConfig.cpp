@@ -8,23 +8,16 @@ ServerConfig::ServerConfig() {
 	_server_directives[4] = "client_max_body_size";
 	_server_directives[5] = "root";
 	_server_directives[6] = "index";
-	_server_directives[6] = "listen";
-	_server_directives[7] = "host";
-	_server_directives[8] = "server_name";
-	_server_directives[9] = "error_page"; //WTF
-	_server_directives[10] = "client_max_body_size";
-	_server_directives[11] = "root";
-	_server_directives[12] = "index";
-	_server_directives[13] = "alias";
-	_server_directives[14] = "autoindex";
-	_server_directives[15] = "allow_methods";
-	_server_directives[16] = "cgi_path";
-	_server_directives[17] = "cgi_ext";
-	_server_directives[18] = "return";
-	_server_directives[19] = "rewrite";
-	_server_directives[20] = "access_log";
-	_server_directives[21] = "error_log";
-	_server_directives[22] = "keepalive_timeout";
+	_server_directives[7] = "alias";
+	_server_directives[8] = "autoindex";
+	_server_directives[9] = "allow_methods";
+	_server_directives[10] = "cgi_path";
+	_server_directives[11] = "cgi_ext";
+	_server_directives[12] = "return";
+	_server_directives[13] = "rewrite";
+	_server_directives[14] = "access_log";
+	_server_directives[15] = "error_log";
+	_server_directives[16] = "keepalive_timeout";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
@@ -38,7 +31,7 @@ ServerConfig::~ServerConfig() {}
 
 bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 {
-	for (int i = 0; i < 23; i++)
+	for (int i = 0; i < 17; i++)
 	{
 		if (key == _server_directives[i])
 			return 0;
@@ -50,7 +43,7 @@ bool	ServerConfig::parse_server(std::istringstream &iss, std::string key)
 
 bool	ServerConfig::is_server_variable(std::string key)
 {
-	for (int i = 0; i < 23; i++)
+	for (int i = 0; i < 17; i++)
 		if (key == _server_directives[i])
 			return true;
 	return false;

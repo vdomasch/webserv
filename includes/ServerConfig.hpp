@@ -27,7 +27,7 @@ class ServerConfig
 		std::map<std::string, std::string> _map_server;
 		std::vector<std::string> _listen_ports;
 		std::vector<LocationConfig> _location_list;
-		std::string _server_directives[23];
+		std::string _server_directives[17];
 	
 
 		bool	is_server_variable(std::string key);

@@ -1,5 +1,8 @@
 TO DO:
 
+DRY THIS CODE!
+	-> error_page
+
 /!\ aucun des keywords n'est verifie s'il est appele plusieurs fois sur les memes valeurs /!\
 -> http done
 
