@@ -101,6 +101,21 @@ bool	HTTPConfig::parse_http()
 			{
 				server_temp = ServerConfig();
 				location_number = -1;
+				if (!(iss >> key))
+				{
+					std::cerr << "Error: Keyword server need an openning bracket '{'!" << std::endl;
+					return 1;
+				}
+				if (key != "{")
+				{
+					std::cerr << "Error: Keyword server must be followed by '{'!" << std::endl;
+					return 1;
+				}
+				if (!iss.eof())
+				{
+					std::cerr << "Error: Keyword server has too many values!" << std::endl;
+					return 1;
+				}
 			}
 			else if (!key.empty() && key != "}")
 			{
@@ -168,6 +183,11 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	{
 		if (iss >> key && key != "{")
 			return 1;
+		if (!iss.eof())
+		{
+			std::cerr << "Error: Keyword http has too many values!" << std::endl;
+			return 1;
+		}
 	}
 	else
 	{
@@ -205,9 +225,19 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 		}
 		count++;
 	}
-	if (count < 3)
+	if (count < 2)
 	{
 		std::cerr << "Error: Keyword location has no path!" << std::endl;
+		return false;
+	}
+	else if (count < 3)
+	{
+		std::cerr << "Error: Keyword location needs an opening bracket!" << std::endl;
+		return false;
+	}
+	else if (count > 3)
+	{
+		std::cerr << "Error: Keyword location has too many values!" << std::endl;
 		return false;
 	}
 	return true;
