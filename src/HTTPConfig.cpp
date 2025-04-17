@@ -167,34 +167,8 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
     }
 	else if (key == "error_page")
 	{
-		std::vector<std::string> code_numbers;
-		std::string error_code;
-		
-		iss >> error_code;
-		while (!error_code.empty())
-		{
-			if (is_error_page_code(error_code))
-				code_numbers.push_back(error_code);
-			else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
-				break ;
-			else
-			{
-				std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
-				return 1;
-			}
-			iss >> error_code;
-		}
-		while (!code_numbers.empty())
-		{
-			if (!_map_http[code_numbers.back()].empty())
-			{
-				std::cerr << "Error: Keyword error_page already set for code " << code_numbers.back() << "!" << std::endl;
-				return 1;
-			}
-			error_code = clean_semicolon(error_code);
-			_map_http[code_numbers.back()] = error_code;
-			code_numbers.pop_back();
-		}
+		if (handle_error_page(iss, _map_http))
+			return 1;
 	}
 	else if (is_keyword(key, "http"))
 	{

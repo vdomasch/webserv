@@ -3,8 +3,6 @@
 
 # include "LocationConfig.hpp"
 
-# include <fstream> //ifstream
-
 class ServerConfig
 {
 	public:
@@ -29,8 +27,10 @@ class ServerConfig
 		std::vector<LocationConfig> _location_list;
 		std::string _server_directives[17];
 	
-
 		bool	is_server_variable(std::string key);
+		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
+		bool	handle_host(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
+
 };
 
 #endif

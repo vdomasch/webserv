@@ -33,59 +33,18 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	}
 	else if (key == "error_page")
 	{
-		std::vector<std::string> code_numbers;
-
-		iss >> key;
-		while (!key.empty())
-		{
-			if (is_error_page_code(key))
-				code_numbers.push_back(key);
-			else if (key.find(".html") != std::string::npos && !code_numbers.empty())
-				break ;
-			else
-			{
-				std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
-				return 1;
-			}
-			iss >> key;
-		}
-		while (!code_numbers.empty())
-		{
-			key = clean_semicolon(key);
-			_map_location[code_numbers.back()] = key;
-			code_numbers.pop_back();
-		}
+		if (handle_error_page(iss, _map_location))
+			return 1;
 	}
 	else if (key == "allow_methods")
 	{
-		while (iss >> key)
-		{
-			if (!is_valid_to_clean_semicolon(key))
-				return 1;
-			key = clean_semicolon(key);
-			if (key == "POST" || key == "GET" || key == "DELETE")
-				_map_location[key] = "true";
-			else
-			{
-				std::cerr << "Error: Invalid allow_methods value '" << key << "'!" << std::endl;
-				return 1;
-			}
-		}
+		if (handle_allow_methods(iss, _map_location))
+			return 1;
 	}
 	else if (key == "autoindex")
 	{
-		std::string value;
-		iss >> value;
-		if (!is_valid_to_clean_semicolon(value))
+		if (handle_autoindex(iss, _map_location))
 			return 1;
-		value = clean_semicolon(value);
-		if (value == "on" || value == "off")
-			_map_location[key] = value;
-		else
-		{
-			std::cerr << "Error: Invalid autoindex value '" << value << "'!" << std::endl;
-			return 1;
-		}
 	}
 	else
 	{
