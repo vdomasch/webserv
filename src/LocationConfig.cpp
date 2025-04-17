@@ -48,12 +48,22 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	}
 	else
 	{
+		if (!_map_location[key].empty())
+		{
+			std::cerr << "Error: Keyword " << key << " already set!" << std::endl;
+			return 1;
+		}
 		std::string value;
 		iss >> value;
 		if (!is_valid_to_clean_semicolon(value))
 			return 1;
 		value = clean_semicolon(value);
 		_map_location[key] = value;
+		if (!iss.eof())
+		{
+			std::cerr << "Error: There are values after ';' for keyword: " << key << std::endl;
+			return 1;
+		}
 	}
 	return 0;
 }

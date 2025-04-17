@@ -84,6 +84,11 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 		_current_map[code_numbers.back()] = error_code;
 		code_numbers.pop_back();
 	}
+	if (!iss.eof())
+	{
+		std::cerr << "Error: There are values after ';' for keyword error_page!" << std::endl;
+		return 1;
+	}
 	return 0;
 }
 
@@ -106,6 +111,11 @@ bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string
 		std::cerr << "Error: Invalid autoindex value '" << value << "'!" << std::endl;
 		return 1;
 	}
+	if (!iss.eof())
+	{
+		std::cerr << "Error: There are values after ';' for keyword autoindex" << std::endl;
+		return 1;
+	}
 	return 0;
 }
 
@@ -114,6 +124,11 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 	std::string key;
 	while (iss >> key)
 	{
+		if (!iss.eof() && key.find(";") != std::string::npos)
+		{
+			std::cerr << "Error: There are values after ';' for keyword allow_methods!" << std::endl;
+			return 1;
+		}
 		if (!is_valid_to_clean_semicolon(key))
 			return 1;
 		key = clean_semicolon(key);

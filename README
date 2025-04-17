@@ -1,11 +1,8 @@
 TO DO:
 
-/!\ aucun des keywords n'est verifie s'il est appele plusieurs fois sur les memes valeurs /!\
-DONE -> HTTP, error_page, host, listen, autoindex, allow_methods + generics keywords
+Double declaration des keywords -> Semble OK
 
 error_page
-	
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
-	Ceci devrait retourner une erreur: error_page 404 /oui.html; 405 /errors/404.html;
 	Location:
 		error_page doesn't return error when ';' is missing ? A tous les levels ?

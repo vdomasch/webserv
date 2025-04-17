@@ -98,7 +98,10 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 			return 1;
 		}
 		if (!iss.eof())
+		{
 			std::cerr << "Error: Too many values for keyword: " << key << std::endl;
+			return 1;
+		}
     }
 	else if (!is_keyword(key, "location"))
 		;
@@ -235,6 +238,11 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 	std::string ip_2;
 	std::string ip_3;
 
+	if (!iss.eof())
+	{
+		std::cerr << "Error: Keyword host has too many values!" << std::endl;
+		return 1;
+	}
 	if (!_map_server["host"].empty())
 	{
 		std::cerr << "Error: Keyword host already set!" << std::endl;
@@ -247,7 +255,7 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 	}
 	if (value.at(value.length() - 1) != ';')
 	{
-		std::cerr << "Error: Semicolon is missing for keyword: host" << std::endl;
+		std::cerr << "Error: Semicolon is missing for keyword: host!" << std::endl;
 		return 1;
 	}
 	if (!is_valid_to_clean_semicolon(value))
