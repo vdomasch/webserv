@@ -99,7 +99,7 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		}
 		if (!iss.eof())
 		{
-			std::cerr << "Error: Too many values for keyword: " << key << std::endl;
+			std::cerr << "Error: Too many values for keyword: " << key << "!" << std::endl;
 			return 1;
 		}
     }
@@ -107,7 +107,7 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		;
 	else
 	{
-		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		std::cerr << "Error: Invalid keyword: " << key << "!" << std::endl; 
 		return 1;
 	}
 	return 0;
@@ -145,11 +145,6 @@ std::string ServerConfig::DEBUG_test()
 	}
 	return str;
 }
-
-/*void	ServerConfig::show()
-{
-	std::cout << _server_directives[0] << std::endl;
-}*/
 
 std::string ServerConfig::get_server_name()
 {
@@ -191,12 +186,12 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 	{
 		if (value.find_first_not_of("0123456789;") != std::string::npos)
 		{
-			std::cerr << "Error: value '" << value << "' is invalid for keyword listen" << std::endl;
+			std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
 			return 1;
 		}
 		if (value.length() > 6 || atol(value.c_str()) > 65535 || atol(value.c_str()) < 1024)
 		{
-			std::cerr << "Error: value '" << value << "' is invalid for keyword listen" << std::endl;
+			std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
 			return 1;
 		}
 		if (value.find(";") != std::string::npos)
@@ -218,13 +213,13 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 			iss >> value;
 		else
 		{
-			std::cerr << "Error: Semicolon is missing for keyword: listen" << std::endl;
+			std::cerr << "Error: Semicolon is missing for keyword: listen!" << std::endl;
 			return 1;
 		}
 	}
 	if (!iss.eof())
 	{
-		std::cerr << "Error: There are values after ';' for keyword listen" << std::endl;
+		std::cerr << "Error: There are values after ';' for keyword listen!" << std::endl;
 		return 1;
 	}
 	return 0;

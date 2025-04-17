@@ -61,7 +61,7 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		_map_location[key] = value;
 		if (!iss.eof())
 		{
-			std::cerr << "Error: There are values after ';' for keyword: " << key << std::endl;
+			std::cerr << "Error: There are values after ';' for keyword: " << key << "!" << std::endl;
 			return 1;
 		}
 	}

@@ -85,10 +85,7 @@ bool	HTTPConfig::parse_http()
 			{
 				location_number++;
 				if (!is_location_valid(iss))
-				{
-					//std::cerr << "Error: Keyword location has no path!" << std::endl;
 					return 1;
-				}
 				iss >> key;
 				server_temp.add_location(key, location_number);
 			}
@@ -129,10 +126,7 @@ bool	HTTPConfig::parse_http()
 		else if (is_http(key))
 		{
 			if (set_http_values(iss, key))
-			{
-				//std::cerr << "Error: Invalid keyword '" << key << "'!" << std::endl;
 				return 1;
-			}
 		}
 		else
 		{
@@ -177,7 +171,7 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	}
 	else
 	{
-		std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		std::cerr << "Error: Invalid keyword: " << key << "!" << std::endl; 
 		return 1;
 	}
 	return 0;

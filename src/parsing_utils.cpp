@@ -43,12 +43,12 @@ bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_lis
 {
 	if (server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != server_list.end())
 	{
-		std::cerr << "Error: Server name already exists for this port" << std::endl;
+		std::cerr << "Error: Server name already exists for this port!" << std::endl;
 		return true;
 	}
 	else if (server_list[server_temp.get_string_port_number()].get_server_name() == server_temp.get_server_name())
 	{
-		std::cerr << "Error: Server name already exists for this port" << std::endl;
+		std::cerr << "Error: Server name already exists for this port!" << std::endl;
 		return true;
 	}
 	return false;
@@ -113,7 +113,7 @@ bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string
 	}
 	if (!iss.eof())
 	{
-		std::cerr << "Error: There are values after ';' for keyword autoindex" << std::endl;
+		std::cerr << "Error: There are values after ';' for keyword autoindex!" << std::endl;
 		return 1;
 	}
 	return 0;
