@@ -149,6 +149,21 @@ bool	HTTPConfig::parse_http()
 			return 1;
 		}
 	}
+	if (_is_location)
+	{
+		std::cerr << "Error: Closing bracket for location is missing!" << std::endl;
+		return 1;
+	}
+	if (_is_server)
+	{
+		std::cerr << "Error: Closing bracket for server is missing!" << std::endl;
+		return 1;
+	}
+	if (_is_http)
+	{
+		std::cerr << "Error: Closing bracket for http is missing!" << std::endl;
+		return 1;
+	}
 	if (_server_list.empty())
 	{
 		std::cerr << "Error: File '" << _filename.c_str() << "' is empty!" << std::endl;
