@@ -14,6 +14,9 @@ Server::Server() {
 	FD_ZERO(&_socket_data.ready_sockets);
 	_socket_data.max_fd = 0;
 	_port_socket_map.clear();
+	_method_map["GET"] = &get_request,
+	_method_map["POST"] = &post_request,
+	_method_map["DELETE"] = &delete_request;
 }
 
 Server::~Server() {}
@@ -117,15 +120,12 @@ void	Server::run_server(HTTPConfig &http_config)
 	shutdown_all_sockets();
 }
 
-
-
-
-
-
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 {
 	while (g_running)
 	{
+		HttpRequest req;
+
 		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n" << std::endl;
 		_socket_data.ready_sockets = _socket_data.saved_sockets;
 
@@ -205,9 +205,18 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					std::string request(buffer);
 					bool keep_alive = is_keep_alive(request);
 
-					std::cout << "Received: " << buffer << std::endl;
-					const char* http_response;
+					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
 
+
+					req.parseRequest(req, request);
+
+					std::map<std::string, void(*)(HttpRequest&)>::iterator it = _method_map.find(req.getMethod());
+					if (it != _method_map.end())
+					    it->second(req);
+					else
+					    std::cerr << "Error: Unsupported HTTP method: " << req.getMethod() << std::endl;
+
+					const char* http_response;
 					if (!keep_alive)
 					{
 						http_response = "HTTP/1.1 200 OK\r\n"

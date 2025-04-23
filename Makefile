@@ -13,7 +13,9 @@ SRV_FILES = main			\
 			ServerConfig	\
 			LocationConfig	\
 			parsing_utils	\
-			Server
+			Server			\
+			HttpRequest		\
+			method_request
 
 CLIENT_FILES = client
 
