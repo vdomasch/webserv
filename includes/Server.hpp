@@ -18,7 +18,7 @@ class Server
 		t_fd_data	_socket_data;	// to keep track of all active sockets
 
 		std::map<int, int>								_port_socket_map;
-		std::map<std::string, void(*)(HttpRequest&)>	_method_map;
+		std::map<std::string, void(*)(HttpRequest&, std::map<std::string, ServerConfig>&)>	_method_map;
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void	update_max_fd(int fd);

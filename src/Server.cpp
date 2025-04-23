@@ -14,8 +14,8 @@ Server::Server() {
 	FD_ZERO(&_socket_data.ready_sockets);
 	_socket_data.max_fd = 0;
 	_port_socket_map.clear();
-	_method_map["GET"] = &get_request,
-	_method_map["POST"] = &post_request,
+	_method_map["GET"] = &get_request;
+	_method_map["POST"] = &post_request;
 	_method_map["DELETE"] = &delete_request;
 }
 
@@ -210,11 +210,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 					req.parseRequest(req, request);
 
-					std::map<std::string, void(*)(HttpRequest&)>::iterator it = _method_map.find(req.getMethod());
-					if (it != _method_map.end())
-					    it->second(req);
+					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+
+					if (_method_map.count(req.getMethod()))
+						_method_map[req.getMethod()](req, server_list);
 					else
-					    std::cerr << "Error: Unsupported HTTP method: " << req.getMethod() << std::endl;
+						std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
 
 					const char* http_response;
 					if (!keep_alive)
