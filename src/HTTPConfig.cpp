@@ -2,7 +2,6 @@
 
 HTTPConfig::HTTPConfig(): _is_http(false), _is_server(false), _is_location(false)
 {
-	_map_http["error_page"] = "UNSET";
 	_map_http["client_max_body_size"] = "UNSET";
 }
 
@@ -73,7 +72,7 @@ bool	HTTPConfig::parse_http()
 	std::ifstream infile(_filename.c_str());
 	if (!infile.is_open())
 	{
-		std::cerr << "Error, failed to open filename!" << std::endl;
+		std::cerr << "Error: Failed to open filename '" << _filename.c_str() << "'!" << std::endl;
 		return (true);
 	}
 	while (std::getline(infile, line)) {
@@ -87,10 +86,7 @@ bool	HTTPConfig::parse_http()
 			{
 				location_number++;
 				if (!is_location_valid(iss))
-				{
-					std::cerr << "Error: location has no path!" << std::endl;
 					return 1;
-				}
 				iss >> key;
 				server_temp.add_location(key, location_number);
 			}
@@ -106,6 +102,21 @@ bool	HTTPConfig::parse_http()
 			{
 				server_temp = ServerConfig();
 				location_number = -1;
+				if (!(iss >> key))
+				{
+					std::cerr << "Error: Keyword server need an openning bracket '{'!" << std::endl;
+					return 1;
+				}
+				if (key != "{")
+				{
+					std::cerr << "Error: Keyword server must be followed by '{'!" << std::endl;
+					return 1;
+				}
+				if (!iss.eof())
+				{
+					std::cerr << "Error: Keyword server has too many values!" << std::endl;
+					return 1;
+				}
 			}
 			else if (!key.empty() && key != "}")
 			{
@@ -131,16 +142,33 @@ bool	HTTPConfig::parse_http()
 		else if (is_http(key))
 		{
 			if (set_http_values(iss, key))
-			{
-				std::cerr << "Error: Invalid keyword" << std::endl;
 				return 1;
-			}
 		}
 		else
 		{
 			std::cerr << "Error: Element declared incorrectly!" << std::endl;
 			return 1;
 		}
+	}
+	if (_is_location)
+	{
+		std::cerr << "Error: Closing bracket for location is missing!" << std::endl;
+		return 1;
+	}
+	if (_is_server)
+	{
+		std::cerr << "Error: Closing bracket for server is missing!" << std::endl;
+		return 1;
+	}
+	if (_is_http)
+	{
+		std::cerr << "Error: Closing bracket for http is missing!" << std::endl;
+		return 1;
+	}
+	if (_server_list.empty())
+	{
+		std::cerr << "Error: File '" << _filename.c_str() << "' is empty!" << std::endl;
+		return 1;
 	}
 	return 0;
 }
@@ -151,44 +179,35 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 
 	if (key == "client_max_body_size")
 	{
+		if (_map_http["client_max_body_size"] != "UNSET")
+		{
+			std::cerr << "Error: Keyword client_max_body_size already set!" << std::endl;
+			return 1;
+		}
 		iss >> value;
+		if (!is_valid_to_clean_semicolon(value))
+					return 1;
 		value = clean_semicolon(value);
 		_map_http[key] = value;
     }
 	else if (key == "error_page")
 	{
-		std::vector<std::string> code_numbers;
-		std::string error_code;
-		
-		iss >> error_code;
-		while (!error_code.empty())
-		{
-			if (is_error_page_code(error_code))
-				code_numbers.push_back(error_code);
-			else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
-				break ;
-			else
-			{
-				std::cerr << "Error: error_page need a valid error number before path!" << std::endl;
-				return 1;
-			}
-			iss >> error_code;
-		}
-		while (!code_numbers.empty())
-		{
-			error_code = clean_semicolon(error_code);
-			_map_http[code_numbers.back()] = error_code;
-			code_numbers.pop_back();
-		}
+		if (handle_error_page(iss, _map_http))
+			return 1;
 	}
 	else if (is_keyword(key, "http"))
 	{
 		if (iss >> key && key != "{")
 			return 1;
+		if (!iss.eof())
+		{
+			std::cerr << "Error: Keyword http has too many values!" << std::endl;
+			return 1;
+		}
 	}
 	else
 	{
-		//std::cerr << "Error: Invalid keyword: " << key << std::endl; 
+		std::cerr << "Error: Invalid keyword: " << key << "!" << std::endl; 
 		return 1;
 	}
 	return 0;
@@ -214,9 +233,29 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 
 	unsigned int count = 0;
 	while (iss_copy >> key)
+	{
+		if (count == 1 && key.at(0) != '/')
+		{
+			std::cerr << "Error: Keyword location path must start with '/'!" << std::endl;
+			return false;
+		}
 		count++;
-	if (count < 3)
+	}
+	if (count < 2)
+	{
+		std::cerr << "Error: Keyword location has no path!" << std::endl;
 		return false;
+	}
+	else if (count < 3)
+	{
+		std::cerr << "Error: Keyword location needs an opening bracket!" << std::endl;
+		return false;
+	}
+	else if (count > 3)
+	{
+		std::cerr << "Error: Keyword location has too many values!" << std::endl;
+		return false;
+	}
 	return true;
 }
 
@@ -241,17 +280,17 @@ bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
 	std::map<std::string, std::string> server_map = server_temp.get_map_server();
 	if (server_map.find("listen") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'listen' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'listen' missing!" << std::endl;
 		return true;
 	}
 	if (server_map.find("index") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'index' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'index' missing!" << std::endl;
 		return true;
 	}
 	if (server_map.find("root") == server_map.end())
 	{
-		std::cerr << "Error: Mandatory directive 'root' missing!" << std::endl;
+		std::cerr << "Error: Mandatory keyword 'root' missing!" << std::endl;
 		return true;
 	}
 	return false;
