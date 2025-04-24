@@ -4,3 +4,14 @@ error_page
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
 	Location:
 		error_page doesn't return error when ';' is missing ? A tous les levels ?
+
+GET:
+	probleme lors de la reception sur le navigateur (favicon.ico ?)
+	Peaufiner les index des locations
+	se mettre en accord avec ben pour le port 
+
+POST:
+	to do
+
+DELETE:
+	to do

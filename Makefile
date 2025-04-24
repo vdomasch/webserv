@@ -15,7 +15,8 @@ SRV_FILES = main			\
 			parsing_utils	\
 			Server			\
 			HttpRequest		\
-			method_request
+			method_request	\
+			utils
 
 CLIENT_FILES = client
 

@@ -14,29 +14,35 @@ class HttpRequest
 		std::string getHost() const;
 		std::string getConnection() const;
 		std::string getCookie() const;
-		std::string getBody() const;
 		std::string getPath() const;
+		std::string	getPort() const;
 		bool		getKeepAlive() const;
 		int			getDone() const;
+		std::string getResponse() const;
 
 		void setMethod(const std::string& method);
 		void setHost(const std::string& host);
 		void setConnection(const std::string& connection);
 		void setCookie(const std::string& cookie);
 		void setPath(const std::string& path);
+		void setPort(const std::string& port);
 		void setKeepAlive(bool keep_alive);
 		void setDone(int done);
+		void setResponse(const std::string& response);
 
-		void parseRequest(HttpRequest &rea, const std::string& request);
+		void parseRequest(const std::string& request, int port);
 
 	private:
 		std::string _method;
 		std::string _host;
 		std::string _connection;
 		std::string _path;
+		std::string _port;
 		std::string _cookie;
 		bool 		_keep_alive;
 		int 		_done;
+
+		std::string _response;
 
 };
 

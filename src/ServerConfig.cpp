@@ -156,6 +156,11 @@ std::map<std::string, std::string> ServerConfig::get_map_server()
 	return _map_server;
 }
 
+std::vector<LocationConfig> ServerConfig::get_location_list()
+{
+	return _location_list;
+}
+
 bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_list)
 {
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)

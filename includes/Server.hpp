@@ -12,12 +12,16 @@ class Server
 	public:
 		Server();
 		~Server();
+		
 		void		run_server(HTTPConfig &http_config);
+		std::map<int, int> get_port_to_socket_map() const;
+		std::map<int, int> get_socket_to_port_map() const;
 		
 	private:
 		t_fd_data	_socket_data;	// to keep track of all active sockets
 
-		std::map<int, int>								_port_socket_map;
+		std::map<int, int>								_port_to_socket_map;
+		std::map<int, int>								_socket_to_port_map;
 		std::map<std::string, void(*)(HttpRequest&, std::map<std::string, ServerConfig>&)>	_method_map;
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);

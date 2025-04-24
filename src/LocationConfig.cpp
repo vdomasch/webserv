@@ -24,6 +24,11 @@ void	LocationConfig::set_path(std::string key)
 	_map_location["path"] = key;
 }
 
+std::map<std::string, std::string> LocationConfig::get_map_location()
+{
+	return _map_location;
+}
+
 bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 {
 	if (!is_location_variable(key))

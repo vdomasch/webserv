@@ -13,7 +13,7 @@ Server::Server() {
 	FD_ZERO(&_socket_data.saved_sockets);
 	FD_ZERO(&_socket_data.ready_sockets);
 	_socket_data.max_fd = 0;
-	_port_socket_map.clear();
+	_port_to_socket_map.clear();
 	_method_map["GET"] = &get_request;
 	_method_map["POST"] = &post_request;
 	_method_map["DELETE"] = &delete_request;
@@ -97,7 +97,7 @@ void	Server::run_server(HTTPConfig &http_config)
 		int port = server.get_port_number();
 
 		// Only create a socket once per port
-		if (_port_socket_map.find(port) == _port_socket_map.end())
+		if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
 		{
 			std::cout << "Creating server socket on port " << port << std::endl;
 			int server_socket = initialize_server(server, servaddr);
@@ -106,10 +106,12 @@ void	Server::run_server(HTTPConfig &http_config)
 				std::cerr << "Failed to initialize server" << std::endl;
 				return;
 			}
-			_port_socket_map[port] = server_socket;
+			_port_to_socket_map[port] = server_socket;
+			_socket_to_port_map[server_socket] = port;
 			FD_SET(server_socket, &_socket_data.saved_sockets);
 			if (server_socket > _socket_data.max_fd)
 				_socket_data.max_fd = server_socket;
+			std::cout << "Server port " << port << " created on socket " << server_socket << std::endl;
 		}
 	}
 
@@ -176,7 +178,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					FD_SET(client_socket, &_socket_data.saved_sockets);
 					if (client_socket > _socket_data.max_fd)
 						_socket_data.max_fd = client_socket;
-					std::cout << "New client connected on socket " << client_socket << std::endl;
+					std::cout << "New client connected on socket " << client_socket << " through server port " << _socket_to_port_map[i] << std::endl;
+					_socket_to_port_map[client_socket] = _socket_to_port_map[i];
 				}
 				else
 				{
@@ -196,7 +199,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						continue;
 					}
 
-						std::cout << "Bytes read: " << bytes_read << std::endl;
+					std::cout << "Bytes read: " << bytes_read << std::endl;
 					if (bytes_read < BUFFER_SIZE)
 						buffer[bytes_read] = '\0';
 					else
@@ -207,8 +210,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
 
-
-					req.parseRequest(req, request);
+					req.parseRequest(request, _socket_to_port_map[i]);
 
 					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
@@ -237,7 +239,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 										"Message received";
 					}
 
-					send(i, http_response, strlen(http_response), 0); // Echo back to client
+					send(i, req.getResponse().c_str(), req.getResponse().size(), 0); // Echo back to client
 					if (!keep_alive)
 					{
 						close_msg(i, "Connection on socket ", 0);
@@ -259,7 +261,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 	//{
 	//	if (FD_ISSET(fd, &_socket_data.ready_sockets))
 	//	{
-	//		if (fd == _port_socket_map.begin()->second)
+	//		if (fd == _port_to_socket_map.begin()->second)
 	//		{
 	//			int new_socket = accept(fd, NULL, NULL);
 	//			if (new_socket < 0)
@@ -280,10 +282,15 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 
 
+std::map<int, int> Server::get_port_to_socket_map() const
+{
+	return _port_to_socket_map;
+}
 
-
-
-
+std::map<int, int> Server::get_socket_to_port_map() const
+{
+	return _socket_to_port_map;
+}
 
 
 void	Server::update_max_fd(int fd)
@@ -308,7 +315,7 @@ void Server::close_msg(int fd, const std::string &message, int err)
 
 bool	Server::is_server_socket(int fd)
 {
-	for (std::map<int, int>::iterator it = _port_socket_map.begin(); it != _port_socket_map.end(); ++it)
+	for (std::map<int, int>::iterator it = _port_to_socket_map.begin(); it != _port_to_socket_map.end(); ++it)
 	{
 		if (it->second == fd)
 			return true;
@@ -330,7 +337,7 @@ void	Server::shutdown_all_sockets()
 	FD_ZERO(&_socket_data.ready_sockets);
 	_socket_data.max_fd = 0;
 
-	for (std::map<int, int>::iterator it = _port_socket_map.begin(); it != _port_socket_map.end(); ++it)
+	for (std::map<int, int>::iterator it = _port_to_socket_map.begin(); it != _port_to_socket_map.end(); ++it)
 	{
 		int fd = it->second;
 		if (FD_ISSET(fd, &_socket_data.saved_sockets))
@@ -340,5 +347,5 @@ void	Server::shutdown_all_sockets()
 			FD_CLR(fd, &_socket_data.saved_sockets);
 		}
 	}
-	_port_socket_map.clear();
+	_port_to_socket_map.clear();
 }
