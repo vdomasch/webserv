@@ -82,29 +82,108 @@ char	find_method_name(std::string request_string)
 
 }
 
-std::string	openAndReadFile(std::string file, int *errcode)
+std::string	displayErrorPage(std::string serverFolder, int *errcode)
 {
-	char	buffer[BUFFER_SIZE];
-	int		bytes_read;
-	int		fd;
+	char		buffer[BUFFER_SIZE];
+	std::string current_pwd(getcwd(NULL, 0));
+	std::string pathToErrPage;
+	int			bytes_read;
+	int			fd;
 
-	fd = open(file.c_str(), O_RDONLY);	
+
+	pathToErrPage = serverFolder + "/error_404.html"; // subject to change ? 
+
+	fd = open(pathToErrPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
 	if (fd < 0)
 	{
-		*errcode = -1;
+		*errcode = FAILEDSYSTEMCALL;
 		return ("void");
 	}
 	bytes_read = read(fd, buffer, BUFFER_SIZE);
 	if (bytes_read < 0)
 	{
-		*errcode = -1;
+		*errcode = FAILEDSYSTEMCALL;
 		close(fd);
 		return ("void");
 	}
+	*errcode = 0;
+	close(fd);
+	std::string response(buffer);
+	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
+	return (response);
+}
+
+std::string	handleIcoFile(t_fd_data *d)
+{
+	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
+	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
+	// std::ifstream binfile("reset", std::ios::binary);
+	if (!binfile.is_open()) 
+		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
+	else 
+	{
+		binfile.seekg(0, std::ios::end);
+		size_t file_size = binfile.tellg();
+		binfile.seekg(0, std::ios::beg);
+		
+		std::vector<char> buffer2(file_size);
+		binfile.read(&buffer2[0], file_size);
+
+		// for (std::vector<char>::const_iterator i = buffer2.begin(); i != buffer2.end(); ++i)
+    	// 	std::cout << *i << ' ';
+
+		binfile.close();
+		
+		std::ostringstream response;
+		response << "HTTP/1.1 200 OK\r\n"
+		<< "Content-Type: image/x-icon\r\n"
+		<< "Content-Length: " << file_size << "\r\n"
+		<< "\r\n";
+
+		d->binaryContent = buffer2;
+		return(response.str().c_str());
+		// printf("\033[31m  gougou %lu\n", d->binaryContent.size());
+		// printf("\033[31m gaga %lu\n", buffer2.size());
+
+	}
+
+	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
+	
+}
+
+std::string	openAndReadFile(t_fd_data *d, int *errcode)
+{
+	char			buffer[BUFFER_SIZE];
+	int				bytes_read;
+	int				fd;
+	unsigned int	len;
+
+
+	len = d->requestedFilePath.length();
+	// printf("\033[31m HEY ! 🗣 \n I AM %s WITH A LEN OF %u\n\n", file.substr(len - 4, len - 1).c_str(), len);
+	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
+	{
+		// printf("\033[34m####Setting error code to 2 ! Seems to be an ico file !\n\033[0m\n");
+		*errcode = ICOHANDELING; // move into func bellow
+		return (handleIcoFile(d));
+	}
+
+	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
+	if (fd < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		return ("void"); // to handle better
+	}
+	bytes_read = read(fd, buffer, BUFFER_SIZE);
+	if (bytes_read < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		close(fd);
+		return ("void"); //handle better
+	}
 	// printf("\033[36m->Bytes read : (%d)\n\033[0m\n", bytes_read);
 	*errcode = 0;
-	if (file == "/home/lchapard/Documents/Webserv/server_files/favicon.ico")
-		*errcode = 2;
+	
 	close(fd);
 	std::string response(buffer);
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
@@ -114,67 +193,138 @@ std::string	openAndReadFile(std::string file, int *errcode)
 int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 {
 	struct stat fileinfo;  
-	std::string current_pwd(getcwd(NULL, 0));
 	std::string pathToCheck;
 	std::string	fileContent;
 	
 
 	if (filename == "/") // then redirect to index  --> to check ??
 	{
-		d->requestedFilePath = "";
+		d->requestedFilePath = d->serverFolder;
+		printf("Got it ! the folder is : (%s)\n\n", d->requestedFilePath.c_str());
 		return (IS_INDEXDIR);
 	}
-	pathToCheck = current_pwd + d->serverFolder + filename; // we need to check if len > 0 before ? 
-	// printf("\033[35m(%s)\n\033[0m\n", pathToCheck.c_str());
+	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
+	printf("Path to check is : (%s)\n\n", pathToCheck.c_str());
 
     if (stat (pathToCheck.c_str(), &fileinfo) == 0) // then file exists --> to secure better, check requestedFilePath too
-		printf("\033[34mFound it !\n\033[0m\n");
+		printf("\033[34mFound it --> \033[0m");
 	else
-		printf("\033[34mGone :(\n\033[0m\n");
+	{
+		printf("\033[31mFile wasn't found ! Setting error code appropriately !\n\033[0m\n");
+		*errcode = MISSINGFILE;
+		return (MISSINGFILE);
+	}
 	d->requestedFilePath = pathToCheck;
-	return (IS_EXISTINGFILE);
+	switch (fileinfo.st_mode & S_IFMT) 
+	{
+		case S_IFDIR: 
+			printf("\033[34mis a dir !\n\033[0m");
+			return (IS_DIRECTORY);
+		case S_IFREG:
+			printf("\033[34mis a file !\n\033[0m");
+			return (IS_EXISTINGFILE);
+		default: return (IS_EXISTINGFILE);
+	}
 }
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], bool full, t_fd_data *d, int *errcode)
+
+std::string	openAndDisplayIndex(std::string file, int *errcode) // to do later
+{
+	char		buffer[BUFFER_SIZE];
+	std::string pathToIndexPage;
+	int			bytes_read;
+	int			fd;
+
+	
+	pathToIndexPage = file + "/basePageForIndex.html"; // subject to change ?  --> should NOT be using still .html, or content will be the same no matter the files
+	fd = open(pathToIndexPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
+	if (fd < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		return ("void");
+	}
+	bytes_read = read(fd, buffer, BUFFER_SIZE);
+	if (bytes_read < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		close(fd);
+		return ("void");
+	}
+	*errcode = 0;
+	close(fd);
+	std::string response(buffer);
+	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
+	return (response);
+}
+
+
+std::string	buildCurrentIndexPage(std::string file, int *errcode)
+{
+	std::ostringstream oss;
+	struct dirent *pDirent;
+    DIR *pDir;
+	(void)errcode;
+
+	pDir = opendir (file.c_str());
+	if (pDir == NULL) 
+	{
+        printf ("Cannot open directory '%s'\n", file.c_str());
+		*errcode = FAILEDSYSTEMCALL;
+        return ("");
+    }
+	errno = 0;
+	while ((pDirent = readdir(pDir)) != NULL) // can fail, check ernoo when null is found, set ernoo to 0 before first call
+	{
+		std::string fname(pDirent->d_name );
+		if ((fname == ".") || fname == "..")
+			continue;
+    	printf ("[%s]\n", pDirent->d_name);
+		oss << pDirent->d_name;
+		oss << "\n";
+    }
+	if (errno != 0)
+	{
+		perror("Readdir failed ! "); 
+		closedir (pDir);
+		*errcode = FAILEDSYSTEMCALL;
+		return ("");
+	}
+
+   
+	return (oss.str().c_str());
+}
+
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
 {
 	std::string request(buffer);
 	std::string first_line;
 	std::string requested_file;
 	std::string response;
 	char		objType;
-	char		method_name;
 	size_t		filename_start;
 	size_t		filename_end;
 
-	// method_name = find_method_name(request);
 	first_line = request.substr(0, request.find('\n')); // doesn´t work if curl
 	filename_start = first_line.find_first_of(' ');
 	filename_end = first_line.find_last_of(' ');
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
-	
-	if (full)
-	{
-		printf("\033[34m------------------------\n");
-		printf("%s\n", buffer);
-		printf("------------------------\033[0m\n");
-	}
-	else
-	{
-		printf("\033[34m------------------------\n");
-		printf("(%s)\n",requested_file.c_str() );
-		printf("------------------------\033[0m\n");
-		
-	}
+
+	printf("\033[34m------------------------------------\n");
+	printf(" Requested : (%s)\n",requested_file.c_str() );
+	printf("------------------------------------\033[0m\n");
 
 	objType = checkObjectType(requested_file, d, errcode); // is it a file ? or a folder ?
 
 	if (objType == IS_INDEXDIR)
-		response = openAndReadFile(d->requestedFilePath, errcode);
+		response = openAndDisplayIndex(d->requestedFilePath, errcode);
+	else if (objType == IS_DIRECTORY)
+		response = buildCurrentIndexPage(d->requestedFilePath, errcode);
+	else if (objType == IS_EXISTINGFILE)
+		response = openAndReadFile(d, errcode);
 	else
-		response = openAndReadFile(d->requestedFilePath, errcode);	
+		response = displayErrorPage(d->serverFolder, errcode); // check if error is file not found
 	return (response);
 }
-
 
 std::ifstream::pos_type filesize(const char *filename)
 {
@@ -190,7 +340,9 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 
 
 	//--------------------------------------------------------//
-    std::cout << "body size is " << requestBody.length() << "\n"; //temporary until ico zorks in binary
+    //std::cout << "body size is " << requestBody.length() << "\n"; //temporary until ico zorks in binary
+
+
 	if (requestBody.length() == 0)
 	{
 		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
@@ -198,7 +350,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	}
 	//--------------------------------------------------------//
 
-	dataFile = filesize(d->requestedFilePath.c_str());
+	dataFile = filesize(d->requestedFilePath.c_str()); // doesn´t work on folders
 	oss << dataFile;
 
 	switch (errcode)
@@ -207,18 +359,21 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
 		responseCode.append(oss.str());
 		responseCode.append("\r\n\r\n\n");
+		d->content_len = atof(oss.str().c_str()); // ugly but ok
+		d->content_type = "text/html";
 		break;
 	
 	case 2:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: image/x-icon\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		break;
+		d->content_len = atof(oss.str().c_str());
+		d->content_type = "image/x-icon";
+		return(requestBody);
 
 	default:
 		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
 		responseCode.append(oss.str());
 		responseCode.append("\r\n\r\n\n");
+		d->content_len = atof(oss.str().c_str());
+		d->content_type = "text/html";
 		break;
 	}
 	responseCode = responseCode + requestBody;
@@ -240,56 +395,34 @@ int	handle_client_request(int socket, t_fd_data *d)
 		perror("Failed to read ! ");
 		return (-1);
 	}
-	requestBody = analyse_request(buffer, false, d, &errcode); // decide how to interpret the request
+	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
+
 	memset(buffer, '\0', sizeof(buffer));
-
+	if (errcode == FAILEDSYSTEMCALL)
+	{
+		perror("\nAn error occured while trying to open the requested file :(\n\n");
+		exit(-1); // to check for leaks later
+	}
 	//Sending a response :
-	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d);
+	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
 
-	printf("\033[35m------------------------\n");
+	printf("\033[35m\n#######################\n");
 	printf("(%s)\n",finalMessage.c_str() );
 	printf(" \nERROR CODE(%d)\n",errcode);
-	printf("------------------------\033[0m\n");
+	printf("#######################\033[0m\n");
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// std::ifstream file("/home/lchapard/Documents/Webserv/server_files/favicon.ico", std::ios::binary);
-	// if (!file.is_open()) 
-	// 	std::cerr << "Could not open .ico file" << std::endl;
-	// else 
-	// {
-	// 	file.seekg(0, std::ios::end);
-	// 	size_t file_size = file.tellg();
-	// 	file.seekg(0, std::ios::beg);
-		
-	// 	std::vector<char> buffer2(file_size);
-	// 	file.read(&buffer2[0], file_size);
-	// 	file.close();
-		
-	// 	std::ostringstream response;
-	// 	response << "HTTP/1.1 200 OK\r\n"
-	// 	<< "Content-Type: image/x-icon\r\n"
-	// 	<< "Content-Length: " << file_size << "\r\n"
-	// 	<< "\r\n";
-		
-	// 	send(socket, response.str().c_str(), response.str().length(), 0); // check if all the bytes were sent ?
-	// 	send(socket, &buffer2[0], buffer2.size(), 0);
-	// }
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	
 	if (!finalMessage.empty())
 	{
 		//write(socket , finalMessage.c_str() , strlen(finalMessage.c_str()));
-		if (send(socket , finalMessage.c_str() , finalMessage.length(), 0) == -1)
-			printf ("\033[34mI COULN'T SEND IT ALL MB MB\n\n\033[0m");
+		if (d->content_type == "image/x-icon")
+		{
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
+			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
+		}
+		else
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 		std::cout << "message sent from server !\n" << std::endl;
 	}
-	
-	
-
-	//clean the buffer  ?
-
 	close(socket);
 	return (0);
 }
@@ -311,9 +444,10 @@ int main(int argc, char **argv)
 	}
 	FD_ZERO(&s_data.saved_sockets);
 	FD_SET(server_fd, &s_data.saved_sockets);
-	s_data.max_sckt_fd = server_fd;
 
-	s_data.serverFolder = "/server_files"; //after parsing
+	std::string current_pwd(getcwd(NULL, 0)); // check if null, then exit early
+	s_data.max_sckt_fd = server_fd;
+	s_data.serverFolder = current_pwd + "/server_files"; //after parsing, to replace
 	while(42)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
@@ -340,7 +474,7 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					printf( "request from client %d : \n", i);
+					// printf( "request from client %d : \n", i);
 					handle_client_request(i, &s_data);
 					FD_CLR(i, &s_data.saved_sockets);
 				}

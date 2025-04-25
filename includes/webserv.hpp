@@ -21,7 +21,9 @@
 #include <fstream> // std::ofstream
 #include <sys/stat.h> // stat for file status
 #include <sstream> // Content Size
-#include <vector>
+#include <vector> // .ico handling
+#include <stdlib.h> // atof
+ #include <dirent.h> // dirent for opendir
 
 
  #include <fcntl.h>// open
@@ -30,7 +32,11 @@
 #define SERV_PORT 8080
 #define BUFFER_SIZE 5000 /// to change, must be 1024
 #define IS_INDEXDIR 60
-#define IS_EXISTINGFILE 60
+#define IS_EXISTINGFILE 61
+#define IS_DIRECTORY 62
+#define FAILEDSYSTEMCALL -1
+#define MISSINGFILE -2
+#define ICOHANDELING 2
 
 struct s_fd_data
 {
@@ -39,5 +45,9 @@ struct s_fd_data
 	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
 	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
 	int			max_sckt_fd;
+
+	std::string	content_type; // only for .ico for the moment
+	int content_len;
+	std::vector<char> binaryContent;				
 };
 typedef struct s_fd_data	t_fd_data;
