@@ -39,6 +39,15 @@ std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 	return os;
 }
 
+std::string trim(const std::string& str)
+{
+    size_t first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos)
+        return "";
+    size_t last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, last - first + 1);
+}
+
 void	HttpRequest::parseRequest(const std::string &request, int port)
 {
 	if (request.empty())
@@ -55,14 +64,11 @@ void	HttpRequest::parseRequest(const std::string &request, int port)
 
 	while (_done < 2)
 	{
-		//std::cout << "DEBUG: PARSING LINE" << std::endl;
 		std::getline(iss, line);
 		for (int i = 0; i < 2; i++)
 		{
-			//std::cout << "DEBUG: COMPARING LINE" << std::endl;
 			if (!found_flags[i])
 			{
-				//std::cout << compare[i] << std::endl;
 				std::size_t found = line.find(compare[i]);
 				if (found != std::string::npos)
 				{
@@ -70,10 +76,10 @@ void	HttpRequest::parseRequest(const std::string &request, int port)
 					switch (i)
 					{
 						case 0:
-							_host = value;
+							_host = trim(value);
 							break;
 						case 1:
-							_connection = value;
+							_connection = trim(value);
 							break;
 					}
 					found_flags[i] = true;
@@ -88,7 +94,7 @@ void	HttpRequest::parseRequest(const std::string &request, int port)
 		_keep_alive = true;
 	else
 		_keep_alive = false;
-	//_path = _path.substr(1);
+	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
 	_port = tostr(port);
 }
 

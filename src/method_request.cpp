@@ -63,12 +63,14 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 									std::cout << "File found" << std::endl;
 									std::ostringstream ss;
 									ss << file.rdbuf();
+
+									if (req.getKeepAlive())
+										req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "keep-alive") + ss.str());
+									else
+										req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "close") + ss.str());
 									
-									std::string response = create_header("200 OK", "text/plain", tostr(file.width()), "keep-alive");
-									response += ss.str();
-									std::cout << response << std::endl;
+									//req.setResponse(ss.str() + req.getResponse());
 									file.close();
-									req.setResponse(response);
 									return ;
 								}
 								else

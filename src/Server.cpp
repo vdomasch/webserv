@@ -32,15 +32,6 @@ void	handle_signal(int signum)
 	}
 }
 
-static bool is_keep_alive(const std::string &request)
-{
-	std::string lower_request = request;
-	std::transform(lower_request.begin(), lower_request.end(), lower_request.begin(), ::tolower);
-	return lower_request.find("connection: keep-alive") != std::string::npos;
-}
-
-
-
 int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 {
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -206,7 +197,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						buffer[BUFFER_SIZE - 1] = '\0';
 
 					std::string request(buffer);
-					bool keep_alive = is_keep_alive(request);
 
 					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
 
@@ -219,28 +209,9 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					else
 						std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
 
-					const char* http_response;
-					if (!keep_alive)
-					{
-						http_response = "HTTP/1.1 200 OK\r\n"
-										"Content-Type: text/plain\r\n"
-										"Content-Length: 16\r\n"
-										"Connection: close\r\n"
-										"\r\n"
-										"Message received";
-					}
-					else
-					{
-						http_response =	"HTTP/1.1 200 OK\r\n"
-										"Content-Type: text/plain\r\n"
-										"Content-Length: 16\r\n"
-										"Connection: keep-alive\r\n"
-										"\r\n"
-										"Message received";
-					}
-
+					std::cout << "\n\nDEBUG: RESPONSE\n" << req.getResponse() << std::endl << std::endl;
 					send(i, req.getResponse().c_str(), req.getResponse().size(), 0); // Echo back to client
-					if (!keep_alive)
+					if (!req.getKeepAlive())
 					{
 						close_msg(i, "Connection on socket ", 0);
 						//update_max_fd(i);
