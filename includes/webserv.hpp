@@ -46,7 +46,7 @@ void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 void	post_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 void	delete_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 
-
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode);
 
 std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection);
 

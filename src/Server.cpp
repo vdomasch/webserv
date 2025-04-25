@@ -200,7 +200,16 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
 
+
+					int errcode = 0;
+					std::string requestBody = analyse_request(buffer, &_socket_data, &errcode); // decide how to interpret the request
+
+
 					req.parseRequest(request, _socket_to_port_map[i]);
+
+
+
+
 
 					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
