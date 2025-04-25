@@ -2,17 +2,44 @@
 # define WEBSSERV_HPP
 
 # include "HTTPConfig.hpp"
-
-# define SERV_PORT 8080
-# define BUFFER_SIZE 2000
-
 # include "HttpRequest.hpp"
+
+#include <stdio.h>
+#include <iostream>//std::cout
+#include <sys/socket.h> //socket
+#include <strings.h> //bzero
+#include <netinet/in.h> // struct addr
+#include <arpa/inet.h> // inet_addr
+#include <unistd.h> //read & write
+#include <string.h> // strlen
+#include <fstream> // std::ofstream
+#include <sys/stat.h> // stat for file status
+#include <sstream> // Content Size
+#include <vector> // .ico handling
+#include <stdlib.h> // atof
+#include <dirent.h> // dirent for opendir
+#include <fcntl.h>// open
+
+#define SERV_PORT 8080
+#define BUFFER_SIZE 5000 /// to change, must be 1024
+#define IS_INDEXDIR 60
+#define IS_EXISTINGFILE 61
+#define IS_DIRECTORY 62
+#define FAILEDSYSTEMCALL -1
+#define MISSINGFILE -2
+#define ICOHANDELING 2
 
 typedef struct s_fd_data
 {
-	fd_set  ready_sockets;
-	fd_set  saved_sockets;
-	int		max_fd;
+	fd_set		ready_sockets;
+	fd_set		saved_sockets; // current sockets
+	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
+	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
+	int			max_fd;
+
+	std::string	content_type; // only for .ico for the moment
+	int content_len;
+	std::vector<char> binaryContent;
 }	t_fd_data;
 
 void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
