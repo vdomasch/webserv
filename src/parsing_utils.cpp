@@ -47,9 +47,7 @@ bool	is_error_page_code(std::string code)
 {
 	int int_code = atoi(code.c_str());
 
-	if (code.length() != 3)
-		;
-	else if (int_code >= 400 && int_code <= 599)
+	if (code.length() == 3 && int_code >= 400 && int_code <= 599)
 		return true;
 	return false;
 }
