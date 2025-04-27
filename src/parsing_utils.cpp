@@ -28,17 +28,6 @@ bool is_keyword(std::string key, std::string pattern)
 	return (false);
 }
 
-bool	is_error_page_code(std::string code)
-{
-	int int_code = atoi(code.c_str());
-
-	if (code.length() != 3)
-		;
-	else if (int_code >= 400 && int_code <= 599)
-		return true;
-	return false;
-}
-
 bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_list, ServerConfig &server_temp)
 {
 	if (server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != server_list.end())
@@ -54,28 +43,78 @@ bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_lis
 	return false;
 }
 
-bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+bool	is_error_page_code(std::string code)
 {
-	std::vector<std::string> code_numbers;
-	std::string error_code;
-	
-	iss >> error_code;
-	while (!error_code.empty())
+	int int_code = atoi(code.c_str());
+
+	if (code.length() != 3)
+		;
+	else if (int_code >= 400 && int_code <= 599)
+		return true;
+	return false;
+}
+
+bool	is_error_page_extension(std::string error_code)
+{
+	size_t code_size = error_code.size();
+	if (error_code.empty())
 	{
-		if (is_error_page_code(error_code))
-			code_numbers.push_back(error_code);
-		else if (error_code.find(".html") != std::string::npos && !code_numbers.empty())
-			break ;
-		else
-		{
-			std::cerr << "Error: Keyword error_page needs a valid error number before path!" << std::endl;
-			return 1;
-		}
-		iss >> error_code;
+		std::cerr << "Error: Keyword error_page has no page path!" << std::endl;
+		return 1;
 	}
 	if (error_code.find(";") == std::string::npos)
 	{
 		std::cerr << "Error: Semicolon is missing for keyword: error_page!" << std::endl;
+		return false;
+	}
+	if (error_code.find(".html;") == code_size - 6
+		|| error_code.find(".htm;") == code_size - 5
+		|| error_code.find(".txt;") == code_size - 5)
+		;
+	else
+	{
+		std::cerr << "Error: Invalid error_page path '" << error_code << "'!" << std::endl;
+		return false;
+	}
+	
+	return true;
+}
+
+bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::vector<std::string> code_numbers;
+	std::string error_code;
+
+	iss >> error_code;
+	if (error_code.empty())
+	{
+		std::cerr << "Error: Keyword error_page has no value!" << std::endl;
+		return 1;
+	}
+	while (!error_code.empty())
+	{
+		if (error_code.at(0) == '/')
+			break ;
+		if (is_error_page_code(error_code))
+			code_numbers.push_back(error_code);
+		else
+		{
+			std::cerr << "Error: Invalid error_page code '" << error_code << "'!" << std::endl;
+			return 1;
+		}
+		error_code.clear();
+		iss >> error_code;
+	}
+	if (code_numbers.empty())
+	{
+		std::cerr << "Error: Keyword error_page has no page code!" << std::endl;
+		return 1;
+	}
+	if (!is_error_page_extension(error_code))
+		return 1;
+	if ((iss >> error_code))
+	{
+		std::cerr << "Error: There are values after ';' for keyword error_page!" << std::endl;
 		return 1;
 	}
 	while (!code_numbers.empty())
