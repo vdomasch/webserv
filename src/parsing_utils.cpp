@@ -73,6 +73,11 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 		}
 		iss >> error_code;
 	}
+	if (error_code.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: error_page!" << std::endl;
+		return 1;
+	}
 	while (!code_numbers.empty())
 	{
 		if (!_current_map[code_numbers.back()].empty())

@@ -2,5 +2,3 @@ TO DO:
 
 error_page
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
-	Location:
-		error_page doesn't return error when ';' is missing ? A tous les levels ?
