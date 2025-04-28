@@ -1,4 +1,5 @@
-TO DO:
+Utilitee de host ?
+page d'erreur, accepter .cgi?
 
 error_page
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
@@ -15,3 +16,9 @@ POST:
 
 DELETE:
 	to do
+
+TO DO:
+	si declare dans http et server = error?
+
+inverser le PORT:SERVERNAME
+	
