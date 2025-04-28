@@ -188,6 +188,11 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 					return 1;
 		value = clean_semicolon(value);
 		_map_http[key] = value;
+		if (iss >> value)
+		{
+			std::cerr << "Error: Keyword client_max_body_size has too many values!" << std::endl;
+			return 1;
+		}
     }
 	else if (key == "error_page")
 	{
