@@ -319,9 +319,9 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 	{
 		std::cout << "Path Request Recieved" << std::endl;
 		//std::cout << "Path: " << req.getPath() << std::endl;
-		std::cout << "Host: " << req.getHost() << std::endl;
-		std::cout << "Host: " << req.getHost().substr(0, req.getHost().find(':')) << std::endl;
-		std::cout << "Port: " << req.getPort() << std::endl;
+		//std::cout << "Host: " << req.getHost() << std::endl;
+		//std::cout << "Host: " << req.getHost().substr(0, req.getHost().find(':')) << std::endl;
+		//std::cout << "Port: " << req.getPort() << std::endl;
 
 		std::string server_name(req.getHost().substr(0, req.getHost().find(':')));
 
@@ -369,8 +369,7 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 										req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "keep-alive") + ss.str());
 									else
 										req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "close") + ss.str());
-									
-									//req.setResponse(ss.str() + req.getResponse());
+
 									file.close();
 									return ;
 								}
@@ -392,6 +391,38 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 				else
 				{
 					std::cout << "Path is root" << std::endl;
+					std::ifstream file;
+					file.open(req.getPath().c_str(), std::ios::in);
+					if (file)
+					{
+						std::cout << "File found" << std::endl;
+						std::ostringstream ss;
+						ss << file.rdbuf();
+						if (req.getKeepAlive())
+							req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "keep-alive") + ss.str());
+						else
+							req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "close") + ss.str());
+
+						file.close();
+						return ;
+					}
+					else
+					{
+						std::cout << "File not found, using default path" << std::endl;
+						std::string default_path = server.get_map_server()["root"] + server.get_map_server()["index"];
+						std::cout << "Default path: " << default_path << std::endl;
+						file.open(default_path.c_str(), std::ios::in);
+						std::cout << "File found" << std::endl;
+						std::ostringstream ss;
+						ss << file.rdbuf();
+						if (req.getKeepAlive())
+							req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "keep-alive") + ss.str());
+						else
+							req.setResponse(create_header("200 OK", "text/html", tostr(file.width()), "close") + ss.str());
+
+						file.close();
+						return;
+					}
 					return;
 				}
 			}

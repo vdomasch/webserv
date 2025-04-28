@@ -208,7 +208,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					req.parseRequest(request, _socket_to_port_map[i]);
 
 
-
+					
 
 
 					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
