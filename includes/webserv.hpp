@@ -37,9 +37,10 @@ typedef struct s_fd_data
 	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
 	int			max_fd;
 
-	std::string	content_type; // only for .ico for the moment
-	int content_len;
-	std::vector<char> binaryContent;
+	std::string			content_type; // only for .ico for the moment
+	unsigned int		content_len;
+	std::vector<char> 	binaryContent;
+	std::vector<dirent>	folderContent;
 }	t_fd_data;
 
 void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
