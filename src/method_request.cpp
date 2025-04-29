@@ -331,7 +331,7 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 		{
 			if (server_list.find(key) != server_list.end())
 			{
-				std::cout << "Server found 1" << std::endl;
+				std::cout << "Server found" << std::endl;
 				ServerConfig server = server_list[key];
 
 				if (req.getPath().rfind('/') != 0)
@@ -426,18 +426,17 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 					return;
 				}
 			}
-			else if (server_list.find(req.getPort()) != server_list.end())
+			else //if (server_list.find(req.getPort()) != server_list.end())
 			{
-				std::cout << "Server found 2" << std::endl;
+				std::cout << "Server by default found" << std::endl;
 				return;
 			}
-			else
-			{
-				std::cout << "Server not found" << std::endl;
-				return;
-			}
+			//else
+			//{
+			//	std::cout << "Server not found" << std::endl;
+			//	return;
+			//}
 		}
-
 	}
 	else
 	{
