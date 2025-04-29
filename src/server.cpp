@@ -82,6 +82,12 @@ char	find_method_name(std::string request_string)
 
 }
 
+std::ifstream::pos_type filesize(const char *filename)
+{
+	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+	return in.tellg(); 
+}
+
 std::string	displayErrorPage(std::string serverFolder, int *errcode)
 {
 	char		buffer[BUFFER_SIZE];
@@ -117,6 +123,9 @@ std::string	handleIcoFile(t_fd_data *d)
 {
 	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
 	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
+	std::ostringstream oss;
+	std::ifstream::pos_type dataFile;
+
 	// std::ifstream binfile("reset", std::ios::binary);
 	if (!binfile.is_open()) 
 		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
@@ -141,6 +150,11 @@ std::string	handleIcoFile(t_fd_data *d)
 		<< "\r\n";
 
 		d->binaryContent = buffer2;
+		
+		dataFile = filesize(d->requestedFilePath.c_str());
+		oss << dataFile;
+		d->content_len = atof(oss.str().c_str());
+
 		return(response.str().c_str());
 		// printf("\033[31m  gougou %lu\n", d->binaryContent.size());
 		// printf("\033[31m gaga %lu\n", buffer2.size());
@@ -183,9 +197,11 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	}
 	// printf("\033[36m->Bytes read : (%d)\n\033[0m\n", bytes_read);
 	*errcode = 0;
-	
 	close(fd);
+
 	std::string response(buffer);
+
+	d->content_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
 }
@@ -228,7 +244,7 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 }
 
 
-std::string	openAndDisplayIndex(std::string file, int *errcode) // to do later
+std::string	openAndDisplayIndex(t_fd_data *d, int *errcode) // to do later
 {
 	char		buffer[BUFFER_SIZE];
 	std::string pathToIndexPage;
@@ -236,7 +252,7 @@ std::string	openAndDisplayIndex(std::string file, int *errcode) // to do later
 	int			fd;
 
 	
-	pathToIndexPage = file + "/basePageForIndex.html"; // subject to change ?  --> should NOT be using still .html, or content will be the same no matter the files
+	pathToIndexPage = d->requestedFilePath + "/basePageForIndex.html"; // subject to change ?  --> should NOT be using still .html, or content will be the same no matter the files
 	fd = open(pathToIndexPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
 	if (fd < 0)
 	{
@@ -253,45 +269,110 @@ std::string	openAndDisplayIndex(std::string file, int *errcode) // to do later
 	*errcode = 0;
 	close(fd);
 	std::string response(buffer);
+
+	d->content_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
 }
 
-
-std::string	buildCurrentIndexPage(std::string file, int *errcode)
+void	storeFolderContent(t_fd_data *d, int *errcode)
 {
-	std::ostringstream oss;
+	// std::ostringstream oss;
 	struct dirent *pDirent;
     DIR *pDir;
-	(void)errcode;
 
-	pDir = opendir (file.c_str());
+	pDir = opendir (d->requestedFilePath.c_str());
 	if (pDir == NULL) 
 	{
-        printf ("Cannot open directory '%s'\n", file.c_str());
+        printf ("Cannot open directory '%s'\n", d->requestedFilePath.c_str());
 		*errcode = FAILEDSYSTEMCALL;
-        return ("");
+        return ;
     }
 	errno = 0;
 	while ((pDirent = readdir(pDir)) != NULL) // can fail, check ernoo when null is found, set ernoo to 0 before first call
 	{
 		std::string fname(pDirent->d_name );
+		
 		if ((fname == ".") || fname == "..")
 			continue;
-    	printf ("[%s]\n", pDirent->d_name);
-		oss << pDirent->d_name;
-		oss << "\n";
+		d->folderContent.push_back(*pDirent); /// fait une boucle pour check le nom et le type de fichier sale flemmard
+
+
+    	//printf ("[%s]\n", pDirent->d_name);
+		// oss << pDirent->d_name;
+		// oss << "\n";
     }
+	closedir (pDir);
 	if (errno != 0)
 	{
 		perror("Readdir failed ! "); 
-		closedir (pDir);
 		*errcode = FAILEDSYSTEMCALL;
-		return ("");
+		return ;
 	}
+	
+}
 
-   
-	return (oss.str().c_str());
+
+std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
+{
+	std::ostringstream	oss;
+	std::string			pageContent;
+	
+	storeFolderContent(d, errcode);
+	if (*errcode == FAILEDSYSTEMCALL)
+		return ("");
+	// for (std::vector<dirent>::const_iterator i = d->folderContent.begin(); i != d->folderContent.end(); ++i)   ---> we can store it !
+	// 	std::cout << i->d_name << ' ';
+
+	oss << "<html>\n";
+	oss << "<head>\n";
+	oss << "<title> Index of";
+	oss << d->requestedFilePath;
+	oss << "</title>\n";
+	oss << "</head>\n";
+	oss << "<body >\n";
+	oss << "<h1> Index of " + d->requestedFilePath + "</h1>\n";
+	oss << "<table style=\"width:80%; font-size: 15px\">\n";
+	oss << "<thead>\n";
+	oss << "<hr>\n";
+	oss << "<th style=\"text-align:left\"> File Name </th>\n";
+	oss << "<th style=\"text-align:left\"> Last Modification  </th>\n";
+	oss << "<th style=\"text-align:left\"> File Size </th>\n";
+	oss << "</thead>\n";
+	oss << "<tbody>\n";
+	for (std::vector<dirent>::const_iterator i = d->folderContent.begin(); i != d->folderContent.end(); ++i)   //---> we can store it !
+	{
+		oss << "<tr><td> ";
+		oss << i->d_name;
+		oss << "</td>\n";
+		oss << "<td> gougou ? </td>\n"; // last modif
+		if (i->d_type == DT_REG) // get file size
+		{
+			printf("HERE ! (%s)\n", i->d_name);
+			std::string m_fpath(i->d_name);
+			oss << "<td> ";
+			oss << filesize((d->requestedFilePath + "/" + m_fpath).c_str());
+			oss << " </td>\n";
+
+		}
+		else if (i->d_type == DT_DIR) // no size needed
+		{
+			oss << "<td> gougougaga ? </td>\n";
+		}
+		oss << "</tr>\n";
+	}
+	oss << "</tbody>\n";
+	oss << "</table>\n";
+	oss << "<hr>\n";
+	oss << "</body>\n";
+	oss << "</html>\n";
+
+	*errcode = 0;
+
+	pageContent = oss.str().c_str();
+	d->content_len = pageContent.length();
+	d->folderContent.clear();
+	return (pageContent);
 }
 
 std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
@@ -316,9 +397,9 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	objType = checkObjectType(requested_file, d, errcode); // is it a file ? or a folder ?
 
 	if (objType == IS_INDEXDIR)
-		response = openAndDisplayIndex(d->requestedFilePath, errcode);
+		response = openAndDisplayIndex(d, errcode);
 	else if (objType == IS_DIRECTORY)
-		response = buildCurrentIndexPage(d->requestedFilePath, errcode);
+		response = buildCurrentIndexPage(d, errcode);
 	else if (objType == IS_EXISTINGFILE)
 		response = openAndReadFile(d, errcode);
 	else
@@ -326,16 +407,9 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	return (response);
 }
 
-std::ifstream::pos_type filesize(const char *filename)
-{
-    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-    return in.tellg(); 
-}
-
 std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_fd_data *d)
 {
 	std::string	responseCode;
-	std::ifstream::pos_type dataFile;
 	std::ostringstream oss;
 
 
@@ -350,8 +424,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	}
 	//--------------------------------------------------------//
 
-	dataFile = filesize(d->requestedFilePath.c_str()); // doesn´t work on folders
-	oss << dataFile;
+	oss << d->content_len;
 
 	switch (errcode)
 	{
@@ -359,12 +432,12 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
 		responseCode.append(oss.str());
 		responseCode.append("\r\n\r\n\n");
-		d->content_len = atof(oss.str().c_str()); // ugly but ok
+		d->content_len = d->content_len;
 		d->content_type = "text/html";
 		break;
 	
 	case 2:
-		d->content_len = atof(oss.str().c_str());
+		d->content_len = d->content_len;
 		d->content_type = "image/x-icon";
 		return(requestBody);
 
@@ -372,7 +445,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
 		responseCode.append(oss.str());
 		responseCode.append("\r\n\r\n\n");
-		d->content_len = atof(oss.str().c_str());
+		d->content_len = d->content_len;
 		d->content_type = "text/html";
 		break;
 	}
@@ -413,10 +486,9 @@ int	handle_client_request(int socket, t_fd_data *d)
 
 	if (!finalMessage.empty())
 	{
-		//write(socket , finalMessage.c_str() , strlen(finalMessage.c_str()));
 		if (d->content_type == "image/x-icon")
 		{
-			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0); // must be content len instead of finaleMessage.lenght, or else header size is added
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
 		}
 		else
@@ -474,7 +546,6 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					// printf( "request from client %d : \n", i);
 					handle_client_request(i, &s_data);
 					FD_CLR(i, &s_data.saved_sockets);
 				}
