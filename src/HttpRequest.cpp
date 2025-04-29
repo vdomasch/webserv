@@ -72,7 +72,7 @@ void	HttpRequest::parseRequest(const std::string &request, int port)
 				std::size_t found = line.find(compare[i]);
 				if (found != std::string::npos)
 				{
-					std::string value = line.substr(found + compare[i].length() + 2);
+					std::string value = line.substr(found + compare[i].size() + 2);
 					switch (i)
 					{
 						case 0:
