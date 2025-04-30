@@ -238,9 +238,9 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 	unsigned int count = 0;
 	while (iss_copy >> key)
 	{
-		if (count == 1 && key.at(0) != '/')
+		if (count == 1 && (key.at(0) != '/' || key.at(key.length() - 1) != '/'))
 		{
-			std::cerr << "Error: Keyword location path must start with '/'!" << std::endl;
+			std::cerr << "Error: Keyword location path must start and end with '/'!" << std::endl;
 			return false;
 		}
 		count++;

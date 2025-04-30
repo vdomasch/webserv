@@ -52,9 +52,19 @@ bool	is_error_page_code(std::string code)
 	return false;
 }
 
+bool	is_page_extension(std::string name)
+{
+	size_t code_size = name.length();
+	if (name.find(".html") == code_size - 5
+		|| name.find(".htm") == code_size - 4
+		|| name.find(".txt") == code_size - 4
+		|| name.find(".php") == code_size - 4)
+		return true;
+	return false;
+}
+
 bool	is_error_page_extension(std::string error_code)
 {
-	size_t code_size = error_code.size();
 	if (error_code.empty())
 	{
 		std::cerr << "Error: Keyword error_page has no page path!" << std::endl;
@@ -65,16 +75,15 @@ bool	is_error_page_extension(std::string error_code)
 		std::cerr << "Error: Semicolon is missing for keyword: error_page!" << std::endl;
 		return false;
 	}
-	if (error_code.find(".html;") == code_size - 6
-		|| error_code.find(".htm;") == code_size - 5
-		|| error_code.find(".txt;") == code_size - 5)
+	while (error_code.at(error_code.length() - 1) == ';')
+		error_code.erase(error_code.length() - 1);
+	if (is_page_extension(error_code))
 		;
 	else
 	{
 		std::cerr << "Error: Invalid error_page path '" << error_code << "'!" << std::endl;
 		return false;
 	}
-	
 	return true;
 }
 
@@ -106,7 +115,11 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 	if (code_numbers.empty())
 	{
 		std::cerr << "Error: Keyword error_page has no page code!" << std::endl;
-		return 1;
+		return 1;if (error_code.find(";") == std::string::npos)
+		{
+			std::cerr << "Error: Semicolon is missing for keyword: error_page!" << std::endl;
+			return false;
+		}
 	}
 	if (!is_error_page_extension(error_code))
 		return 1;
@@ -134,9 +147,9 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 	return 0;
 }
 
-bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string> &_map_server)
+bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
 {
-	if (!_map_server["autoindex"].empty())
+	if (!_current_map["autoindex"].empty())
 	{
 		std::cerr << "Error: Keyword autoindex already set!" << std::endl;
 		return 1;
@@ -145,9 +158,14 @@ bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string
 	iss >> value;
 	if (!is_valid_to_clean_semicolon(value))
 		return 1;
+	if (value.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: autoindex!" << std::endl;
+		return 1;
+	}
 	value = clean_semicolon(value);
 	if (value == "on" || value == "off")
-		_map_server["autoindex"] = value;
+		_current_map["autoindex"] = value;
 	else
 	{
 		std::cerr << "Error: Invalid autoindex value '" << value << "'!" << std::endl;
@@ -188,6 +206,50 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 			std::cerr << "Error: Invalid allow_methods value '" << key << "'!" << std::endl;
 			return 1;
 		}
+	}
+	return 0;
+}
+
+bool	handle_index(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::string value;
+	if (!(iss >> value))
+	{
+		std::cerr << "Error: Keyword index has no value!" << std::endl;
+		return 1;
+	}
+	if (!_current_map["index"].empty())
+	{
+		std::cerr << "Error: Keyword index already set!" << std::endl;
+		return 1;
+	}
+	if (!is_valid_to_clean_semicolon(value))
+		return 1;
+	if (value.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: index!" << std::endl;
+		return 1;
+	}
+	value = clean_semicolon(value);
+	if (value.find("/") != std::string::npos)
+	{
+		if (value.at(0) == '/' || value.at(value.length() - 1) == '/')
+		{
+			std::cerr << "Error: Invalid index value '" << value << "'!" << std::endl;
+			return 1;
+		}
+	}
+	if (!is_page_extension(value))
+	{
+		std::cerr << "Error: Invalid index value '" << value << "'!" << std::endl;
+		return 1;
+	}
+	// check '/' at the beginning of the value and the end; if size > 1
+	_current_map["index"] = value;
+	if (iss >> value)
+	{
+		std::cerr << "Error: Keyword index has too many values!" << std::endl;
+		return 1;
 	}
 	return 0;
 }
