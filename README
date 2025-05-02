@@ -5,7 +5,7 @@ TO DO:
 	reverifier les mandatory
 	si declare dans http et server = error?
 	index, root et location:
-		-> root besoin d'un a la fin
+		-> root besoin d'un a la fin - done
 		-> location au debut et a la fin - done
 		-> index pas aux extremites - done
 

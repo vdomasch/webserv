@@ -51,6 +51,11 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		if (handle_index(iss, _map_location))
 			return 1;
 	}
+	else if (key == "root")
+	{
+		if (handle_root(iss, _map_location))
+			return 1;
+	}
 	else
 	{
 		if (!_map_location[key].empty())

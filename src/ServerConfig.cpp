@@ -81,6 +81,11 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		if (handle_index(iss, _map_server))
 			return 1;
 	}
+	else if (key == "root")
+	{
+		if (handle_root(iss, _map_server))
+			return 1;
+	}
 	else if (is_server_variable(key))
 	{
 		if (!_map_server[key].empty())

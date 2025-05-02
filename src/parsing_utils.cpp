@@ -244,12 +244,46 @@ bool	handle_index(std::istringstream &iss, std::map<std::string, std::string> &_
 		std::cerr << "Error: Invalid index value '" << value << "'!" << std::endl;
 		return 1;
 	}
-	// check '/' at the beginning of the value and the end; if size > 1
 	_current_map["index"] = value;
 	if (iss >> value)
 	{
 		std::cerr << "Error: Keyword index has too many values!" << std::endl;
 		return 1;
 	}
+	return 0;
+}
+
+bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::string value;
+	if (!(iss >> value))
+	{
+		std::cerr << "Error: Keyword root has no value!" << std::endl;
+		return 1;
+	}
+	if (!_current_map["root"].empty())
+	{
+		std::cerr << "Error: Keyword root already set!" << std::endl;
+		return 1;
+	}
+	if (!is_valid_to_clean_semicolon(value))
+		return 1;
+	if (value.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: root!" << std::endl;
+		return 1;
+	}
+	value = clean_semicolon(value);
+	if (value.find_last_of("/") != value.length() - 1)
+	{
+		std::cerr << "Error: Invalid root value '" << value << "', must ends with '/'!" << std::endl;
+		return 1;
+	}
+	if (value.size() < 2)
+	{
+		std::cerr << "Error: Invalid root value has no path!" << std::endl;
+		return 1;
+	}
+	_current_map["root"] = value;
 	return 0;
 }
