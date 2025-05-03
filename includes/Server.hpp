@@ -18,11 +18,13 @@ class Server
 		std::map<int, int> get_socket_to_port_map() const;
 		
 	private:
-		t_fd_data	_socket_data;	// to keep track of all active sockets
+		t_fd_data		_socket_data;	// to keep track of all active sockets
+		HttpRequest		_req;			// to parse the request
 
 		std::map<int, int>								_port_to_socket_map;
 		std::map<int, int>								_socket_to_port_map;
 		std::map<std::string, void(*)(HttpRequest&, std::map<std::string, ServerConfig>&)>	_method_map;
+		std::map<int , t_requeste_state>				_socket_states;
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void	update_max_fd(int fd);
@@ -30,6 +32,8 @@ class Server
 		void	running_loop(HTTPConfig &http_config, sockaddr_in &servaddr);
 		bool	is_server_socket(int fd);
 		void	shutdown_all_sockets();
+		void	handle_new_connection(int fd, sockaddr_in &servaddr);
+		void	handle_client_request(int fd, t_fd_data *socket_data);
 };
 
 #endif

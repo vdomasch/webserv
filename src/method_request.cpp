@@ -214,7 +214,7 @@ std::string	buildCurrentIndexPage(std::string file, int *errcode)
 	return (oss.str().c_str());
 }
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
+std::string	analyse_request(std::string buffer, t_fd_data *d, int *errcode)
 {
 	std::string request(buffer);
 	std::string first_line;

@@ -8,6 +8,20 @@
 #include <algorithm>
 #include <cctype>
 
+bool g_running = true;
+
+void handle_signal(int signum) { if (signum == SIGINT) std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; }
+
+/*void	handle_signal(int signum)
+{
+	if (signum == SIGINT)
+	{
+		std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl;
+		g_running = false;
+	}
+}*/
+
+
 Server::Server() {
 	// Initialize the socket data
 	FD_ZERO(&_socket_data.saved_sockets);
@@ -21,16 +35,11 @@ Server::Server() {
 
 Server::~Server() {}
 
-bool g_running = true;
+std::map<int, int> Server::get_port_to_socket_map() const { return _port_to_socket_map; }
+std::map<int, int> Server::get_socket_to_port_map() const { return _socket_to_port_map; }
 
-void	handle_signal(int signum)
-{
-	if (signum == SIGINT)
-	{
-		std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl;
-		g_running = false;
-	}
-}
+
+
 
 int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 {
@@ -75,8 +84,6 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 
 
 
-
-
 void	Server::run_server(HTTPConfig &http_config)
 {
 	std::map<std::string, ServerConfig> servers_list = http_config.get_server_list();
@@ -111,6 +118,134 @@ void	Server::run_server(HTTPConfig &http_config)
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
+}
+
+void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
+{
+	socklen_t addr_len = sizeof(servaddr);
+	int client_socket = accept(fd, reinterpret_cast<struct sockaddr *>(&servaddr), &addr_len);
+	if (client_socket < 0)
+	{
+		std::cerr << "Failed to accept new connection" << std::endl;
+		return;
+	}
+	if (client_socket > FD_SETSIZE)
+	{
+		close_msg(client_socket, "Too many connections", 1);
+		return;
+	}
+	FD_SET(client_socket, &_socket_data.saved_sockets);
+	if (client_socket > _socket_data.max_fd)
+		_socket_data.max_fd = client_socket;
+	std::cout << "New client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << std::endl;
+	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
+}
+
+std::string	analyse_request(std::string buffer, t_fd_data *d, int *errcode);
+
+void	Server::handle_client_request(int fd, t_fd_data *socket_data)
+{
+	char buffer[BUFFER_SIZE] = {0};
+	std::string	finalMessage;
+	int			errcode;
+	HttpRequest req; // BAD, should be outside of this function, will be re-initialized each time
+	
+	//Receive the new message : 
+	ssize_t bytes_read = recv(fd , buffer, BUFFER_SIZE, 0);
+	if (bytes_read < 0)
+	{
+		close_msg(fd, "recv() failed", 1);
+		//update_max_fd(i);;
+		return ;
+	}
+	if (bytes_read == 0)
+	{
+		close_msg(fd, "Client on socket ", 0);
+		//update_max_fd(i);
+		return ;
+	}
+	if (bytes_read < BUFFER_SIZE)
+		buffer[bytes_read] = '\0';
+	else
+		buffer[BUFFER_SIZE - 1] = '\0';
+
+
+	// Accumulate partial reads
+	_socket_states[fd].request += std::string(buffer);
+
+	// Check if header is complete
+	if (_socket_states[fd].request.find("\r\n\r\n") != std::string::npos)
+	{
+		if (_socket_states[fd].header_complete == false)
+		{
+			req.analyseHeader(_socket_states[fd], _socket_to_port_map[fd]);
+			_socket_states[fd].header_complete = true;
+		}
+		if (_socket_states[fd].header_complete == true)
+			req.constructBody(_socket_states[fd], _socket_to_port_map[fd]);
+	}
+	else
+	{
+		// Not yet complete — wait for next recv()
+		return;
+	}
+
+
+	/*memset(buffer, '\0', sizeof(buffer));
+	if (errcode == FAILEDSYSTEMCALL)
+	{
+		perror("\nAn error occured while trying to open the requested file :(\n\n");
+		exit(-1); // to check for leaks later
+	}
+	//Sending a response :
+	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, socket_data); // when .ico, finalMessage = requestBody
+
+	printf("\033[35m\n#######################\n");
+	printf("(%s)\n",finalMessage.c_str() );
+	printf(" \nERROR CODE(%d)\n",errcode);
+	printf("#######################\033[0m\n");
+
+	if (!finalMessage.empty())
+	{
+		if (d->content_type == "image/x-icon")
+		{
+			send(fd , finalMessage.c_str() , finalMessage.length(), 0); // must be content len instead of finaleMessage.lenght, or else header size is added
+			send(fd , &d->binaryContent[0] , d->binaryContent.size(), 0);
+		}
+		else
+			send(fd , finalMessage.c_str() , finalMessage.length(), 0);
+		std::cout << "message sent from server !\n" << std::endl;
+	}
+	close(fd);
+	return ;*/
+
+
+
+/////////////////////////////////////////////////////
+
+
+
+
+	/*std::string request(buffer);
+
+	std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
+
+	req.parseRequest(request, _socket_to_port_map[i]);
+
+	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+
+	if (_method_map.count(req.getMethod()))
+		_method_map[req.getMethod()](req, server_list);
+	else
+		std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
+
+	std::cout << "\n\nDEBUG: RESPONSE\n" << req.getResponse() << std::endl << std::endl;
+	send(i, req.getResponse().c_str(), req.getResponse().size(), 0); // Echo back to client
+	if (!req.getKeepAlive())
+	{
+		close_msg(i, "Connection on socket ", 0);
+		//update_max_fd(i);
+	}*/
 }
 
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
@@ -154,23 +289,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 				if (is_server_socket(i)) // New connection
 				{
-					socklen_t addr_len = sizeof(servaddr);
-					int client_socket = accept(i, reinterpret_cast<struct sockaddr *>(&servaddr), &addr_len);
-					if (client_socket < 0)
-					{
-						std::cerr << "Failed to accept new connection" << std::endl;
-						continue;
-					}
-					if (client_socket > FD_SETSIZE)
-					{
-						close_msg(client_socket, "Too many connections", 1);
-						continue;
-					}
-					FD_SET(client_socket, &_socket_data.saved_sockets);
-					if (client_socket > _socket_data.max_fd)
-						_socket_data.max_fd = client_socket;
-					std::cout << "New client connected on socket " << client_socket << " through server port " << _socket_to_port_map[i] << std::endl;
-					_socket_to_port_map[client_socket] = _socket_to_port_map[i];
+					handle_new_connection(i, servaddr);
 				}
 				else
 				{
@@ -200,16 +319,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
 
-
-					int errcode = 0;
-					std::string requestBody = analyse_request(buffer, &_socket_data, &errcode); // decide how to interpret the request
-
-
 					req.parseRequest(request, _socket_to_port_map[i]);
-
-
-					
-
 
 					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
@@ -230,48 +340,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		}
 		static_cast<void>(http_config);
 	}
-	//_socket_data.ready_sockets = _socket_data.saved_sockets;
-	//int activity = select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL);
-	//if (activity < 0 && errno != EINTR)
-	//{
-	//	std::cerr << "Select error" << std::endl;
-	//	return;
-	//}
-	//for (int fd = 0; fd <= _socket_data.max_fd; ++fd)
-	//{
-	//	if (FD_ISSET(fd, &_socket_data.ready_sockets))
-	//	{
-	//		if (fd == _port_to_socket_map.begin()->second)
-	//		{
-	//			int new_socket = accept(fd, NULL, NULL);
-	//			if (new_socket < 0)
-	//			{
-	//				std::cerr << "Accept error" << std::endl;
-	//				continue;
-	//			}
-	//			FD_SET(new_socket, &_socket_data.saved_sockets);
-	//			update_max_fd(new_socket);
-	//		}
-	//		else
-	//		{
-	//			close_msg(fd, "Client disconnected: ", 0);
-	//		}
-	//	}
-	//}
 }
-
-
-
-std::map<int, int> Server::get_port_to_socket_map() const
-{
-	return _port_to_socket_map;
-}
-
-std::map<int, int> Server::get_socket_to_port_map() const
-{
-	return _socket_to_port_map;
-}
-
 
 void	Server::update_max_fd(int fd)
 {

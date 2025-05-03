@@ -4,6 +4,8 @@
 # include <iostream>
 # include <sstream>
 
+typedef struct s_requeste_state	t_requeste_state;
+
 class HttpRequest
 {
 	public:
@@ -13,6 +15,8 @@ class HttpRequest
 		std::string getMethod() const;
 		std::string getHost() const;
 		std::string getConnection() const;
+		std::string getContentLength() const;
+		std::string getContentType() const;
 		std::string getCookie() const;
 		std::string getPath() const;
 		std::string	getPort() const;
@@ -23,6 +27,8 @@ class HttpRequest
 		void setMethod(const std::string& method);
 		void setHost(const std::string& host);
 		void setConnection(const std::string& connection);
+		void setContentLength(const std::string& content_length);
+		void setContentType(const std::string& content_type);
 		void setCookie(const std::string& cookie);
 		void setPath(const std::string& path);
 		void setPort(const std::string& port);
@@ -32,10 +38,16 @@ class HttpRequest
 
 		void parseRequest(const std::string& request, int port);
 
+		void analyseHeader(t_requeste_state &state, int port);
+
+		void constructBody(t_requeste_state &state, int port);
+
 	private:
 		std::string _method;
 		std::string _host;
 		std::string _connection;
+		std::string _content_length;
+		std::string _content_type;
 		std::string _path;
 		std::string _port;
 		std::string _cookie;

@@ -43,6 +43,16 @@ typedef struct s_fd_data
 	std::vector<dirent>	folderContent;
 }	t_fd_data;
 
+typedef struct s_requeste_state
+{
+	bool		header_complete;
+	bool		ready_to_process;
+	int			content_length;
+	int			bytesRead;
+	std::string	request;
+	std::string	body;
+}	t_requeste_state;
+
 void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 void	post_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 void	delete_request(HttpRequest &, std::map<std::string, ServerConfig> &);
@@ -52,5 +62,8 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection);
 
 std::string tostr(const int value);
+
+template <typename T>
+bool strto_safe(const std::string& str, T& result);
 
 #endif
