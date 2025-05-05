@@ -115,7 +115,7 @@ void	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 	std::getline(iss, _path, ' ');
 	std::string compare[4] = {"Host", "Connection", "Content-length", "Content-type"};
 
-	bool found_flags[4] = {false, false};
+	bool found_flags[4] = {false, false, false, false};
 
 	while (_done < 4)
 	{
