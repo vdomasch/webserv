@@ -23,6 +23,7 @@
 #include <sstream> // Content Size
 #include <vector> // .ico handling
 #include <stdlib.h> // atof
+#include <algorithm> // std::sort
  #include <dirent.h> // dirent for opendir
 
 
@@ -52,3 +53,13 @@ struct s_fd_data
 	std::vector<dirent>	folderContent;
 };
 typedef struct s_fd_data	t_fd_data;
+
+class orderedFiles
+{
+	public :
+		std::string		baseName;
+		std::string		lowerName;
+		unsigned char	type;
+
+	orderedFiles(const std::string& name, const std::string& lowname, unsigned char n_type) : baseName(name), lowerName(lowname), type(n_type) {}
+};

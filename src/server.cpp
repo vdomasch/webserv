@@ -312,63 +312,171 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 	
 }
 
+bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
+    return a.lowerName < b.lowerName;
+}
+
+void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
+{
+	printf("\033[31mlooking for the parent folder of (%s) !\033[0m\n", filepath.c_str());
+	printf("\033[31mi know server folder is (%s) !\033[0m\n", server_folder.c_str());
+	
+	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
+	{
+		printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
+		parent = "/";
+		return ;
+	}
+
+	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
+	parent = filepath.substr(0, pos);
+	pos = parent.find_last_of('/');
+	parent = parent.substr(pos);
+	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
+	if (parent == "/server_files")
+		parent = "/";
+}
+
+void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
+{
+	for (std::vector<dirent>::const_iterator i = fileList.begin(); i != fileList.end(); ++i)
+	{
+		std::string	filename(i->d_name);
+		std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
+		sorted.push_back(orderedFiles(i->d_name, filename, i->d_type));
+	}
+
+	std::sort(sorted.begin(), sorted.end(), compareBySize);
+
+
+	// std::sort(sorted.begin(), sorted.end());
+
+	for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
+		std::cout << j->baseName << std::endl;
+}
+
+void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
+{
+	struct stat					fileinfo;
+	time_t						timestamp;
+	std::vector<orderedFiles>	sorted_names;
+
+	getRightFileOrder(sorted_names, d->folderContent);
+	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
+	{
+		
+		std::string	m_fpath(i->baseName);
+		std::string	fileHref;
+
+		if (i->type != DT_DIR)
+			continue ;
+		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/"; // a changerrrrrrr
+		if (fileHref == "/server_files/")
+			fileHref = ""; 
+		printf("HREFFFFFFFFFFFFFF %s\n", fileHref.c_str());
+		printf("MIAOUUUUU (%s)\n", i->baseName.c_str());
+		oss << "<tr><td>\n";
+		oss << "<a class";
+		oss << "=\"icon dir\" href=\"";
+		oss << fileHref + i->baseName;
+		oss << "\">";
+		oss << m_fpath + "/";
+		oss << " ";
+		oss << "</a>\n";
+		oss << "</td>\n";
+		oss << "<td> / </td>\n"; // no size needed
+
+		//handle last file modification
+		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
+		timestamp = fileinfo.st_mtime;
+		oss << "<td> ";
+		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
+		oss << " </td>\n";
+		oss << "</tr>\n";
+	}
+	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
+	{
+		
+		std::string	m_fpath(i->baseName);
+		std::string	fileHref;
+
+		if (i->type == DT_DIR)
+			continue ;
+
+		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/";
+		if (fileHref == "/server_files/") //temporary fix for when we reach last folder
+			fileHref = ""; 
+		printf("HREFFFFFFFFFFFFFF %s\n", fileHref.c_str());
+		oss << "<tr><td>\n";
+		oss << "<a class";
+		oss << "=\"icon file\" href=\"\n";
+		oss << fileHref + i->baseName;
+		oss << "\">";
+		oss << m_fpath + "/";
+		oss << "</a>\n";
+		oss << "</td>\n";
+	
+		oss << "<td> ";
+		oss << filesize((d->requestedFilePath + "/" + m_fpath).c_str());
+		oss << " </td>\n";
+
+		//handle last file modification
+		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
+		timestamp = fileinfo.st_mtime;
+		oss << "<td> ";
+		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
+		oss << " </td>\n";
+		oss << "</tr>\n";
+	}
+}
+
+void	setupHTMLpageStyle(std::ostringstream &oss)
+{
+	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
+	oss << "<style>\n";
+	oss << "#parentDirLinkBox {\nmargin-bottom: 10px;\npadding-bottom: 10px;\n}\n";
+	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
+	oss << "table {\nborder-collapse: collapse;\n}\n";
+	oss << "td.detailsColumn {padding-inline-start: 2em;\ntext-align: end;\nwhite-space: nowrap;\n}\n";
+	oss << "a.up {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACM0lEQVR42myTA+w1RxRHz+zftmrbdlTbtq04qRGrCmvbDWp9tq3a7tPcub8mj9XZ3eHOGQdJAHw77/LbZuvnWy+c/CIAd+91CMf3bo+bgcBiBAGIZKXb19/zodsAkFT+3px+ssYfyHTQW5tr05dCOf3xN49KaVX9+2zy1dX4XMk+5JflN5MBPL30oVsvnvEyp+18Nt3ZAErQMSFOfelCFvw0HcUloDayljZkX+MmamTAMTe+d+ltZ+1wEaRAX/MAnkJdcujzZyErIiVSzCEvIiq4O83AG7LAkwsfIgAnbncag82jfPPdd9RQyhPkpNJvKJWQBKlYFmQA315n4YPNjwMAZYy0TgAweedLmLzTJSTLIxkWDaVCVfAbbiKjytgmm+EGpMBYW0WwwbZ7lL8anox/UxekaOW544HO0ANAshxuORT/RG5YSrjlwZ3lM955tlQqbtVMlWIhjwzkAVFB8Q9EAAA3AFJ+DR3DO/Pnd3NPi7H117rAzWjpEs8vfIqsGZpaweOfEAAFJKuM0v6kf2iC5pZ9+fmLSZfWBVaKfLLNOXj6lYY0V2lfyVCIsVzmcRV9Y0fx02eTaEwhl2PDrXcjFdYRAohQmS8QEFLCLKGYA0AeEakhCCFDXqxsE0AQACgAQp5w96o0lAXuNASeDKWIvADiHwigfBINpWKtAXJvCEKWgSJNbRvxf4SmrnKDpvZavePu1K/zu/due1X/6Nj90MBd/J2Cic7WjBp/jUdIuA8AUtd65M+PzXIAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
+	oss << "a.file {\n    background : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAABnRSTlMAAAAAAABupgeRAAABEElEQVR42nRRx3HDMBC846AHZ7sP54BmWAyrsP588qnwlhqw/k4v5ZwWxM1hzmGRgV1cYqrRarXoH2w2m6qqiqKIR6cPtzc3xMSML2Te7XZZlnW7Pe/91/dX47WRBHuA9oyGmRknzGDjab1ePzw8bLfb6WRalmW4ip9FDVpYSWZgOp12Oh3nXJ7nxoJSGEciteP9y+fH52q1euv38WosqA6T2gGOT44vry7BEQtJkMAMMpa6JagAMcUfWYa4hkkzAc7fFlSjwqCoOUYAF5RjHZPVCFBOtSBGfgUDji3c3jpibeEMQhIMh8NwshqyRsBJgvF4jMs/YlVR5KhgNpuBLzk0OcUiR3CMhcPaOzsZiAAA/AjmaB3WZIkAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
+	oss << "a.dir {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==\") left top no-repeat;\n}\n";
+	oss << "a.icon {\npadding-inline-start: 1.5em;\ntext-decoration: none;\nuser-select: auto;\n}\n";
+	oss << "</style>\n";
+}
 
 std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 {
 	std::ostringstream	oss;
 	std::string			pageContent;
+	std::string			parentFolder;
 	
 	storeFolderContent(d, errcode);
+	findParentFolder(parentFolder, d->requestedFilePath, d->serverFolder);
 	if (*errcode == FAILEDSYSTEMCALL)
 		return ("");
-	// for (std::vector<dirent>::const_iterator i = d->folderContent.begin(); i != d->folderContent.end(); ++i)   ---> we can store it !
-	// 	std::cout << i->d_name << ' ';
 
-	oss << "<html>\n";
-	oss << "<head>\n";
+	setupHTMLpageStyle(oss); // contains the <style> of the html 
 	oss << "<title> Index of";
-	oss << d->requestedFilePath;
-	oss << "</title>\n";
-	oss << "</head>\n";
-	oss << "<body >\n";
-	oss << "<h1> Index of " + d->requestedFilePath + "</h1>\n";
-	oss << "<table style=\"width:80%; font-size: 15px\">\n";
-	oss << "<thead>\n";
-	oss << "<hr>\n";
-	oss << "<th style=\"text-align:left\"> File Name </th>\n";
-	oss << "<th style=\"text-align:left\"> Last Modification  </th>\n";
-	oss << "<th style=\"text-align:left\"> File Size </th>\n";
-	oss << "</thead>\n";
-	oss << "<tbody>\n";
-	for (std::vector<dirent>::const_iterator i = d->folderContent.begin(); i != d->folderContent.end(); ++i)   //---> we can store it !
-	{
-		oss << "<tr><td> ";
-		oss << i->d_name;
-		oss << "</td>\n";
-		oss << "<td> gougou ? </td>\n"; // last modif
-		if (i->d_type == DT_REG) // get file size
-		{
-			printf("HERE ! (%s)\n", i->d_name);
-			std::string m_fpath(i->d_name);
-			oss << "<td> ";
-			oss << filesize((d->requestedFilePath + "/" + m_fpath).c_str());
-			oss << " </td>\n";
+	oss << d->requestedFilePath + "/";
+	oss << "</title>\n</head>\n<body >\n";
+	oss << "<h1> Index of " + d->requestedFilePath + "/" "</h1>\n";
 
-		}
-		else if (i->d_type == DT_DIR) // no size needed
-		{
-			oss << "<td> gougougaga ? </td>\n";
-		}
-		oss << "</tr>\n";
-	}
-	oss << "</tbody>\n";
-	oss << "</table>\n";
-	oss << "<hr>\n";
-	oss << "</body>\n";
-	oss << "</html>\n";
+	oss << "<div id=\"parentDirLinkBox\" style=\"display: block;\">";
+	oss << "<a id=\"parentDirLink\" class=\"icon up\" href=\"";
+	oss << parentFolder;
+	oss << "\">";
+	oss << "<span id=\"parentDirText\">[parent directory]</span>";
+    oss << "</a>\n</div>\n";
+
+	oss << "<table style=\"width:80%; font-size: 15px\">\n<thead>\n";
+	oss << "<th style=\"text-align:left\"> Name </th>\n";
+	oss << "<th style=\"text-align:left\"> Size </th>\n";
+	oss << "<th style=\"text-align:left\"> Date Modified  </th>\n</thead>\n<tbody>\n";
+	sendSizeAndLastChange(d, oss); // extract the info about file size and last access
+	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 
 	*errcode = 0;
-
 	pageContent = oss.str().c_str();
 	d->content_len = pageContent.length();
 	d->folderContent.clear();
@@ -396,9 +504,7 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 
 	objType = checkObjectType(requested_file, d, errcode); // is it a file ? or a folder ?
 
-	if (objType == IS_INDEXDIR)
-		response = openAndDisplayIndex(d, errcode);
-	else if (objType == IS_DIRECTORY)
+	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR)
 		response = buildCurrentIndexPage(d, errcode);
 	else if (objType == IS_EXISTINGFILE)
 		response = openAndReadFile(d, errcode);
