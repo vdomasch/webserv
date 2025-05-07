@@ -14,8 +14,10 @@ class Server
 		~Server();
 		
 		void		run_server(HTTPConfig &http_config);
-		std::map<int, int> get_port_to_socket_map() const;
-		std::map<int, int> get_socket_to_port_map() const;
+
+		int					get_client_max_body_size();
+		std::map<int, int>	get_port_to_socket_map() const;
+		std::map<int, int> 	get_socket_to_port_map() const;
 		
 	private:
 		t_fd_data		_socket_data;	// to keep track of all active sockets

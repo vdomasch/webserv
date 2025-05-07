@@ -9,7 +9,7 @@ error_page
 GET:
 	probleme lors de la reception sur le navigateur (favicon.ico ?)
 	Peaufiner les index des locations
-	se mettre en accord avec ben pour le port 
+	se mettre en accord avec ben pour le port
 
 POST:
 	to do
@@ -21,4 +21,6 @@ TO DO:
 	si declare dans http et server = error?
 
 inverser le PORT:SERVERNAME
+
+
 	

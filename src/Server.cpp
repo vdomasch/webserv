@@ -128,12 +128,6 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 
 std::string	analyse_request(std::string buffer, t_fd_data *d, int *errcode);
 
-bool check_if_body_size_greater_than_limit(t_requeste_state &request_state, HTTPConfig &http_config)
-{
-	int client_max_body_size = 0;
-	
-}
-
 void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *socket_data)
 {
 	static_cast<void>(socket_data);
@@ -171,7 +165,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 		{
 			errcode = req.analyseHeader(_socket_states[fd], _socket_to_port_map[fd]);
 			_socket_states[fd].header_complete = true;
-			check_if_body_size_greater_than_limit(_socket_states[fd], http_config);
+			req.check_if_body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config);
 		}
 		if (_socket_states[fd].header_complete == true)
 			req.constructBody(_socket_states[fd], _socket_to_port_map[fd]);

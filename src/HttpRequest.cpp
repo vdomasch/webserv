@@ -1,5 +1,7 @@
 #include "HttpRequest.hpp"
 #include "webserv.hpp"
+#include <iostream>
+#include <string>
 
 HttpRequest::HttpRequest():_method(""), _host(""), _connection(""), _content_length(""), _content_type(""), _path(""), _port(""), _cookie(""), _keep_alive(false), _done(0), _response("") {}
 HttpRequest::~HttpRequest() {}
@@ -165,6 +167,40 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 		std::cerr << "Content length is negative" << std::endl;
 		return ;
 	}
+}
+
+bool HttpRequest::check_if_body_size_greater_than_limit(t_requeste_state &request_state, int port, HTTPConfig &http_config)
+{
+	int client_max_body_size = 0;
+	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+
+
+	std::cout << "Path Request Recieved" << std::endl;
+	std::string server_name(req.getHost().substr(0, req.getHost().find(':')));
+	std::string key(req.getPort() + ":" + server_name);
+
+
+
+
+
+
+	std::map<std::string, ServerConfig>::iterator it = server_list.find(_host);
+
+	if (it != server_list.end())
+	{
+		client_max_body_size = it->second.get_client_max_body_size();
+	}
+	else
+	{
+		std::cerr << "Server not found for host: " << _host << std::endl;
+		return false;
+	}
+	if (request_state.content_length > client_max_body_size)
+	{
+		std::cerr << "Request body size exceeds limit: " << request_state.content_length << " > " << client_max_body_size << std::endl;
+		return true;
+	}
+	return false;
 }
 
 void	HttpRequest::constructBody(t_requeste_state &state, int port)

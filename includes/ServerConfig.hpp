@@ -3,6 +3,8 @@
 
 # include "LocationConfig.hpp"
 
+template <typename T> bool strto_safe(const std::string& str, T& result);
+
 class ServerConfig
 {
 	public:
@@ -15,12 +17,15 @@ class ServerConfig
 		bool			set_server_values(std::istringstream &iss, std::string key);
 		void			add_location(std::string key, int location_number);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
-		unsigned int	get_port_number();
-		std::string		get_string_port_number();
-		std::string		DEBUG_test();
-		std::string		get_server_name();
-		std::map<std::string, std::string>	get_map_server();
+
+		int									get_client_max_body_size();
+		unsigned int						get_port_number();
+		std::string							get_string_port_number();
+		std::string							get_server_name();
 		std::vector<LocationConfig>			get_location_list();
+		std::map<std::string, std::string>	get_map_server();
+
+		std::string		DEBUG_test();
 
 	private:
 		std::map<std::string, std::string> _map_server;

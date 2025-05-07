@@ -3,6 +3,8 @@
 
 # include "parsing_utils.hpp"
 
+template <typename T> bool strto_safe(const std::string& str, T& result);
+
 class LocationConfig
 {
 	public:
@@ -13,7 +15,8 @@ class LocationConfig
 		void	set_path(std::string key);
 		bool	parse_location(std::istringstream &iss, std::string key);
 
-		std::map<std::string, std::string> get_map_location();
+		int							get_client_max_body_size();
+		std::map<std::string, std::string>	get_map_location();
 
 	private:
 		std::map<std::string, std::string> _map_location;

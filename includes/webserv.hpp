@@ -28,6 +28,8 @@
 #define FAILEDSYSTEMCALL -1
 #define MISSINGFILE -2
 #define ICOHANDELING 2
+#define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __FUNCTION__ << ":\033[0m " << std::endl;
+#define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __PRETTY_FUNCTION__ << ":\033[0m " << std::endl;
 
 typedef struct s_fd_data
 {

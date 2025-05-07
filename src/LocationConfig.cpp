@@ -19,15 +19,24 @@ LocationConfig::LocationConfig()
 
 LocationConfig::~LocationConfig() {}
 
-void	LocationConfig::set_path(std::string key)
+void	LocationConfig::set_path(std::string key)	{ _map_location["path"] = key; }
+
+int	LocationConfig::get_client_max_body_size()
 {
-	_map_location["path"] = key;
+	int client_max_body_size = 0;
+	std::map<std::string, std::string>::iterator it = _map_location.find("client_max_body_size");
+	if (it != _map_location.end())
+	{
+		if (!strto_safe(it->second, client_max_body_size))
+			std::cerr << "Error: client_max_body_size is not a number!" << std::endl;
+		else if (client_max_body_size < 0)
+			std::cerr << "Error: client_max_body_size is negative!" << std::endl;
+	}
+	std::cout << "client_max_body_size: " << client_max_body_size << std::endl;
+	return client_max_body_size;
 }
 
-std::map<std::string, std::string> LocationConfig::get_map_location()
-{
-	return _map_location;
-}
+std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
 
 bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 {
