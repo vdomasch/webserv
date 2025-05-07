@@ -10,9 +10,14 @@ class HTTPConfig
 		~HTTPConfig();
 
 		bool parse_http();
+
 		void set_filename(std::string filename);
-		std::map<std::string, ServerConfig> get_server_list() const;
+
+		std::map<std::string, std::string>	get_http_map() const;
+		std::map<std::string, ServerConfig>	get_server_list() const;
+
 		void DEBUG_HTTP_show();
+
 
 	private:
 		std::map<std::string, std::string> _map_http;

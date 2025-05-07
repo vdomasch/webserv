@@ -34,8 +34,6 @@ int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 	return (server_fd);
 }
 
-
-
 int accept_connexion(int server_fd, sockaddr_in *servaddr)
 {
 	int	my_socket;
@@ -48,38 +46,6 @@ int accept_connexion(int server_fd, sockaddr_in *servaddr)
 		return(0); //exit ?
 	}
 	return (my_socket);
-}
-
-char	find_method_name(std::string request_string)
-{
-	std::string method;
-	int			i;
-
-	method = request_string.substr(0, request_string.find(' '));
-
-	std::string	(method_dictionary[4]) = {"GET", "POST", "DELETE", "PUT"};
-
-	i = -1;
-	while(++i < 4)
-	{
-		if (method == method_dictionary[i])
-			break ;
-	}
-
-	switch (i)
-	{
-	case 0:
-		return ('G');
-	case 1:
-		return ('P');
-	case 2:
-		return ('P');
-	case 3:
-		return ('U');
-	default:
-		return ('G');
-	}
-
 }
 
 std::ifstream::pos_type filesize(const char *filename)
@@ -243,7 +209,6 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	}
 }
 
-
 std::string	openAndDisplayIndex(t_fd_data *d, int *errcode) // to do later
 {
 	char		buffer[BUFFER_SIZE];
@@ -311,7 +276,6 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 	}
 	
 }
-
 
 std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 {
@@ -384,6 +348,8 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	char		objType;
 	size_t		filename_start;
 	size_t		filename_end;
+
+	std::cout << "DEBUG LEO: " << request << std::endl;
 
 	first_line = request.substr(0, request.find('\n')); // doesn´t work if curl
 	filename_start = first_line.find_first_of(' ');

@@ -21,7 +21,7 @@
 #include <fcntl.h>// open
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 5000 /// to change, must be 1024
+#define BUFFER_SIZE 2048 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
@@ -47,7 +47,7 @@ typedef struct s_requeste_state
 {
 	bool		header_complete;
 	bool		ready_to_process;
-	int			content_length;
+	size_t		content_length;
 	int			bytesRead;
 	std::string	request;
 	std::string	body;
@@ -64,6 +64,11 @@ std::string create_header(const std::string &status, const std::string &content_
 std::string tostr(const int value);
 
 template <typename T>
-bool strto_safe(const std::string& str, T& result);
+bool strto_safe(const std::string& str, T& result)
+{
+    std::stringstream ss(str);
+    ss >> result;
+    return !ss.fail() && ss.eof();
+}
 
 #endif

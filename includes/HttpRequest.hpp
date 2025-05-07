@@ -38,7 +38,7 @@ class HttpRequest
 
 		void parseRequest(const std::string& request, int port);
 
-		void analyseHeader(t_requeste_state &state, int port);
+		int analyseHeader(t_requeste_state &state, int port);
 
 		void constructBody(t_requeste_state &state, int port);
 

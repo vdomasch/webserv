@@ -53,7 +53,7 @@ std::string trim(const std::string& str)
     return str.substr(first, last - first + 1);
 }
 
-void	HttpRequest::parseRequest(const std::string &request, int port)
+/*void	HttpRequest::parseRequest(const std::string &request, int port)
 {
 	if (request.empty())
 		return ;
@@ -101,9 +101,9 @@ void	HttpRequest::parseRequest(const std::string &request, int port)
 		_keep_alive = false;
 	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
 	_port = tostr(port);
-}
+}*/
 
-void	HttpRequest::analyseHeader(t_requeste_state &state, int port)
+int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 {
 	if (state.request.empty())
 		return ;
@@ -160,10 +160,16 @@ void	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 		std::cerr << "Content length is not a number" << std::endl;
 		return ;
 	}
+	if (state.content_length < 0)
+	{
+		std::cerr << "Content length is negative" << std::endl;
+		return ;
+	}
 }
 
 void	HttpRequest::constructBody(t_requeste_state &state, int port)
 {
+	static_cast<void>(port);
 	if (state.request.empty())
 		return ;
 
@@ -173,5 +179,8 @@ void	HttpRequest::constructBody(t_requeste_state &state, int port)
 	if (body.size() > state.content_length)
 		std::cerr << "Body size is greater than content length" << std::endl;
 	else if (body.size() == state.content_length)
+	{
 		state.ready_to_process = true;
+		state.body = body;
+	}
 }
