@@ -72,7 +72,7 @@ function onHasParentDirectory() {
   box.style.display = "block";
 
   var root = document.location.pathname;
-  if (!root.endsWith("/"))
+  if (!root.endsWith("/")) ///////////////////////////////// IMPORTANT ! ELSE ISNT VALID ! 
     root += "/";
 
   var link = document.getElementById("parentDirLink");

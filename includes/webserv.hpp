@@ -25,6 +25,7 @@
 #include <stdlib.h> // atof
 #include <algorithm> // std::sort
  #include <dirent.h> // dirent for opendir
+ #include <cmath> // floor for size
 
 
  #include <fcntl.h>// open
@@ -38,6 +39,7 @@
 #define FAILEDSYSTEMCALL -1
 #define MISSINGFILE -2
 #define ICOHANDELING 2
+#define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
 struct s_fd_data
 {

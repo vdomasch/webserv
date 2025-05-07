@@ -50,38 +50,6 @@ int accept_connexion(int server_fd, sockaddr_in *servaddr)
 	return (my_socket);
 }
 
-char	find_method_name(std::string request_string)
-{
-	std::string method;
-	int			i;
-
-	method = request_string.substr(0, request_string.find(' '));
-
-	std::string	(method_dictionary[4]) = {"GET", "POST", "DELETE", "PUT"};
-
-	i = -1;
-	while(++i < 4)
-	{
-		if (method == method_dictionary[i])
-			break ;
-	}
-
-	switch (i)
-	{
-	case 0:
-		return ('G');
-	case 1:
-		return ('P');
-	case 2:
-		return ('P');
-	case 3:
-		return ('U');
-	default:
-		return ('G');
-	}
-
-}
-
 std::ifstream::pos_type filesize(const char *filename)
 {
 	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
@@ -126,7 +94,6 @@ std::string	handleIcoFile(t_fd_data *d)
 	std::ostringstream oss;
 	std::ifstream::pos_type dataFile;
 
-	// std::ifstream binfile("reset", std::ios::binary);
 	if (!binfile.is_open()) 
 		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
 	else 
@@ -134,13 +101,8 @@ std::string	handleIcoFile(t_fd_data *d)
 		binfile.seekg(0, std::ios::end);
 		size_t file_size = binfile.tellg();
 		binfile.seekg(0, std::ios::beg);
-		
 		std::vector<char> buffer2(file_size);
 		binfile.read(&buffer2[0], file_size);
-
-		// for (std::vector<char>::const_iterator i = buffer2.begin(); i != buffer2.end(); ++i)
-    	// 	std::cout << *i << ' ';
-
 		binfile.close();
 		
 		std::ostringstream response;
@@ -156,13 +118,27 @@ std::string	handleIcoFile(t_fd_data *d)
 		d->content_len = atof(oss.str().c_str());
 
 		return(response.str().c_str());
-		// printf("\033[31m  gougou %lu\n", d->binaryContent.size());
-		// printf("\033[31m gaga %lu\n", buffer2.size());
-
 	}
 
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
 	
+}
+
+bool	indexFileExists(t_fd_data *d, int debug)
+{
+	struct stat fileinfo;
+
+
+	if (debug) // check DEBUG_INDEX_EXISTS in webserv.hpp
+		return (false);
+
+	if (stat ((d->serverFolder + "/index.html").c_str(), &fileinfo) == 0) // does NOT have to be named index, to be replaced with the name of the index file parsed
+	{
+		d->requestedFilePath = d->serverFolder + "/index.html";
+		return (true);
+	}
+	else
+		return (false);
 }
 
 std::string	openAndReadFile(t_fd_data *d, int *errcode)
@@ -172,13 +148,10 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	int				fd;
 	unsigned int	len;
 
-
 	len = d->requestedFilePath.length();
-	// printf("\033[31m HEY ! 🗣 \n I AM %s WITH A LEN OF %u\n\n", file.substr(len - 4, len - 1).c_str(), len);
 	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
 	{
-		// printf("\033[34m####Setting error code to 2 ! Seems to be an ico file !\n\033[0m\n");
-		*errcode = ICOHANDELING; // move into func bellow
+		*errcode = ICOHANDELING;
 		return (handleIcoFile(d));
 	}
 
@@ -195,12 +168,9 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 		close(fd);
 		return ("void"); //handle better
 	}
-	// printf("\033[36m->Bytes read : (%d)\n\033[0m\n", bytes_read);
 	*errcode = 0;
 	close(fd);
-
 	std::string response(buffer);
-
 	d->content_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
@@ -213,10 +183,9 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	std::string	fileContent;
 	
 
-	if (filename == "/") // then redirect to index  --> to check ??
+	if (filename == "/") // special case, must act like the index page was asked
 	{
 		d->requestedFilePath = d->serverFolder;
-		printf("Got it ! the folder is : (%s)\n\n", d->requestedFilePath.c_str());
 		return (IS_INDEXDIR);
 	}
 	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
@@ -244,40 +213,8 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 }
 
 
-std::string	openAndDisplayIndex(t_fd_data *d, int *errcode) // to do later
-{
-	char		buffer[BUFFER_SIZE];
-	std::string pathToIndexPage;
-	int			bytes_read;
-	int			fd;
-
-	
-	pathToIndexPage = d->requestedFilePath + "/basePageForIndex.html"; // subject to change ?  --> should NOT be using still .html, or content will be the same no matter the files
-	fd = open(pathToIndexPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
-	if (fd < 0)
-	{
-		*errcode = FAILEDSYSTEMCALL;
-		return ("void");
-	}
-	bytes_read = read(fd, buffer, BUFFER_SIZE);
-	if (bytes_read < 0)
-	{
-		*errcode = FAILEDSYSTEMCALL;
-		close(fd);
-		return ("void");
-	}
-	*errcode = 0;
-	close(fd);
-	std::string response(buffer);
-
-	d->content_len = response.length();
-	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
-	return (response);
-}
-
 void	storeFolderContent(t_fd_data *d, int *errcode)
 {
-	// std::ostringstream oss;
 	struct dirent *pDirent;
     DIR *pDir;
 
@@ -289,18 +226,13 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
         return ;
     }
 	errno = 0;
-	while ((pDirent = readdir(pDir)) != NULL) // can fail, check ernoo when null is found, set ernoo to 0 before first call
+	while ((pDirent = readdir(pDir)) != NULL) // can fail, we check ernoo when null is found,and set ernoo to 0 before first call
 	{
 		std::string fname(pDirent->d_name );
 		
-		if ((fname == ".") || fname == "..")
+		if ((fname == ".") || fname == "..") // skip previous and current folder objects
 			continue;
-		d->folderContent.push_back(*pDirent); /// fait une boucle pour check le nom et le type de fichier sale flemmard
-
-
-    	//printf ("[%s]\n", pDirent->d_name);
-		// oss << pDirent->d_name;
-		// oss << "\n";
+		d->folderContent.push_back(*pDirent);
     }
 	closedir (pDir);
 	if (errno != 0)
@@ -312,22 +244,15 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 	
 }
 
-bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
-    return a.lowerName < b.lowerName;
-}
 
 void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
 {
-	printf("\033[31mlooking for the parent folder of (%s) !\033[0m\n", filepath.c_str());
-	printf("\033[31mi know server folder is (%s) !\033[0m\n", server_folder.c_str());
-	
 	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
 	{
-		printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
+		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
 		parent = "/";
 		return ;
 	}
-
 	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
 	parent = filepath.substr(0, pos);
 	pos = parent.find_last_of('/');
@@ -335,6 +260,10 @@ void	findParentFolder(std::string &parent, std::string filepath, std::string ser
 	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
 	if (parent == "/server_files")
 		parent = "/";
+}
+
+bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
+	return a.lowerName < b.lowerName;
 }
 
 void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
@@ -347,12 +276,34 @@ void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &f
 	}
 
 	std::sort(sorted.begin(), sorted.end(), compareBySize);
+	// for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
+	// 	std::cout << j->baseName << std::endl;
+}
 
+std::string	displayCorrectFileSize(const char * filename)
+{
+	std::ostringstream		oss;
+	std::ifstream::pos_type	posSize;
+	float					size;
+	int						i = 0;
 
-	// std::sort(sorted.begin(), sorted.end());
-
-	for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
-		std::cout << j->baseName << std::endl;
+	posSize = filesize(filename); //check if fail i guess ?
+	oss << posSize;
+	size = atof(oss.str().c_str());
+	
+	std::string dico[4] = {" B"," kB"," MB", " GB"};
+	while (size > 1024)
+	{
+		size /= 1024;
+		i++;
+	}
+	if (i > 3)
+		i = 3;
+	size = floor(size * 10 + 0.5f) / 10.0f;
+	oss.str("");
+	oss.clear();
+	oss << size;
+	return (oss.str() + dico[i]);
 }
 
 void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
@@ -361,7 +312,7 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 	time_t						timestamp;
 	std::vector<orderedFiles>	sorted_names;
 
-	getRightFileOrder(sorted_names, d->folderContent);
+	getRightFileOrder(sorted_names, d->folderContent); //sort all elements by name
 	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
 	{
 		
@@ -373,8 +324,6 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/"; // a changerrrrrrr
 		if (fileHref == "/server_files/")
 			fileHref = ""; 
-		printf("HREFFFFFFFFFFFFFF %s\n", fileHref.c_str());
-		printf("MIAOUUUUU (%s)\n", i->baseName.c_str());
 		oss << "<tr><td>\n";
 		oss << "<a class";
 		oss << "=\"icon dir\" href=\"";
@@ -384,7 +333,9 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		oss << " ";
 		oss << "</a>\n";
 		oss << "</td>\n";
-		oss << "<td> / </td>\n"; // no size needed
+
+		//Handle size
+		oss << "<td> - </td>\n"; // no size needed for folders
 
 		//handle last file modification
 		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
@@ -406,7 +357,6 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/";
 		if (fileHref == "/server_files/") //temporary fix for when we reach last folder
 			fileHref = ""; 
-		printf("HREFFFFFFFFFFFFFF %s\n", fileHref.c_str());
 		oss << "<tr><td>\n";
 		oss << "<a class";
 		oss << "=\"icon file\" href=\"\n";
@@ -416,8 +366,9 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		oss << "</a>\n";
 		oss << "</td>\n";
 	
+		//handle size
 		oss << "<td> ";
-		oss << filesize((d->requestedFilePath + "/" + m_fpath).c_str());
+		oss << displayCorrectFileSize((d->requestedFilePath + "/" + m_fpath).c_str());
 		oss << " </td>\n";
 
 		//handle last file modification
@@ -454,7 +405,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	storeFolderContent(d, errcode);
 	findParentFolder(parentFolder, d->requestedFilePath, d->serverFolder);
 	if (*errcode == FAILEDSYSTEMCALL)
-		return ("");
+		return (""); // to handle better ??
 
 	setupHTMLpageStyle(oss); // contains the <style> of the html 
 	oss << "<title> Index of";
@@ -475,7 +426,6 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	oss << "<th style=\"text-align:left\"> Date Modified  </th>\n</thead>\n<tbody>\n";
 	sendSizeAndLastChange(d, oss); // extract the info about file size and last access
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
-
 	*errcode = 0;
 	pageContent = oss.str().c_str();
 	d->content_len = pageContent.length();
@@ -493,7 +443,7 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	size_t		filename_start;
 	size_t		filename_end;
 
-	first_line = request.substr(0, request.find('\n')); // doesn´t work if curl
+	first_line = request.substr(0, request.find('\n'));
 	filename_start = first_line.find_first_of(' ');
 	filename_end = first_line.find_last_of(' ');
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
@@ -502,10 +452,15 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	printf(" Requested : (%s)\n",requested_file.c_str() );
 	printf("------------------------------------\033[0m\n");
 
-	objType = checkObjectType(requested_file, d, errcode); // is it a file ? or a folder ?
+	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
-	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR)
-		response = buildCurrentIndexPage(d, errcode);
+	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : use actual index.html if exists, else list the content of the folder
+	{
+		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and indexfile was found, redirecting	
+			response = openAndReadFile(d, errcode);
+		else
+			response = buildCurrentIndexPage(d, errcode); // no index found, listing files instead (if auto-index on)
+	}
 	else if (objType == IS_EXISTINGFILE)
 		response = openAndReadFile(d, errcode);
 	else
@@ -518,12 +473,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	std::string	responseCode;
 	std::ostringstream oss;
 
-
-	//--------------------------------------------------------//
-    //std::cout << "body size is " << requestBody.length() << "\n"; //temporary until ico zorks in binary
-
-
-	if (requestBody.length() == 0)
+	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ?
 	{
 		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
 		return (""); 
@@ -586,7 +536,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
 
 	printf("\033[35m\n#######################\n");
-	printf("(%s)\n",finalMessage.c_str() );
+	// printf("(%s)\n",finalMessage.c_str() );
 	printf(" \nERROR CODE(%d)\n",errcode);
 	printf("#######################\033[0m\n");
 
@@ -594,7 +544,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 	{
 		if (d->content_type == "image/x-icon")
 		{
-			send(socket , finalMessage.c_str() , finalMessage.length(), 0); // must be content len instead of finaleMessage.lenght, or else header size is added
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
 		}
 		else
@@ -635,7 +585,6 @@ int main(int argc, char **argv)
 			perror("Select failed ! ");
 			return (0);
 		}
-
 		for (int i = 0; i <= s_data.max_sckt_fd ; i++)
 		{
 			if (FD_ISSET(i, &s_data.ready_sockets))
@@ -657,7 +606,6 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-		
 		my_socket = -1;
 	}
 	return (argc * 0);
