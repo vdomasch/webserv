@@ -157,7 +157,7 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
 	_port = tostr(port);
 	state.bytesRead = state.request.size() - (state.request.find("\r\n\r\n") + 4);
-	if (strto_safe(_content_length, state.content_length) == false)
+	if (convert(_content_length, state.content_length) == false)
 	{
 		std::cerr << "Content length is not a number" << std::endl;
 		return ;
@@ -172,6 +172,12 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 bool HttpRequest::check_if_body_size_greater_than_limit(t_requeste_state &request_state, int port, HTTPConfig &http_config)
 {
 	int client_max_body_size = 0;
+
+	std::map<std::string, std::string>::iterator it = http_config.get_http_map().find("client_max_body_size");
+	if (it != http_config.get_http_map().end() && it->second != "UNSET")
+		client_max_body_size = 
+
+
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
 

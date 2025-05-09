@@ -3,7 +3,7 @@
 
 # include "parsing_utils.hpp"
 
-template <typename T> bool strto_safe(const std::string& str, T& result);
+template <typename T, typename Y> bool convert(const T& from, Y& to);
 
 class LocationConfig
 {

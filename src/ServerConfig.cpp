@@ -35,7 +35,7 @@ int	ServerConfig::get_client_max_body_size()
 	std::map<std::string, std::string>::iterator it = _map_server.find("client_max_body_size");
 	if (it != _map_server.end())
 	{
-		if (!strto_safe(it->second, client_max_body_size))
+		if (!convert(it->second, client_max_body_size))
 			std::cerr << "Error: client_max_body_size is not a number!" << std::endl;
 		else if (client_max_body_size < 0)
 			std::cerr << "Error: client_max_body_size is negative!" << std::endl;
