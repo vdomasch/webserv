@@ -23,9 +23,9 @@ class Server
 		t_fd_data		_socket_data;	// to keep track of all active sockets
 		HttpRequest		_req;			// to parse the request
 
-		std::map<int, int>								_port_to_socket_map;
-		std::map<int, int>								_socket_to_port_map;
-		std::map<int , t_requeste_state>				_socket_states;
+		std::map<int, int>																	_port_to_socket_map;
+		std::map<int, int>																	_socket_to_port_map;
+		std::map<int , HttpRequest>															_socket_states;
 		std::map<std::string, void(*)(HttpRequest&, std::map<std::string, ServerConfig>&)>	_method_map;
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);

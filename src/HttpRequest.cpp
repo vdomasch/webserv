@@ -157,8 +157,7 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
 	_port = tostr(port);
 	state.bytesRead = state.request.size() - (state.request.find("\r\n\r\n") + 4);
-	if (convert(_content_length, state.content_length) == false)
-	{
+	try { convert(_content_length, state.content_length); } catch (std::exception &e) {
 		std::cerr << "Content length is not a number" << std::endl;
 		return ;
 	}
@@ -169,44 +168,40 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 	}
 }
 
-bool HttpRequest::check_if_body_size_greater_than_limit(t_requeste_state &request_state, int port, HTTPConfig &http_config)
+bool HttpRequest::check_if_body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config)
 {
-	int client_max_body_size = 0;
+	int client_max_body_size = http_config.get_client_max_body_size();
 
-	std::map<std::string, std::string>::iterator it = http_config.get_http_map().find("client_max_body_size");
-	if (it != http_config.get_http_map().end() && it->second != "UNSET")
-		client_max_body_size = 
-
-
+	// IN SERVER
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-
-
-	std::cout << "Path Request Recieved" << std::endl;
-	std::string server_name(req.getHost().substr(0, req.getHost().find(':')));
-	std::string key(req.getPort() + ":" + server_name);
-
-
-
-
-
-
-	std::map<std::string, ServerConfig>::iterator it = server_list.find(_host);
-
-	if (it != server_list.end())
+	std::string key(port + ":" + request.getHost());
+	std::map<std::string, ServerConfig>::iterator it_server = server_list.find(key);
+	if (it_server != server_list.end())
 	{
-		client_max_body_size = it->second.get_client_max_body_size();
+		client_max_body_size = it_server->second.get_client_max_body_size();
+
+		// IN LOCATION
+		std::vector<LocationConfig> location = it_server->second.get_location_list();
+		for (size_t i = 0; i < location.size(); i++)
+		{
+			if (location[i].get_path() == request.getPath())
+			{
+				client_max_body_size = location[i].get_client_max_body_size();
+				break;
+			}
+		}
+
 	}
-	else
-	{
-		std::cerr << "Server not found for host: " << _host << std::endl;
-		return false;
-	}
-	if (request_state.content_length > client_max_body_size)
-	{
-		std::cerr << "Request body size exceeds limit: " << request_state.content_length << " > " << client_max_body_size << std::endl;
-		return true;
-	}
-	return false;
+
+
+
+
+
+		if (request._state.content_length > client_max_body_size)
+		{
+			std::cerr << "Content length is greater than client max body size" << std::endl;
+			return false;
+		}
 }
 
 void	HttpRequest::constructBody(t_requeste_state &state, int port)

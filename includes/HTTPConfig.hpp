@@ -13,6 +13,7 @@ class HTTPConfig
 
 		void set_filename(std::string filename);
 
+		size_t								get_client_max_body_size();
 		std::map<std::string, std::string>	get_http_map() const;
 		std::map<std::string, ServerConfig>	get_server_list() const;
 

@@ -21,22 +21,22 @@ LocationConfig::~LocationConfig() {}
 
 void	LocationConfig::set_path(std::string key)	{ _map_location["path"] = key; }
 
+std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
+
 int	LocationConfig::get_client_max_body_size()
 {
 	int client_max_body_size = 0;
 	std::map<std::string, std::string>::iterator it = _map_location.find("client_max_body_size");
 	if (it != _map_location.end())
 	{
-		if (!convert(it->second, client_max_body_size))
-			std::cerr << "Error: client_max_body_size is not a number!" << std::endl;
-		else if (client_max_body_size < 0)
-			std::cerr << "Error: client_max_body_size is negative!" << std::endl;
+			try { convert(it->second, client_max_body_size); }
+			catch (std::exception &e) { return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0); }
+			if (client_max_body_size < 0)
+				return (std::cerr << "Error: client_max_body_size is negative!" << std::endl, 0);
 	}
-	std::cout << "client_max_body_size: " << client_max_body_size << std::endl;
 	return client_max_body_size;
 }
 
-std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
 
 bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 {

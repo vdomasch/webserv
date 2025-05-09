@@ -66,12 +66,13 @@ std::string create_header(const std::string &status, const std::string &content_
 std::string tostr(const int value);
 
 template <typename T, typename Y>
-bool convert(const T& from, Y& to)
+void convert(const T& from, Y& to)
 {
     std::stringstream ss;
 	ss << from;
     ss >> to;
-    return !ss.fail() && ss.eof();
+    if (!ss.fail() && ss.eof())
+		throw std::runtime_error("Conversion failed");
 }
 
 #endif

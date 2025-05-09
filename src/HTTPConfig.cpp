@@ -9,6 +9,23 @@ HTTPConfig::~HTTPConfig() {}
 
 void	HTTPConfig::set_filename(std::string filename)					{ _filename = filename; }
 
+size_t	HTTPConfig::get_client_max_body_size()
+{
+	int client_max_body_size = 0;
+	std::map<std::string, std::string>::iterator it = _map_http.find("client_max_body_size");
+	if (it != _map_http.end() && it->second != "UNSET")
+	{
+		try { convert(it->second, client_max_body_size);
+		}
+		catch (std::exception &e) {
+			return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0);
+		}
+		if (client_max_body_size < 0)
+			return (std::cerr << "Error: client_max_body_size is negative!" << std::endl, 0);
+	}
+	return client_max_body_size;
+}
+
 std::map<std::string, ServerConfig> HTTPConfig::get_server_list() const	{ return _server_list; }
 std::map<std::string, std::string> HTTPConfig::get_http_map() const		{ return _map_http; }
 

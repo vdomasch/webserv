@@ -156,19 +156,19 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 		buffer[BUFFER_SIZE - 1] = '\0';
 
 	// Accumulate partial reads
-	_socket_states[fd].request += std::string(buffer);
+	_socket_states[fd]._state.request += std::string(buffer);
 
 	// Check if header is complete
-	if (_socket_states[fd].request.find("\r\n\r\n") != std::string::npos)
+	if (_socket_states[fd]._state.request.find("\r\n\r\n") != std::string::npos)
 	{
-		if (_socket_states[fd].header_complete == false)
+		if (_socket_states[fd]._state.header_complete == false)
 		{
-			errcode = req.analyseHeader(_socket_states[fd], _socket_to_port_map[fd]);
-			_socket_states[fd].header_complete = true;
+			errcode = req.analyseHeader(_socket_states[fd]._state, _socket_to_port_map[fd]);
+			_socket_states[fd]._state.header_complete = true;
 			req.check_if_body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config);
 		}
-		if (_socket_states[fd].header_complete == true)
-			req.constructBody(_socket_states[fd], _socket_to_port_map[fd]);
+		if (_socket_states[fd]._state.header_complete == true)
+			req.constructBody(_socket_states[fd]._state, _socket_to_port_map[fd]);
 	}
 	else
 		return; // Not yet complete — wait for next recv()

@@ -13,6 +13,8 @@ class HttpRequest
 		HttpRequest();
 		~HttpRequest();
 
+		t_requeste_state	_state;
+
 		std::string	getMethod() const;
 		std::string	getHost() const;
 		std::string	getConnection() const;
@@ -43,19 +45,19 @@ class HttpRequest
 
 		void	constructBody(t_requeste_state &state, int port);
 
-		bool	check_if_body_size_greater_than_limit(t_requeste_state &state, int port, HTTPConfig &http_config);
+		bool	check_if_body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config);
 
 	private:
-		std::string	_method;
-		std::string	_host;
-		std::string	_connection;
-		std::string	_content_length;
-		std::string	_content_type;
-		std::string	_path;
-		std::string	_port;
-		std::string	_cookie;
-		bool 		_keep_alive;
-		int 		_done;
+		std::string			_method;
+		std::string			_host;
+		std::string			_connection;
+		std::string			_content_length;
+		std::string			_content_type;
+		std::string			_path;
+		std::string			_port;
+		std::string			_cookie;
+		bool 				_keep_alive;
+		int 				_done;
 
 		std::string	_response;
 };
