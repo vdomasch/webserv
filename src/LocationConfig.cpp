@@ -6,23 +6,17 @@ LocationConfig::LocationConfig()
 	_location_directives[1] = "client_max_body_size";
 	_location_directives[2] = "root";
 	_location_directives[3] = "index";
-	_location_directives[4] = "alias";
+	_location_directives[4] = "rewrite";
 	_location_directives[5] = "autoindex";
 	_location_directives[6] = "allow_methods";
 	_location_directives[7] = "cgi_path";
 	_location_directives[8] = "cgi_ext";
 	_location_directives[9] = "return";
-	_location_directives[10] = "rewrite";
 }
 
 //LocationConfig::LocationConfig(const LocationConfig& param) {}
 
 LocationConfig::~LocationConfig() {}
-
-void	LocationConfig::set_path(std::string key)
-{
-	_map_location["path"] = key;
-}
 
 bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 {

@@ -8,7 +8,7 @@ ServerConfig::ServerConfig() {
 	_server_directives[4] = "client_max_body_size";
 	_server_directives[5] = "root";
 	_server_directives[6] = "index";
-	_server_directives[7] = "alias";
+	_server_directives[7] = "keepalive_timeout";
 	_server_directives[8] = "autoindex";
 	_server_directives[9] = "allow_methods";
 	_server_directives[10] = "cgi_path";
@@ -17,7 +17,6 @@ ServerConfig::ServerConfig() {
 	_server_directives[13] = "rewrite";
 	_server_directives[14] = "access_log";
 	_server_directives[15] = "error_log";
-	_server_directives[16] = "keepalive_timeout";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
@@ -123,15 +122,18 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	return 0;
 }
 
-void	ServerConfig::add_location(std::string key, int location_number)
+void	ServerConfig::add_location(std::string key)
 {
-	_location_list.push_back(LocationConfig());
-	_location_list[location_number].set_path(key);
+	//if (_location_list.count((key))
+		//error
+	std::cout << "DEBUG: key = " << key << std::endl;
+	_location_list[key] = LocationConfig();
+	std::cout << "DEBUG: check here !" << std::endl;
 }
 
-bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key, int location_number)
+bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key)
 {
-	if (_location_list[location_number].parse_location(iss, key))
+	if (_location_list[key].parse_location(iss, key))
 		return 1;
 	return 0;
 }

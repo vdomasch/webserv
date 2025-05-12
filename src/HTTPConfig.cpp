@@ -65,7 +65,6 @@ bool HTTPConfig::is_location(std::string key)
 bool	HTTPConfig::parse_http()
 {
 	ServerConfig server_temp;
-	int	location_number = -1;
 
 	std::string line;
 	std::ifstream infile(_filename.c_str());
@@ -83,15 +82,14 @@ bool	HTTPConfig::parse_http()
 		{
 			if (key == "location")
 			{
-				location_number++;
 				if (!is_location_valid(iss))
 					return 1;
 				iss >> key;
-				server_temp.add_location(key, location_number);
+				server_temp.add_location(key);
 			}
 			else if (!key.empty() && key != "}")
 			{
-				if (server_temp.select_current_location(iss, key, location_number))
+				if (server_temp.select_current_location(iss, key))
 					return 1;
 			}
 		}
@@ -100,7 +98,6 @@ bool	HTTPConfig::parse_http()
 			if (key == "server")
 			{
 				server_temp = ServerConfig();
-				location_number = -1;
 				if (!(iss >> key))
 				{
 					std::cerr << "Error: Keyword server need an openning bracket '{'!" << std::endl;

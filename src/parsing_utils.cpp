@@ -217,8 +217,8 @@ bool	handle_index(std::istringstream &iss, std::map<std::string, std::string> &_
 	{
 		std::cerr << "Error: Keyword index has no value!" << std::endl;
 		return 1;
-	}
-	if (!_current_map["index"].empty())
+	}	
+	if (_current_map.count("index"))
 	{
 		std::cerr << "Error: Keyword index already set!" << std::endl;
 		return 1;

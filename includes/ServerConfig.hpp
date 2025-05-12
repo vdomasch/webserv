@@ -11,9 +11,9 @@ class ServerConfig
 		~ServerConfig();
 
 		bool			parse_server(std::istringstream &iss, std::string key);
-		bool			select_current_location(std::istringstream &iss, std::string key, int location_number);
+		bool			select_current_location(std::istringstream &iss, std::string key);
 		bool			set_server_values(std::istringstream &iss, std::string key);
-		void			add_location(std::string key, int location_number);
+		void			add_location(std::string key);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
 		unsigned int	get_port_number();
 		std::string		get_string_port_number();
@@ -23,8 +23,8 @@ class ServerConfig
 	private:
 		std::map<std::string, std::string> _map_server;
 		std::vector<std::string> _listen_ports;
-		std::vector<LocationConfig> _location_list;
-		std::string _server_directives[17];
+		std::map<std::string, LocationConfig> _location_list;
+		std::string _server_directives[16];
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);

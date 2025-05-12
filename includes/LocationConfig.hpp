@@ -10,12 +10,11 @@ class LocationConfig
 		//LocationConfig(const LocationConfig&);
 		~LocationConfig();
 
-		void	set_path(std::string key);
 		bool	parse_location(std::istringstream &iss, std::string key);
 
 	private:
 		std::map<std::string, std::string> _map_location;
-		std::string _location_directives[11];
+		std::string _location_directives[10];
 
 		bool	is_location_variable(std::string key);
 		
