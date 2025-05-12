@@ -15,6 +15,7 @@ class LocationConfig
 		void	set_path(std::string key);
 		bool	parse_location(std::istringstream &iss, std::string key);
 
+		std::string							get_path();
 		int									get_client_max_body_size();
 		std::map<std::string, std::string>	get_map_location();
 

@@ -142,13 +142,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 	{
 		close_msg(fd, "recv() failed", 1);
 		update_max_fd(fd);;
-		return ;
+		return;
 	}
 	if (bytes_read == 0)
 	{
 		close_msg(fd, "Client on socket ", 0);
 		update_max_fd(fd);
-		return ;
+		return;
 	}
 	if (bytes_read < BUFFER_SIZE)
 		buffer[bytes_read] = '\0';
@@ -165,7 +165,11 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 		{
 			errcode = req.analyseHeader(_socket_states[fd]._state, _socket_to_port_map[fd]);
 			_socket_states[fd]._state.header_complete = true;
-			req.check_if_body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config);
+			if (req.body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config))
+			{
+				close_msg(fd, "Request body size exceeds limit", 1);
+				return;
+			}
 		}
 		if (_socket_states[fd]._state.header_complete == true)
 			req.constructBody(_socket_states[fd]._state, _socket_to_port_map[fd]);

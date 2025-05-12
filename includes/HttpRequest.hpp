@@ -5,7 +5,7 @@
 
 class HTTPConfig;
 
-typedef struct s_requeste_state	t_requeste_state;
+typedef struct s_request_state	t_request_state;
 
 class HttpRequest
 {
@@ -13,7 +13,7 @@ class HttpRequest
 		HttpRequest();
 		~HttpRequest();
 
-		t_requeste_state	_state;
+		t_request_state	_state;
 
 		std::string	getMethod() const;
 		std::string	getHost() const;
@@ -41,23 +41,24 @@ class HttpRequest
 
 		void	parseRequest(const std::string& request, int port);
 
-		int		analyseHeader(t_requeste_state &state, int port);
+		int		analyseHeader(t_request_state &state, int port);
 
-		void	constructBody(t_requeste_state &state, int port);
+		void	constructBody(t_request_state &state, int port);
 
-		bool	check_if_body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config);
+		bool	body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config);
 
 	private:
-		std::string			_method;
-		std::string			_host;
-		std::string			_connection;
-		std::string			_content_length;
-		std::string			_content_type;
-		std::string			_path;
-		std::string			_port;
-		std::string			_cookie;
-		bool 				_keep_alive;
-		int 				_done;
+		std::string	_method;
+		std::string	_host;
+		std::string	_connection;
+		std::string	_content_length;
+		std::string	_content_type;
+		std::string	_path;
+		std::string	_port;
+		std::string	_cookie;
+		bool 		_keep_alive;
+		int 		_done;
+		int			error_code;
 
 		std::string	_response;
 };

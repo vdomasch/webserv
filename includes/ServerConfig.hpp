@@ -18,20 +18,20 @@ class ServerConfig
 		void			add_location(std::string key, int location_number);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
 
-		size_t								get_client_max_body_size();
-		unsigned int						get_port_number();
-		std::string							get_string_port_number();
-		std::string							get_server_name();
-		std::vector<LocationConfig>			get_location_list();
-		std::map<std::string, std::string>	get_map_server();
+		size_t									get_client_max_body_size();
+		unsigned int							get_port_number();
+		std::string								get_string_port_number();
+		std::string								get_server_name();
+		std::map<std::string, LocationConfig>	get_location_list();
+		std::map<std::string, std::string>		get_map_server();
 
 		std::string		DEBUG_test();
 
 	private:
-		std::map<std::string, std::string>	_map_server;
-		std::vector<std::string>			_listen_ports;
-		std::vector<LocationConfig>			_location_list;
-		std::string							_server_directives[17];
+		std::map<std::string, std::string>		_map_server;
+		std::vector<std::string>				_listen_ports;
+		std::map<std::string, LocationConfig>	_location_list;
+		std::string								_server_directives[17];
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);

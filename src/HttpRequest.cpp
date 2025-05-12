@@ -105,7 +105,7 @@ std::string trim(const std::string& str)
 	_port = tostr(port);
 }*/
 
-int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
+int	HttpRequest::analyseHeader(t_request_state &state, int port)
 {
 	if (state.request.empty())
 		return ;
@@ -168,43 +168,67 @@ int	HttpRequest::analyseHeader(t_requeste_state &state, int port)
 	}
 }
 
-bool HttpRequest::check_if_body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config)
+std::string find_best_location_match(const std::string& request_path, const std::map<std::string, LocationConfig>& locations)
+{
+	std::string best_match("");
+	size_t best_length = 0;
+
+	for (std::map<std::string, LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it)
+	{
+		const std::string& loc_path = it->first;
+		// Ensure it matches as a prefix
+		if (request_path.find(loc_path) == 0)
+		{
+			// Check if this is a better (longer) match
+			if (loc_path.length() > best_length)
+			{
+				best_match = loc_path;
+				best_length = loc_path.length();
+			}
+		}
+	}
+	return best_match;  // empty if no match found
+}
+
+
+
+bool HttpRequest::body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config)
 {
 	int client_max_body_size = http_config.get_client_max_body_size();
+	std::string port_str;
+	std::string key;
+	try { convert(port, port_str); }
+	catch (std::exception &e) { return (std::cerr << "Port is not a number" << std::endl, true); } ;
 
 	// IN SERVER
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-	std::string key(port + ":" + request.getHost());
+	if (server_list.count(port_str + ":" + request.getHost()))
+		key = port_str + ":" + request.getHost();
+	else //if (server_list.count(port_str + ":"))
+		key = port_str + ":";
+	//else
+	//{
+	//	std::cerr << "No server found for this port" << std::endl;
+	//	return true;
+	//}
+
 	std::map<std::string, ServerConfig>::iterator it_server = server_list.find(key);
-	if (it_server != server_list.end())
+	client_max_body_size = it_server->second.get_client_max_body_size();
+
+	// IN LOCATION
+	std::string best_match = find_best_location_match(request.getPath(), it_server->second.get_location_list());
+	if (!best_match.empty())
 	{
-		client_max_body_size = it_server->second.get_client_max_body_size();
-
-		// IN LOCATION
-		std::vector<LocationConfig> location = it_server->second.get_location_list();
-		for (size_t i = 0; i < location.size(); i++)
-		{
-			if (location[i].get_path() == request.getPath())
-			{
-				client_max_body_size = location[i].get_client_max_body_size();
-				break;
-			}
-		}
-
+		LocationConfig location = it_server->second.get_location_list().find(best_match)->second;
+		client_max_body_size = location.get_client_max_body_size();
 	}
 
-
-
-
-
-		if (request._state.content_length > client_max_body_size)
-		{
-			std::cerr << "Content length is greater than client max body size" << std::endl;
-			return false;
-		}
+	if (request._state.content_length <= client_max_body_size)
+		return false;
+	return true;
 }
 
-void	HttpRequest::constructBody(t_requeste_state &state, int port)
+void	HttpRequest::constructBody(t_request_state &state, int port)
 {
 	static_cast<void>(port);
 	if (state.request.empty())

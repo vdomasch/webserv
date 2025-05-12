@@ -21,6 +21,14 @@ LocationConfig::~LocationConfig() {}
 
 void	LocationConfig::set_path(std::string key)	{ _map_location["path"] = key; }
 
+std::string	LocationConfig::get_path()
+{
+	std::map<std::string, std::string>::iterator it = _map_location.find("path");
+	if (it != _map_location.end())
+		return it->second;
+	return "";
+}
+
 std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
 
 int	LocationConfig::get_client_max_body_size()

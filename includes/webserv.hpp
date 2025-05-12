@@ -45,7 +45,7 @@ typedef struct s_fd_data
 	std::vector<dirent>	folderContent;
 }	t_fd_data;
 
-typedef struct s_requeste_state
+typedef struct s_request_state
 {
 	bool		header_complete;
 	bool		ready_to_process;
@@ -53,7 +53,7 @@ typedef struct s_requeste_state
 	int			bytesRead;
 	std::string	request;
 	std::string	body;
-}	t_requeste_state;
+}	t_request_state;
 
 void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
 void	post_request(HttpRequest &, std::map<std::string, ServerConfig> &);
