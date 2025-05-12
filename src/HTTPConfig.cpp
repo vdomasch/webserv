@@ -292,5 +292,10 @@ bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
 		std::cerr << "Error: Mandatory keyword 'root' missing!" << std::endl;
 		return true;
 	}
+	if (server_map.find("server_name") == server_map.end())
+	{
+		std::cerr << "Error: Mandatory keyword 'server_name' missing!" << std::endl;
+		return true;
+	}
 	return false;
 }
