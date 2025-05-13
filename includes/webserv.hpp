@@ -20,15 +20,20 @@
 #include <stdlib.h> // atof
 #include <dirent.h> // dirent for opendir
 #include <fcntl.h>// open
+#include <algorithm> // std::sort
+#include <cmath> // floor for size
+
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 2048 /// to change, must be 1024
+#define BUFFER_SIZE 50000 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
 #define FAILEDSYSTEMCALL -1
 #define MISSINGFILE -2
 #define ICOHANDELING 2
+#define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
+
 #define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __FUNCTION__ << ":\033[0m " << std::endl;
 #define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __PRETTY_FUNCTION__ << ":\033[0m " << std::endl;
 
@@ -49,5 +54,15 @@ void	convert(const T& from, Y& to)
     if (!ss.fail() && ss.eof())
 		throw std::runtime_error("Conversion failed");
 }
+
+class orderedFiles
+{
+	public :
+		std::string		baseName;
+		std::string		lowerName;
+		unsigned char	type;
+
+	orderedFiles(const std::string& name, const std::string& lowname, unsigned char n_type) : baseName(name), lowerName(lowname), type(n_type) {}
+};
 
 #endif
