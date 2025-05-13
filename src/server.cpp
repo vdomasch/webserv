@@ -58,7 +58,7 @@ std::ifstream::pos_type filesize(const char *filename)
 
 std::string	displayErrorPage(std::string serverFolder, int *errcode)
 {
-	char		buffer[BUFFER_SIZE];
+	char		buffer[BUFFER_SIZE] = {0};
 	std::string current_pwd(getcwd(NULL, 0));
 	std::string pathToErrPage;
 	int			bytes_read;
@@ -449,14 +449,16 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
 
 	printf("\033[34m------------------------------------\n");
-	printf(" Requested : (%s)\n",requested_file.c_str() );
+	printf("(%s)\n",request.c_str() );
+	printf("\033[32m------------------------------------\n");
+	printf("Requested : (%s)\n",requested_file.c_str() );
 	printf("------------------------------------\033[0m\n");
 
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
 	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : use actual index.html if exists, else list the content of the folder
 	{
-		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and indexfile was found, redirecting	
+		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and index file was found, redirecting	
 			response = openAndReadFile(d, errcode);
 		else
 			response = buildCurrentIndexPage(d, errcode); // no index found, listing files instead (if auto-index on)
@@ -517,7 +519,8 @@ int	handle_client_request(int socket, t_fd_data *d)
 	int			errcode;
 	ssize_t 	bytesRead;
 	
-	//Receive the new message : 
+	//Receive the new message :
+
 	bytesRead = read(socket , buffer, BUFFER_SIZE);
 	if (bytesRead < 0)
 	{
@@ -525,13 +528,13 @@ int	handle_client_request(int socket, t_fd_data *d)
 		return (-1);
 	}
 	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
-
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
 	{
 		perror("\nAn error occured while trying to open the requested file :(\n\n");
 		exit(-1); // to check for leaks later
 	}
+	
 	//Sending a response :
 	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
 
@@ -580,7 +583,7 @@ int main(int argc, char **argv)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
 		s_data.ready_sockets = s_data.saved_sockets;
-		if (select(s_data.max_sckt_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0)
+		if (select(s_data.max_sckt_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0) // must also check write
 		{
 			perror("Select failed ! ");
 			return (0);
