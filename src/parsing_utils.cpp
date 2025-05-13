@@ -130,7 +130,7 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 	}
 	while (!code_numbers.empty())
 	{
-		if (!_current_map[code_numbers.back()].empty())
+		if (_current_map.count(code_numbers.back()))
 		{
 			std::cerr << "Error: Keyword error_page already set for code " << code_numbers.back() << "!" << std::endl;
 			return 1;
@@ -149,7 +149,7 @@ bool	handle_error_page(std::istringstream &iss, std::map<std::string, std::strin
 
 bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
 {
-	if (!_current_map["autoindex"].empty())
+	if (_current_map.count("autoindex"))
 	{
 		std::cerr << "Error: Keyword autoindex already set!" << std::endl;
 		return 1;
@@ -194,7 +194,7 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 		key = clean_semicolon(key);
 		if (key == "POST" || key == "GET" || key == "DELETE")
 		{
-			if (!_current_map[key].empty())
+			if (_current_map.count(key))
 			{
 				std::cerr << "Error: Keyword allow_methods already set for method " << key << "!" << std::endl;
 				return 1;
@@ -261,7 +261,7 @@ bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_c
 		std::cerr << "Error: Keyword root has no value!" << std::endl;
 		return 1;
 	}
-	if (!_current_map["root"].empty())
+	if (_current_map.count("root"))
 	{
 		std::cerr << "Error: Keyword root already set!" << std::endl;
 		return 1;
