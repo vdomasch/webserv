@@ -78,7 +78,7 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	}
 	else
 	{
-		if (!_map_location[key].empty())
+		if (_map_location.count(key))
 		{
 			std::cerr << "Error: Keyword " << key << " already set!" << std::endl;
 			return 1;
@@ -104,4 +104,15 @@ bool	LocationConfig::is_location_variable(std::string key)
 		if (key == _location_directives[i])
 			return true;
 	return false;
+}
+
+std::string	LocationConfig::DEBUG_test()
+{
+	std::string str;
+	for (std::map<std::string, std::string>::iterator it = _map_location.begin(); it != _map_location.end(); ++it)
+	{
+		str += it->first + ": " + it->second + "\n";
+	}
+	str += "\n";
+	return str;
 }

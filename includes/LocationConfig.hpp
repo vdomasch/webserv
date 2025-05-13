@@ -13,6 +13,7 @@ class LocationConfig
 		~LocationConfig();
 
 		bool	parse_location(std::istringstream &iss, std::string key);
+		std::string	DEBUG_test();
 
 		std::string							get_path();
 		int									get_client_max_body_size();
@@ -23,7 +24,6 @@ class LocationConfig
 		std::string _location_directives[10];
 
 		bool	is_location_variable(std::string key);
-		
 
 };
 

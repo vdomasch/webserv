@@ -136,18 +136,20 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 	return 0;
 }
 
-void	ServerConfig::add_location(std::string key)
+bool	ServerConfig::add_location(std::string key)
 {
-	//if (_location_list.count((key))
-		//error
-	std::cout << "DEBUG: key = " << key << std::endl;
+	if (_location_list.count((key)))
+	{
+		std::cerr << "Error: Location '" << key << "' already set!" << std::endl;
+		return false;
+	}
 	_location_list[key] = LocationConfig();
-	std::cout << "DEBUG: check here !" << std::endl;
+	return true;
 }
 
-bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key)
+bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key, std::string current_location_path)
 {
-	if (_location_list[key].parse_location(iss, key))
+	if (_location_list[current_location_path].parse_location(iss, key))
 		return 1;
 	return 0;
 }
@@ -168,6 +170,12 @@ std::string ServerConfig::DEBUG_test()
 	for (std::map<std::string, std::string>::iterator it = _map_server.begin(); it != _map_server.end(); ++it)
 	{
 		str += it->first + ": " + it->second + "\n";
+	}
+	str += "\n";
+	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
+	{
+		str += "Location: " + it->first + "\n";
+		str += it->second.DEBUG_test();
 	}
 	return str;
 }

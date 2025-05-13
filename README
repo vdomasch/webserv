@@ -18,9 +18,7 @@ DELETE:
 	to do
 
 TO DO:
-		double location avec meme path
-		remplacer les !_current_map["root"].empty() par count
-		remplacer le vector par map dans _location_list
+
 inverser le PORT:SERVERNAME
 
 

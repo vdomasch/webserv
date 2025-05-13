@@ -98,6 +98,7 @@ bool	HTTPConfig::parse_http()
 
 
 	std::string line;
+	std::string current_location_path;
 	std::ifstream infile(_filename.c_str());
 	if (!infile.is_open())
 	{
@@ -116,11 +117,13 @@ bool	HTTPConfig::parse_http()
 				if (!is_location_valid(iss))
 					return 1;
 				iss >> key;
-				server_temp.add_location(key);
+				if (!server_temp.add_location(key))
+					return 1;
+				current_location_path = key;
 			}
 			else if (!key.empty() && key != "}")
 			{
-				if (server_temp.select_current_location(iss, key))
+				if (server_temp.select_current_location(iss, key, current_location_path))
 					return 1;
 			}
 		}
