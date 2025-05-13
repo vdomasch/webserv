@@ -2,7 +2,6 @@ Utilitee de host ?
 accepter .cgi?
 
 TO DO:
-		remplacer les !_current_map["root"].empty() par count
-		remplacer le vector par map dans _location_list
+
 inverser le PORT:SERVERNAME
 	
