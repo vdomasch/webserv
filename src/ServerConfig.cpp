@@ -182,7 +182,7 @@ std::map<std::string, std::string> ServerConfig::get_map_server()
 	return _map_server;
 }
 
-std::vector<LocationConfig> ServerConfig::get_location_list()
+std::map<std::string, LocationConfig> ServerConfig::get_location_list()
 {
 	return _location_list;
 }

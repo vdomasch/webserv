@@ -300,6 +300,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 
 bool search_file(const std::string& path, HttpRequest& req, const ServerConfig& server)
 {
+	static_cast<void>(server);
 	std::cout << "File found" << std::endl;
 	std::ifstream file(path.c_str(), std::ios::in);
 	if (!file)
@@ -309,10 +310,11 @@ bool search_file(const std::string& path, HttpRequest& req, const ServerConfig& 
 	ss << file.rdbuf();
 	file.close();
 
-	if (req.getKeepAlive())
+	static_cast<void>(req);
+	/*if (req.getKeepAlive())
 		req.setResponse(create_header("200 OK", "text/html", tostr(ss.str().size()), "keep-alive") + ss.str());
 	else
-		req.setResponse(create_header("200 OK", "text/html", tostr(ss.str().size()), "close") + ss.str());
+		req.setResponse(create_header("200 OK", "text/html", tostr(ss.str().size()), "close") + ss.str());*/
 	return true;
 }
 
@@ -337,14 +339,15 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 				std::cout << "Server found" << std::endl;
 				ServerConfig server = server_list[key];
 
+				static_cast<void>(server);
 				if (req.getPath().rfind('/') != 0)
 				{
-					std::vector<LocationConfig> locations = server.get_location_list();
-					for (std::vector<LocationConfig>::iterator it = locations.begin(); it != locations.end(); ++it)
+					std::map<std::string, LocationConfig> locations = server.get_location_list();
+					for (std::map<std::string, LocationConfig>::iterator it = locations.begin(); it != locations.end(); ++it)
 					{
-						if (it->get_map_location().find("path") != it->get_map_location().end())
+						if (it->second.get_map_location().find("path") != it->second.get_map_location().end())
 						{
-							std::string location_path = it->get_map_location()["path"];
+						/*	std::string location_path = it->second.get_map_location().find("path");
 
 							std::cout << "Location path: " << location_path << std::endl;
 							std::cout << "Request path: " << req.getPath() << std::endl;
@@ -362,7 +365,7 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 							}
 							else
 								std::cout << "Location not found" << std::endl;
-						}
+						*/}
 					}
 				}
 				else

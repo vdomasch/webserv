@@ -1,4 +1,5 @@
 #include "HTTPConfig.hpp"
+#include "webserv.hpp"
 
 HTTPConfig::HTTPConfig(): _is_http(false), _is_server(false), _is_location(false)
 {
@@ -89,40 +90,6 @@ bool	HTTPConfig::is_http_variable(std::string key)
 	if (key == "error_page")
 		return true;
 	return false;
-}
-
-bool	HTTPConfig::is_location_valid(std::istringstream &iss)
-{
-	std::string str = iss.str();
-    std::istringstream iss_copy(str);
-	std::string key;
-
-	unsigned int count = 0;
-	while (iss_copy >> key)
-	{
-		if (count == 1 && key.at(0) != '/')
-		{
-			std::cerr << "Error: Keyword location path must start with '/'!" << std::endl;
-			return false;
-		}
-		count++;
-	}
-	if (count < 2)
-	{
-		std::cerr << "Error: Keyword location has no path!" << std::endl;
-		return false;
-	}
-	else if (count < 3)
-	{
-		std::cerr << "Error: Keyword location needs an opening bracket!" << std::endl;
-		return false;
-	}
-	else if (count > 3)
-	{
-		std::cerr << "Error: Keyword location has too many values!" << std::endl;
-		return false;
-	}
-	return true;
 }
 
 bool	HTTPConfig::parse_http()
@@ -278,17 +245,6 @@ bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 	return 0;
 }
 
-bool	HTTPConfig::is_http_variable(std::string key)
-{
-	if (key == "error_page")
-		return true;
-	return false;
-}
-
-void	HTTPConfig::set_filename(std::string filename)
-{
-	_filename = filename;
-}
 
 bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 {

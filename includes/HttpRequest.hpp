@@ -1,11 +1,11 @@
 #ifndef HTTPREQUEST_HPP
 #define HTTPREQUEST_HPP
 
+#include "struct.hpp"
+
 # include <iostream> 
 
 class HTTPConfig;
-
-typedef struct s_request_state	t_request_state;
 
 class HttpRequest
 {
@@ -41,7 +41,7 @@ class HttpRequest
 
 		void	parseRequest(const std::string& request, int port);
 
-		int		analyseHeader(t_request_state &state, int port);
+		void	analyseHeader(t_request_state &state, int port);
 
 		void	constructBody(t_request_state &state, int port);
 

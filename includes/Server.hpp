@@ -35,7 +35,7 @@ class Server
 		bool	is_server_socket(int fd);
 		void	shutdown_all_sockets();
 		void	handle_new_connection(int fd, sockaddr_in &servaddr);
-		void	handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *socket_data);
+		void	handle_client_request(HTTPConfig &http_config, int fd);
 };
 
 #endif

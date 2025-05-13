@@ -1,9 +1,11 @@
 #include "webserv.hpp"
 
-std::string tostr(const int value)
+/*template <typename T, typename Y>
+void	convert(const T& from, Y& to)
 {
-	std::stringstream ss;
-	ss << value;
-	return ss.str();
-}
-
+    std::stringstream ss;
+	ss << from;
+    ss >> to;
+    if (!ss.fail() && ss.eof())
+		throw std::runtime_error("Conversion failed");
+}*/

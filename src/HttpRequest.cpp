@@ -105,7 +105,7 @@ std::string trim(const std::string& str)
 	_port = tostr(port);
 }*/
 
-int	HttpRequest::analyseHeader(t_request_state &state, int port)
+void	HttpRequest::analyseHeader(t_request_state &state, int port)
 {
 	if (state.request.empty())
 		return ;
@@ -155,15 +155,22 @@ int	HttpRequest::analyseHeader(t_request_state &state, int port)
 	}
 	_keep_alive = (_connection == "keep-alive");
 	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
-	_port = tostr(port);
+	try { convert(port, _port); }
+	catch (std::exception &e) {	std::cerr << "Port is not a number" << std::endl;
+		state.errcode = 400;
+		return ;
+	}
 	state.bytesRead = state.request.size() - (state.request.find("\r\n\r\n") + 4);
-	try { convert(_content_length, state.content_length); } catch (std::exception &e) {
+	try { convert(_content_length, state.content_length); }
+	catch (std::exception &e) {
 		std::cerr << "Content length is not a number" << std::endl;
+		state.errcode = 400;
 		return ;
 	}
 	if (state.content_length < 0)
 	{
 		std::cerr << "Content length is negative" << std::endl;
+		state.errcode = 400;
 		return ;
 	}
 }
@@ -194,7 +201,7 @@ std::string find_best_location_match(const std::string& request_path, const std:
 
 bool HttpRequest::body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config)
 {
-	int client_max_body_size = http_config.get_client_max_body_size();
+	size_t client_max_body_size = http_config.get_client_max_body_size();
 	std::string port_str;
 	std::string key;
 	try { convert(port, port_str); }
@@ -238,7 +245,12 @@ void	HttpRequest::constructBody(t_request_state &state, int port)
 	if (body.empty())
 		return ;
 	if (body.size() > state.content_length)
+	{
 		std::cerr << "Body size is greater than content length" << std::endl;
+		state.errcode = 413;
+		state.ready_to_process = false;
+		
+	}
 	else if (body.size() == state.content_length)
 	{
 		state.ready_to_process = true;

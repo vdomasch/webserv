@@ -10,7 +10,7 @@
 
 bool g_running = true;
 
-void handle_signal(int signum) { if (signum == SIGINT) std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; }
+void handle_signal(int signum) { if (signum == SIGINT) { std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; } }
 
 Server::Server() {
 	// Initialize the socket data
@@ -128,13 +128,12 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 
 std::string	analyse_request(std::string buffer, t_fd_data *d, int *errcode);
 
-void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *socket_data)
+void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
-	static_cast<void>(socket_data);
+	static_cast<void>(_socket_data);
 	char buffer[BUFFER_SIZE] = {0};
 	std::string	finalMessage;
-	int			errcode;
-	HttpRequest req; // BAD, should be outside of this function, will be re-initialized each time
+	//HttpRequest req; // BAD, should be outside of this function, will be re-initialized each time
 	
 	//Receive the new message : 
 	ssize_t bytes_read = recv(fd , buffer, BUFFER_SIZE, 0);
@@ -163,16 +162,17 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 	{
 		if (_socket_states[fd]._state.header_complete == false)
 		{
-			errcode = req.analyseHeader(_socket_states[fd]._state, _socket_to_port_map[fd]);
+			_socket_states[fd].analyseHeader(_socket_states[fd]._state, _socket_to_port_map[fd]);
 			_socket_states[fd]._state.header_complete = true;
-			if (req.body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config))
+			if (_socket_states[fd].body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config))
 			{
+				_socket_states[fd]._state.errcode = 413;
 				close_msg(fd, "Request body size exceeds limit", 1);
 				return;
 			}
 		}
 		if (_socket_states[fd]._state.header_complete == true)
-			req.constructBody(_socket_states[fd]._state, _socket_to_port_map[fd]);
+			_socket_states[fd].constructBody(_socket_states[fd]._state, _socket_to_port_map[fd]);
 	}
 	else
 		return; // Not yet complete — wait for next recv()
@@ -181,12 +181,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd, t_fd_data *s
 
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
-	if (_method_map.count(req.getMethod()))
-		_method_map[req.getMethod()](req, server_list);
+	if (_method_map.count(_socket_states[fd].getMethod()))
+		_method_map[_socket_states[fd].getMethod()](_socket_states[fd], server_list);
 	else
-		std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
+		std::cerr << "Unsupported method: " << _socket_states[fd].getMethod() << std::endl;
 
-	char objectType = analyse_request(buffer, socket_data, &errcode); // decide how to interpret the request
+	//char objectType = analyse_request(buffer, socket_data, &errcode); // decide how to interpret the request
 
 	
 	/*if (errcode == FAILEDSYSTEMCALL)
@@ -242,7 +242,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 {
 	while (g_running)
 	{
-		HttpRequest req;
+		//HttpRequest req;
 
 		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n" << std::endl;
 		_socket_data.ready_sockets = _socket_data.saved_sockets;
@@ -283,6 +283,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 				else
 				{
+					handle_client_request(http_config, i);
 					/*std::cout << "Handling existing client on socket " << i << std::endl;
 					char buffer[BUFFER_SIZE] = {0};
 					ssize_t bytes_read = recv(i, buffer, BUFFER_SIZE, 0);
