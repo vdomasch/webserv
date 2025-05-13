@@ -1,5 +1,5 @@
 Utilitee de host ?
-page d'erreur, accepter .cgi?
+accepter .cgi?
 
 error_page
 	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
@@ -18,8 +18,9 @@ DELETE:
 	to do
 
 TO DO:
-	si declare dans http et server = error?
-
+		double location avec meme path
+		remplacer les !_current_map["root"].empty() par count
+		remplacer le vector par map dans _location_list
 inverser le PORT:SERVERNAME
 
 
