@@ -11,12 +11,10 @@ ServerConfig::ServerConfig() {
 	_server_directives[7] = "keepalive_timeout";
 	_server_directives[8] = "autoindex";
 	_server_directives[9] = "allow_methods";
-	_server_directives[10] = "cgi_path";
-	_server_directives[11] = "cgi_ext";
-	_server_directives[12] = "return";
-	_server_directives[13] = "rewrite";
-	_server_directives[14] = "access_log";
-	_server_directives[15] = "error_log";
+	_server_directives[10] = "return";
+	_server_directives[11] = "rewrite";
+	_server_directives[12] = "access_log";
+	_server_directives[13] = "error_log";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
