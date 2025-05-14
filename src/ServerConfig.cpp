@@ -128,6 +128,8 @@ bool	ServerConfig::add_location(std::string key)
 		return false;
 	}
 	_location_list[key] = LocationConfig();
+	if (key.find("/cgi") == 0)
+		_location_list[key].set_cgi();
 	return true;
 }
 
