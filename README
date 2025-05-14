@@ -2,9 +2,6 @@ Utilitee de host ?
 accepter .cgi?
 
 TO DO:
-	cgi ->
-		error quand cgi pas dans cgi
-		verifier si tous les mandatory quand cgi (cgi_path, cgi_ext)
-
+	root peut-il etre juste / ?
 
 inverser le PORT:SERVERNAME
