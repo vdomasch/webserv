@@ -11,12 +11,12 @@ class LocationConfig
 		~LocationConfig();
 
 		bool	parse_location(std::istringstream &iss, std::string key);
+		bool	check_cgi();
 		std::string	DEBUG_test();
-		void	set_cgi();
 
 	private:
 		std::map<std::string, std::string> _map_location;
-		std::string _location_directives[8];
+		std::string _location_directives[10];
 
 		bool	is_location_variable(std::string key);
 

@@ -128,12 +128,10 @@ bool	ServerConfig::add_location(std::string key)
 		return false;
 	}
 	_location_list[key] = LocationConfig();
-	if (key.find("/cgi") == 0)
-		_location_list[key].set_cgi();
 	return true;
 }
 
-bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key, std::string current_location_path)
+bool	ServerConfig::select_current_location_to_parse(std::istringstream &iss, std::string key, std::string current_location_path)
 {
 	if (_location_list[current_location_path].parse_location(iss, key))
 		return 1;
@@ -323,5 +321,12 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 		return 1;
 	}
 	_map_server["host"] = "127." + ip_1 + "." + ip_2 + "." + ip_3;
+	return 0;
+}
+
+bool	ServerConfig::select_current_location_to_check_gci(std::string current_location_path)
+{
+	if (_location_list[current_location_path].check_cgi())
+		return 1;
 	return 0;
 }

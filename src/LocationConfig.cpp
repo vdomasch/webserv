@@ -10,6 +10,8 @@ LocationConfig::LocationConfig()
 	_location_directives[5] = "autoindex";
 	_location_directives[6] = "allow_methods";
 	_location_directives[7] = "return";
+	_location_directives[8] = "cgi_path";
+	_location_directives[9] = "cgi_ext";
 }
 
 //LocationConfig::LocationConfig(const LocationConfig& param) {}
@@ -72,12 +74,7 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 
 bool	LocationConfig::is_location_variable(std::string key)
 {
-	if (_map_location.count("cgi"))
-	{
-		if (key == "cgi_path" || key == "cgi_ext")
-			return true;
-	}
-	for (int i = 0; i < 11; i++)
+	for (int i = 0; i < 10; i++)
 		if (key == _location_directives[i])
 			return true;
 	return false;
@@ -94,7 +91,15 @@ std::string	LocationConfig::DEBUG_test()
 	return str;
 }
 
-void	LocationConfig::set_cgi()
+bool	LocationConfig::check_cgi()
 {
-	_map_location["cgi"] = "on";
+	if (_map_location.count("cgi_path") != _map_location.count("cgi_ext"))
+	{
+		if (_map_location.count("cgi_path") == 0)
+			std::cerr << "Error: Missing cgi_path!" << std::endl;
+		else
+			std::cerr << "Error: Missing cgi_ext!" << std::endl;
+		return 1;
+	}
+	return 0;
 }
