@@ -244,9 +244,9 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 	unsigned int count = 0;
 	while (iss_copy >> key)
 	{
-		if (count == 1 && (key.at(0) != '/' || key.at(key.length() - 1) != '/'))
+		if (count == 1 && (key.at(0) != '/' || key.at(key.length() - 1) != '/' || key.length() < 3))
 		{
-			std::cerr << "Error: Keyword location path must start and end with '/'!" << std::endl;
+			std::cerr << "Error: Keyword location path must be \"/PATH/\"!" << std::endl;
 			return false;
 		}
 		count++;
@@ -256,9 +256,9 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 		std::cerr << "Error: Keyword location has no path!" << std::endl;
 		return false;
 	}
-	else if (count < 3)
+	else if (count < 3 || (count == 3 && key != "{"))
 	{
-		std::cerr << "Error: Keyword location needs an opening bracket!" << std::endl;
+		std::cerr << "Error: Keyword location must be followed by '{'!" << std::endl;
 		return false;
 	}
 	else if (count > 3)
