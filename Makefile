@@ -16,7 +16,6 @@ SRV_FILES = main			\
 			Server			\
 			HttpRequest		\
 			method_request	\
-			utils			\
 
 CLIENT_FILES = client
 

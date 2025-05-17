@@ -3,257 +3,119 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest():_method(""), _host(""), _connection(""), _content_length(""), _content_type(""), _path(""), _port(""), _cookie(""), _keep_alive(false), _done(0), _response("") {}
+HttpRequest::HttpRequest(): _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(false), _errcode(0) {}
 HttpRequest::~HttpRequest() {}
 
-std::string HttpRequest::getMethod() const			{ return _method; }
-std::string HttpRequest::getHost() const			{ return _host; }
-std::string HttpRequest::getConnection() const		{ return _connection; }
-std::string HttpRequest::getContentLength() const	{ return _content_length; }
-std::string HttpRequest::getContentType() const		{ return _content_type; }
-std::string HttpRequest::getPath() const			{ return _path; }
-std::string	HttpRequest::getPort() const			{ return _port; }
-std::string HttpRequest::getCookie() const			{ return _cookie; }
-bool		HttpRequest::getKeepAlive() const		{ return _keep_alive; }
-int			HttpRequest::getDone() const			{ return _done; }
-std::string HttpRequest::getResponse() const		{ return _response; }
+void HttpRequest::append_data(const std::string &data)
+{
+	_raw_data += data;
 
+	if (_state == RECEIVING_HEADER)
+	{
+		size_t pos = _raw_data.find("\r\n\r\n");
+		if (pos != std::string::npos)
+		{
+			_header = _raw_data.substr(0, pos);
+			_body = _raw_data.substr(pos + 4);
+			parse_headers();
+			_header_parsed = true;
+			// Exemple simplifié : extraire Content-Length
+			size_t cl = _header.find("Content-Length:");
+			if (cl != std::string::npos)
+			{
+				_content_length = atoi(_header.substr(cl + 15).c_str());
+				_state = RECEIVING_BODY;
+			}
+			else _state = COMPLETE; // Pas de body
+		}
+	}
 
-void HttpRequest::setMethod(const std::string& method)					{ _method = method; }
-void HttpRequest::setHost(const std::string& host)						{ _host = host; }
-void HttpRequest::setConnection(const std::string& connection)			{ _connection = connection; }
-void HttpRequest::setContentLength(const std::string& content_length)	{ _content_length = content_length; }
-void HttpRequest::setContentType(const std::string& content_type)		{ _content_type = content_type; }
-void HttpRequest::setPath(const std::string& path)						{ _path = path; }
-void HttpRequest::setPort(const std::string& port)						{ _port = port; }
-void HttpRequest::setCookie(const std::string& cookie)					{ _cookie = cookie; }
-void HttpRequest::setKeepAlive(bool keep_alive)							{ _keep_alive = keep_alive; }
-void HttpRequest::setDone(int done)										{ _done = done; }
-void HttpRequest::setResponse(const std::string& response)				{ _response = response; }
+  	if (_state == RECEIVING_BODY && _body.length() >= _content_length)
+	{
+		_state = COMPLETE;
+	}
+}
 
+void HttpRequest::parse_headers()
+{
+	std::istringstream stream(_header);
+	std::string line;
+
+	// Première ligne = ligne de requête
+	if (!std::getline(stream, line))
+	{
+		_state = ERROR;
+		_errcode = 400;
+		return;
+	}
+
+	std::istringstream req_line(line);
+	if (!(req_line >> _method >> _target >> _http_version))
+	{
+		_state = ERROR;
+		_errcode = 400;
+		return;
+	}
+
+	if (_http_version != "HTTP/1.1")
+	{
+		_state = ERROR;
+		_errcode = 505; // HTTP Version Not Supported
+		return;
+	}
+
+	// En-têtes HTTP (key: value)
+	while (std::getline(stream, line))
+	{
+		if (line == "\r" || line.empty()) continue;
+		size_t colon = line.find(':');
+		if (colon == std::string::npos) continue;
+
+		std::string key = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
+		// Nettoyage des espaces
+		key.erase(key.find_last_not_of(" \t\r") + 1);
+		value.erase(0, value.find_first_not_of(" \t"));
+		value.erase(value.find_last_not_of(" \t\r") + 1);
+		_headers_map[key] = value;
+	}
+
+	if (_headers_map.count("Content-Length"))
+		_content_length = atoi(_headers_map["Content-Length"].c_str());
+
+	_keep_alive = (_headers_map.count("Connection") && _headers_map["Connection"] == "keep-alive");
+}
+
+bool HttpRequest::is_ready() const { return _state == COMPLETE; }
+bool HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0); } 
+
+/////////// GETTERS ///////////
+
+std::string HttpRequest::get_response() const	{ return _response; }
+bool		HttpRequest::getKeepAlive() const	{ return _keep_alive; }
+std::string HttpRequest::get_method() const		{ return _method; }
+std::string HttpRequest::get_response() const	{ return _response; }
+std::string HttpRequest::get_target() const		{ return _target; }
+std::string HttpRequest::get_header(const std::string& key) const
+{
+	std::map<std::string, std::string>::const_iterator it = _headers_map.find(key);
+	if (it != _headers_map.end())
+		return it->second;
+	return "";
+}
+
+////////// SETTERS ///////////
+
+void HttpRequest::set_response(const std::string& response)	{ _response = response; }
+void HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
+
+//////// OPERATOR OVERLOAD ///////////
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {
 	os << "-----------------------" << std::endl;
-	os << "Method: " << req.getMethod() << std::endl;
-	os << "Host: " << req.getHost() << std::endl;
-	os << "Connection: " << req.getConnection() << std::endl;
-	os << "Path: " << req.getPath() << std::endl;
-	os << "Port: " << req.getPort() << std::endl;
-	os << "Cookie: " << req.getCookie() << std::endl;
+	os << "Method: " << req.get_method() << std::endl;
 	os << "Keep-Alive: " << (req.getKeepAlive() ? "true" : "false") << std::endl;
 	os << "-----------------------" << std::endl;
 	return os;
-}
-
-std::string trim(const std::string& str)
-{
-    size_t first = str.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos)
-        return "";
-    size_t last = str.find_last_not_of(" \t\r\n");
-    return str.substr(first, last - first + 1);
-}
-
-/*void	HttpRequest::parseRequest(const std::string &request, int port)
-{
-	if (request.empty())
-		return ;
-
-	_done = 0;
-	std::istringstream iss(request);
-	std::string line;
-	std::getline(iss, _method, ' ');
-	std::getline(iss, _path, ' ');
-	std::string compare[2] = {"Host", "Connection"};
-
-	bool found_flags[2] = {false, false};
-
-	while (_done < 2)
-	{
-		std::getline(iss, line);
-		for (int i = 0; i < 2; i++)
-		{
-			if (!found_flags[i])
-			{
-				std::size_t found = line.find(compare[i]);
-				if (found != std::string::npos)
-				{
-					std::string value = line.substr(found + compare[i].size() + 2);
-					switch (i)
-					{
-						case 0:
-							_host = trim(value);
-							break;
-						case 1:
-							_connection = trim(value);
-							break;
-					}
-					found_flags[i] = true;
-					_done++;
-				}
-			}
-		}
-		if (iss.eof())
-			break;
-	}
-	if (_connection == "keep-alive")
-		_keep_alive = true;
-	else
-		_keep_alive = false;
-	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
-	_port = tostr(port);
-}*/
-
-void	HttpRequest::analyseHeader(t_request_state &state, int port)
-{
-	if (state.request.empty())
-		return ;
-
-	_done = 0;
-	std::istringstream iss(state.request);
-	std::string line;
-	std::getline(iss, _method, ' ');
-	std::getline(iss, _path, ' ');
-	std::string compare[4] = {"Host", "Connection", "Content-length", "Content-type"};
-
-	bool found_flags[4] = {false, false, false, false};
-
-	while (_done < 4)
-	{
-		std::getline(iss, line);
-		for (int i = 0; i < 4; i++)
-		{
-			if (!found_flags[i])
-			{
-				std::size_t found = line.find(compare[i]);
-				if (found != std::string::npos)
-				{
-					std::string value = line.substr(found + compare[i].size() + 2);
-					switch (i)
-					{
-						case 0:
-							_host = trim(value);
-							break;
-						case 1:
-							_connection = trim(value);
-							break;
-						case 2:
-							_content_length = trim(value);
-							break;
-						case 3:
-							_content_type = trim(value);
-							break;
-					}
-					found_flags[i] = true;
-					_done++;
-				}
-			}
-		}
-		if (iss.eof())
-			break;
-	}
-	_keep_alive = (_connection == "keep-alive");
-	//_path = _path.substr(1); // Remove leading slash TO KEEP OR NOT ?
-	try { convert(port, _port); }
-	catch (std::exception &e) {	std::cerr << "Port is not a number" << std::endl;
-		state.errcode = 400;
-		return ;
-	}
-	state.bytesRead = state.request.size() - (state.request.find("\r\n\r\n") + 4);
-	try { convert(_content_length, state.content_length); }
-	catch (std::exception &e) {
-		std::cerr << "Content length is not a number" << std::endl;
-		state.errcode = 400;
-		return ;
-	}
-	if (state.content_length < 0)
-	{
-		std::cerr << "Content length is negative" << std::endl;
-		state.errcode = 400;
-		return ;
-	}
-}
-
-std::string find_best_location_match(const std::string& request_path, const std::map<std::string, LocationConfig>& locations)
-{
-	std::string best_match("");
-	size_t best_length = 0;
-
-	for (std::map<std::string, LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it)
-	{
-		const std::string& loc_path = it->first;
-		// Ensure it matches as a prefix
-		if (request_path.find(loc_path) == 0)
-		{
-			// Check if this is a better (longer) match
-			if (loc_path.length() > best_length)
-			{
-				best_match = loc_path;
-				best_length = loc_path.length();
-			}
-		}
-	}
-	return best_match;  // empty if no match found
-}
-
-
-
-bool HttpRequest::body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config)
-{
-	size_t client_max_body_size = http_config.get_client_max_body_size();
-	std::string port_str;
-	std::string key;
-	try { convert(port, port_str); }
-	catch (std::exception &e) { return (std::cerr << "Port is not a number" << std::endl, true); } ;
-
-	// IN SERVER
-	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-	if (server_list.count(port_str + ":" + request.getHost()))
-		key = port_str + ":" + request.getHost();
-	else //if (server_list.count(port_str + ":"))
-		key = port_str + ":";
-	//else
-	//{
-	//	std::cerr << "No server found for this port" << std::endl;
-	//	return true;
-	//}
-
-	std::map<std::string, ServerConfig>::iterator it_server = server_list.find(key);
-	client_max_body_size = it_server->second.get_client_max_body_size();
-
-	// IN LOCATION
-	std::string best_match = find_best_location_match(request.getPath(), it_server->second.get_location_list());
-	if (!best_match.empty())
-	{
-		LocationConfig location = it_server->second.get_location_list().find(best_match)->second;
-		client_max_body_size = location.get_client_max_body_size();
-	}
-
-	if (request._state.content_length <= client_max_body_size)
-		return false;
-	return true;
-}
-
-void	HttpRequest::constructBody(t_request_state &state, int port)
-{
-	static_cast<void>(port);
-	if (state.request.empty())
-		return ;
-
-	std::string body = state.request.substr(state.request.find("\r\n\r\n") + 4);
-	if (body.empty())
-		return ;
-	if (body.size() > state.content_length)
-	{
-		std::cerr << "Body size is greater than content length" << std::endl;
-		state.errcode = 413;
-		state.ready_to_process = false;
-		
-	}
-	else if (body.size() == state.content_length)
-	{
-		state.ready_to_process = true;
-		state.body = body;
-	}
 }

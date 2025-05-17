@@ -210,7 +210,6 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	}
 }
 
-
 void	storeFolderContent(t_fd_data *d, int *errcode)
 {
 	struct dirent *pDirent;
@@ -241,7 +240,6 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 	}
 	
 }
-
 
 void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
 {

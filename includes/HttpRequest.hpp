@@ -5,6 +5,14 @@
 
 # include <iostream> 
 
+enum RequestState
+{
+    RECEIVING_HEADER,
+    RECEIVING_BODY,
+    COMPLETE,
+    ERROR
+};
+
 class HTTPConfig;
 
 class HttpRequest
@@ -15,52 +23,40 @@ class HttpRequest
 
 		t_request_state	_state;
 
-		std::string	getMethod() const;
-		std::string	getHost() const;
-		std::string	getConnection() const;
-		std::string	getContentLength() const;
-		std::string	getContentType() const;
-		std::string	getCookie() const;
-		std::string	getPath() const;
-		std::string	getPort() const;
+		std::string	get_method() const;
+		std::string	get_response() const;
+
+		void		append_data(const std::string &data);
+		bool		is_ready() const;
+		bool		has_error() const;
+
+
 		bool		getKeepAlive() const;
-		int			getDone() const;
-		std::string	getResponse() const;
+		std::string	get_response() const;
+		std::string get_method() const;
+		std::string get_target() const;
+		std::string get_header(const std::string& key) const;
 
-		void	setMethod(const std::string& method);
-		void	setHost(const std::string& host);
-		void	setConnection(const std::string& connection);
-		void	setContentLength(const std::string& content_length);
-		void	setContentType(const std::string& content_type);
-		void	setCookie(const std::string& cookie);
-		void	setPath(const std::string& path);
-		void	setPort(const std::string& port);
-		void	setKeepAlive(bool keep_alive);
-		void	setDone(int done);
-		void	setResponse(const std::string& response);
-
-		void	parseRequest(const std::string& request, int port);
-
-		void	analyseHeader(t_request_state &state, int port);
-
-		void	constructBody(t_request_state &state, int port);
-
-		bool	body_size_greater_than_limit(HttpRequest &request, int port, HTTPConfig &http_config);
+		void	set_response(const std::string& response);
+		void	set_errorcode(int code);
 
 	private:
+		std::string	_raw_data;
+		std::string	_body;
+		std::string	_header;
 		std::string	_method;
-		std::string	_host;
-		std::string	_connection;
-		std::string	_content_length;
-		std::string	_content_type;
-		std::string	_path;
-		std::string	_port;
-		std::string	_cookie;
-		bool 		_keep_alive;
-		int 		_done;
-		int			error_code;
+		std::string	_target;
+		std::string _http_version;
+		std::map<std::string, std::string> _headers_map;
 
-		std::string	_response;
+		RequestState	_state;
+		size_t			_content_length;
+		bool			_header_parsed;
+		bool			_keep_alive;
+		int				_errcode;
+		std::string		_response;
+
+		void		parse_headers();
 };
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req);

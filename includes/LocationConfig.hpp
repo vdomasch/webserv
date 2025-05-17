@@ -15,12 +15,15 @@ class LocationConfig
 		bool	parse_location(std::istringstream &iss, std::string key);
 		std::string	DEBUG_test();
 
+		std::string							get_root();
 		std::string							get_path();
+		std::string							get_index();
 		int									get_client_max_body_size();
 		std::map<std::string, std::string>	get_map_location();
 
 	private:
 		std::map<std::string, std::string>	_map_location;
+		
 		std::string _location_directives[10];
 
 		bool	is_location_variable(std::string key);

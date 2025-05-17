@@ -18,6 +18,8 @@ class ServerConfig
 		bool			add_location(std::string key);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
 
+		LocationConfig getMatchingLocation(const std::string& target) const;
+
 		size_t									get_client_max_body_size();
 		unsigned int							get_port_number();
 		std::string								get_string_port_number();

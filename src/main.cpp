@@ -16,7 +16,8 @@ int main(int argc, char **argv)
 	//http_config.DEBUG_HTTP_show();
 		
 	Server server;
-
+	
 	server.run_server(http_config);
+
 	return (0);
 }

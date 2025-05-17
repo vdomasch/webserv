@@ -34,12 +34,12 @@
 #define ICOHANDELING 2
 #define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
-#define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __FUNCTION__ << ":\033[0m " << std::endl;
-#define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ":" << __LINE__ << in << __PRETTY_FUNCTION__ << ":\033[0m " << std::endl;
+#define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __FUNCTION__ << "\033[0m " << std::endl;
+#define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __PRETTY_FUNCTION__ << "\033[0m " << std::endl;
 
-void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &);
-void	post_request(HttpRequest &, std::map<std::string, ServerConfig> &);
-void	delete_request(HttpRequest &, std::map<std::string, ServerConfig> &);
+void	get_request(HttpRequest &, std::map<std::string, ServerConfig> &, t_fd_data &d, std::string response);
+void	post_request(HttpRequest &, std::map<std::string, ServerConfig> &, t_fd_data &d, std::string response);
+void	delete_request(HttpRequest &, std::map<std::string, ServerConfig> &, t_fd_data &d, std::string response);
 
 std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode);
 
@@ -51,7 +51,7 @@ void	convert(const T& from, Y& to)
     std::stringstream ss;
 	ss << from;
     ss >> to;
-    if (!ss.fail() && ss.eof())
+    if (ss.fail() || !ss.eof())
 		throw std::runtime_error("Conversion failed");
 }
 

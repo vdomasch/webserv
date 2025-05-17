@@ -27,6 +27,10 @@ std::string	LocationConfig::get_path()
 	return "";
 }
 
+std::string LocationConfig::get_root()	{ return _map_location["root"]; }
+std::string LocationConfig::get_index()	{ return _map_location["index"]; }
+std::string LocationConfig::get_path()	{ return _map_location[""]; }
+
 std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
 
 int	LocationConfig::get_client_max_body_size()

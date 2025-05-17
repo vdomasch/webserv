@@ -12,7 +12,8 @@ bool g_running = true;
 
 void handle_signal(int signum) { if (signum == SIGINT) { std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; } }
 
-Server::Server() {
+Server::Server()
+{
 	// Initialize the socket data
 	FD_ZERO(&_socket_data.saved_sockets);
 	FD_ZERO(&_socket_data.ready_sockets);
@@ -126,135 +127,56 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
 }
 
-std::string	analyse_request(std::string buffer, t_fd_data *d, int *errcode);
-
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
-	static_cast<void>(_socket_data);
 	char buffer[BUFFER_SIZE] = {0};
-	std::string	finalMessage;
-	//HttpRequest req; // BAD, should be outside of this function, will be re-initialized each time
-	
-	//Receive the new message : 
-	ssize_t bytes_read = recv(fd , buffer, BUFFER_SIZE, 0);
-	if (bytes_read < 0)
+	ssize_t bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+
+	if (bytes_read <= 0)
 	{
-		close_msg(fd, "recv() failed", 1);
-		update_max_fd(fd);;
+		close_msg(fd, "Disconnected or read error", 0);
 		return;
 	}
-	if (bytes_read == 0)
+
+	buffer[bytes_read] = '\0';
+	_socket_states[fd].append_data(buffer);
+
+	if (_socket_states[fd].has_error())
 	{
-		close_msg(fd, "Client on socket ", 0);
-		update_max_fd(fd);
+		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+		close_msg(fd, "Bad request", 1);
 		return;
 	}
-	if (bytes_read < BUFFER_SIZE)
-		buffer[bytes_read] = '\0';
-	else
-		buffer[BUFFER_SIZE - 1] = '\0';
 
-	// Accumulate partial reads
-	_socket_states[fd]._state.request += std::string(buffer);
-
-	// Check if header is complete
-	if (_socket_states[fd]._state.request.find("\r\n\r\n") != std::string::npos)
+	if (_socket_states[fd].is_ready())
 	{
-		if (_socket_states[fd]._state.header_complete == false)
-		{
-			_socket_states[fd].analyseHeader(_socket_states[fd]._state, _socket_to_port_map[fd]);
-			_socket_states[fd]._state.header_complete = true;
-			if (_socket_states[fd].body_size_greater_than_limit(_socket_states[fd], _socket_to_port_map[fd], http_config))
-			{
-				_socket_states[fd]._state.errcode = 413;
-				close_msg(fd, "Request body size exceeds limit", 1);
-				return;
-			}
-		}
-		if (_socket_states[fd]._state.header_complete == true)
-			_socket_states[fd].constructBody(_socket_states[fd]._state, _socket_to_port_map[fd]);
+		std::string response = _socket_states[fd].get_response();
+		send(fd, response.c_str(), response.size(), 0);
+
+		if (!_socket_states[fd].getKeepAlive()) close_msg(fd, "Connection closed (no keep-alive)", 0);
+		else _socket_states[fd] = HttpRequest(); // Optionnel : reset request state for next request
 	}
-	else
-		return; // Not yet complete — wait for next recv()
-
-	memset(buffer, '\0', sizeof(buffer));
-
-	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-
-	if (_method_map.count(_socket_states[fd].getMethod()))
-		_method_map[_socket_states[fd].getMethod()](_socket_states[fd], server_list);
-	else
-		std::cerr << "Unsupported method: " << _socket_states[fd].getMethod() << std::endl;
-
-	//char objectType = analyse_request(buffer, socket_data, &errcode); // decide how to interpret the request
-
-	
-	/*if (errcode == FAILEDSYSTEMCALL)
-	{
-		perror("\nAn error occured while trying to open the requested file :(\n\n");
-		exit(-1); // to check for leaks later
-	}
-	//Sending a response :
-	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, socket_data); // when .ico, finalMessage = requestBody
-
-	printf("\033[35m\n#######################\n");
-	printf("(%s)\n",finalMessage.c_str() );
-	printf(" \nERROR CODE(%d)\n",errcode);
-	printf("#######################\033[0m\n");
-
-	if (!finalMessage.empty())
-	{
-		if (d->content_type == "image/x-icon")
-		{
-			send(fd , finalMessage.c_str() , finalMessage.length(), 0); // must be content len instead of finaleMessage.lenght, or else header size is added
-			send(fd , &d->binaryContent[0] , d->binaryContent.size(), 0);
-		}
-		else
-			send(fd , finalMessage.c_str() , finalMessage.length(), 0);
-		std::cout << "message sent from server !\n" << std::endl;
-	}
-	close(fd);
-	return ;*/
-
-
-
-/////////////////////////////////////////////////////
-
-	/*req.parseRequest(request, _socket_to_port_map[i]);
-
-	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-
-	if (_method_map.count(req.getMethod()))
-		_method_map[req.getMethod()](req, server_list);
-	else
-		std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
-
-	std::cout << "\n\nDEBUG: RESPONSE\n" << req.getResponse() << std::endl << std::endl;
-	send(i, req.getResponse().c_str(), req.getResponse().size(), 0); // Echo back to client
-	if (!req.getKeepAlive())
-	{
-		close_msg(i, "Connection on socket ", 0);
-		//update_max_fd(i);
-	}*/
 }
 
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 {
 	while (g_running)
 	{
-		//HttpRequest req;
+		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n";
 
-		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n" << std::endl;
+		// Rafraîchir la copie des sockets surveillés
 		_socket_data.ready_sockets = _socket_data.saved_sockets;
 
+		// Timeout de 5 secondes pour éviter le blocage
 		struct timeval timeout;
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
 
-
-		for (int i = 0; i <= _socket_data.max_fd; ++i) {
-			if (FD_ISSET(i, &_socket_data.saved_sockets)) {
-				// Check if socket is still valid
+		// Nettoyage préventif des sockets invalides
+		for (int i = 0; i <= _socket_data.max_fd; ++i)
+		{
+			if (FD_ISSET(i, &_socket_data.saved_sockets))
+			{
 				int error = 0;
 				socklen_t len = sizeof(error);
 				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
@@ -263,73 +185,34 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			}
 		}
 
+		// Appel à select()
 		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, &timeout) < 0)
 		{
-			if (errno == EINTR)
-				continue;
+			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
 
-		for (int i = 0; i <= _socket_data.max_fd; i++)
+		// Parcours des sockets actifs
+		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
+			std::cout << "\n\033[32m========= i = " << i << " =========\033[0m\n" << std::endl;
 			if (FD_ISSET(i, &_socket_data.ready_sockets))
 			{
-				std::cout << "\n\033[32m========= i = " << i << " =========\033[0m\n" << std::endl;
-
-				if (is_server_socket(i)) // New connection
+				if (is_server_socket(i))
 				{
-					handle_new_connection(i, servaddr);
+					handle_new_connection(i, servaddr); // socket d'écoute
 				}
 				else
 				{
+					// Initialisation si première interaction
+					if (_socket_states.find(i) == _socket_states.end()) _socket_states[i] = HttpRequest();
+
+					// Traitement de la requête
 					handle_client_request(http_config, i);
-					/*std::cout << "Handling existing client on socket " << i << std::endl;
-					char buffer[BUFFER_SIZE] = {0};
-					ssize_t bytes_read = recv(i, buffer, BUFFER_SIZE, 0);
-					if (bytes_read < 0)
-					{
-						close_msg(i, "recv() failed", 1);
-						//update_max_fd(i);
-						continue;
-					}
-					if (bytes_read == 0)
-					{
-						close_msg(i, "Client on socket ", 0);
-						//update_max_fd(i);
-						continue;
-					}
-
-					std::cout << "Bytes read: " << bytes_read << std::endl;
-					if (bytes_read < BUFFER_SIZE)
-						buffer[bytes_read] = '\0';
-					else
-						buffer[BUFFER_SIZE - 1] = '\0';
-
-					std::string request(buffer);
-
-					std::cout << "\nReceived:\n" << buffer << "\n--------------------------\n" << std::endl;
-
-					req.parseRequest(request, _socket_to_port_map[i]);
-
-					std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-
-					if (_method_map.count(req.getMethod()))
-						_method_map[req.getMethod()](req, server_list);
-					else
-						std::cerr << "Unsupported method: " << req.getMethod() << std::endl;
-
-					std::cout << "\n\nDEBUG: RESPONSE\n" << req.getResponse() << std::endl << std::endl;
-					send(i, req.getResponse().c_str(), req.getResponse().size(), 0); // Echo back to client
-					if (!req.getKeepAlive())
-					{
-						close_msg(i, "Connection on socket ", 0);
-						//update_max_fd(i);
-					}*/
 				}
 			}
 		}
-		static_cast<void>(http_config);
 	}
 }
 
@@ -343,7 +226,7 @@ void	Server::update_max_fd(int fd)
 void Server::close_msg(int fd, const std::string &message, int err)
 {
 	if (err)
-		std::cerr << "\033[31mError: " << strerror(err) << "\033[0m" << std::endl;
+		std::cerr << "\033[31mClose Message Error: " << "\033[0m" << std::endl;
 	else if (!message.empty())
 		;
 	else
