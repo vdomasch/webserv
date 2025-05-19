@@ -30,7 +30,7 @@ bool is_keyword(std::string key, std::string pattern)
 
 bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_list, ServerConfig &server_temp)
 {
-	if (server_list.find(server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()) != server_list.end())
+	if (server_list.find(server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_string_port_number()) != server_list.end())
 	{
 		std::cerr << "Error: Server name already exists for this port!" << std::endl;
 		return true;

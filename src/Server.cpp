@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "HTTPConfig.hpp"
+#include "HttpResponse.hpp"
 #include <map>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -100,7 +101,6 @@ void	Server::run_server(HTTPConfig &http_config)
 	}
 
 	signal(SIGINT, handle_signal);
-	
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
@@ -129,8 +129,10 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
+	static_cast<void>(http_config);
 	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+
 
 	if (bytes_read <= 0)
 	{
@@ -139,8 +141,8 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	}
 
 	buffer[bytes_read] = '\0';
+	std::cout << "Received data: " << buffer << std::endl;
 	_socket_states[fd].append_data(buffer);
-
 	if (_socket_states[fd].has_error())
 	{
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
@@ -148,9 +150,48 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		return;
 	}
 
+	int port = _socket_to_port_map[fd];
+	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+
+	PRINT_DEBUG2
+	std::string server_name("");
+
+	try { convert(port, server_name); }
+	catch (std::exception &e) { std::cerr << "Error converting port: " << e.what() << std::endl; }
+
+	PRINT_DEBUG
+	
+	std::cout << "Server name: " << server_name << std::endl;
+	std::string host_header = _socket_states[fd].get_header("Host");
+
+	std::cout << "Host name: " << host_header << std::endl;
+
+	if (!host_header.empty())
+		server_name += ":" + host_header;
+
+	std::cout << "Server name: " << server_name << std::endl;
+	PRINT_DEBUG2
 	if (_socket_states[fd].is_ready())
 	{
+		std::string method = _socket_states[fd].get_method();
+
+		if (_method_map.count(method))
+		{
+			_method_map[method](_socket_states[fd], server_list, _socket_data, server_name);
+		}
+		else
+		{
+			// Méthode non autorisée
+			HttpResponse res;
+			res.set_status(405, "Method Not Allowed");
+			res.set_body("405 Method Not Allowed");
+			res.add_header("Content-Type", "text/plain");
+			res.add_header("Content-Length", convert(res.get_body().size(), server_name));
+			_socket_states[fd].set_response(res.generate_response());
+		}
+
 		std::string response = _socket_states[fd].get_response();
+		std::cout << "Response: " << response << std::endl;
 		send(fd, response.c_str(), response.size(), 0);
 
 		if (!_socket_states[fd].getKeepAlive()) close_msg(fd, "Connection closed (no keep-alive)", 0);
@@ -205,6 +246,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 				else
 				{
+					std::cout << "Handling request on socket " << i << std::endl;
 					// Initialisation si première interaction
 					if (_socket_states.find(i) == _socket_states.end()) _socket_states[i] = HttpRequest();
 
@@ -214,6 +256,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			}
 		}
 	}
+	std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl;
+	shutdown_all_sockets();
 }
 
 void	Server::update_max_fd(int fd)

@@ -3,7 +3,7 @@
 
 # include "LocationConfig.hpp"
 
-template <typename T, typename Y> void convert(const T& from, Y& to);
+template <typename T, typename Y> Y& convert(const T& from, Y& to);
 
 class ServerConfig
 {
@@ -26,6 +26,8 @@ class ServerConfig
 		std::string								get_server_name();
 		std::map<std::string, LocationConfig>	get_location_list();
 		std::map<std::string, std::string>		get_map_server();
+
+		LocationConfig get_matching_location(const std::string& target);
 
 		std::string		DEBUG_test();
 

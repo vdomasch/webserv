@@ -21,11 +21,6 @@ class HttpRequest
 		HttpRequest();
 		~HttpRequest();
 
-		t_request_state	_state;
-
-		std::string	get_method() const;
-		std::string	get_response() const;
-
 		void		append_data(const std::string &data);
 		bool		is_ready() const;
 		bool		has_error() const;

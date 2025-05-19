@@ -3,12 +3,13 @@
 
 # include "parsing_utils.hpp"
 
-template <typename T, typename Y> void convert(const T& from, Y& to);
+template <typename T, typename Y> Y& convert(const T& from, Y& to);
 
 class LocationConfig
 {
 	public:
 		LocationConfig();
+		LocationConfig(std::string path);
 		//LocationConfig(const LocationConfig&);
 		~LocationConfig();
 

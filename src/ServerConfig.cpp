@@ -205,7 +205,7 @@ bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_
 		else if (is_server_name_already_used(server_list, server_temp))
 			return 1;
 		else
-			server_list[server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()] = server_temp;
+			server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_string_port_number()] = server_temp;
 	}
 	_listen_ports.clear();
 	return 0;
@@ -345,46 +345,35 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 	return 0;
 }
 
-LocationConfig ServerConfig::getMatchingLocation(const std::string& target) const
+LocationConfig ServerConfig::get_matching_location(const std::string& target)
 {
-	LocationConfig best_match;
+	LocationConfig *best_match = NULL;
 	size_t max_len = 0;
 
-	for (std::vector<LocationConfig>::const_iterator it = _locations.begin(); it != _locations.end(); ++it)
+	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
 	{
-		const std::string& loc_path = it->get_path();
+		std::cout << "Checking location: " << it->first << std::endl;
+	}
+
+	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
+	{
+		const std::string& loc_path = it->first;
 		if (target.compare(0, loc_path.length(), loc_path) == 0 && loc_path.length() > max_len)
 		{
-			best_match = &(*it);
+			best_match = &it->second;
 			max_len = loc_path.length();
 		}
 	}
 
-	// Si aucun match spécifique, rechercher location /
-	if (!best_match)
-	{
-		for (std::vector<LocationConfig>::const_iterator it = _locations.begin(); it != _locations.end(); ++it) {
-			if (it->get_path() == "/")
-				return *it;
-	}
-		// Par sécurité, retourner le premier s'il existe
-		if (!_locations.empty())
-			return _locations[0];
-		else
-			throw std::runtime_error("No location block defined.");
-	}
+	std::cout << "Best match for target '" << target << "' is location '" << best_match << "'" << std::endl;
 
-	return best_match;
+	if (best_match)
+		return *best_match;
 
-	return best_match;
+	// fallback: location /
+	std::map<std::string, LocationConfig>::const_iterator it = _location_list.find("/");
+	if (it != _location_list.end())
+		return it->second;
+
+	throw std::runtime_error("No suitable location found for target: " + target);
 }
-
-location /test/
-
-location /test/oui/non/
-	root /999/
-
-
-path www.xxx.com/test/oui/non/test/
-
-www.xxx.com/999/test/

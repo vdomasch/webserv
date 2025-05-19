@@ -94,7 +94,6 @@ bool HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0);
 std::string HttpRequest::get_response() const	{ return _response; }
 bool		HttpRequest::getKeepAlive() const	{ return _keep_alive; }
 std::string HttpRequest::get_method() const		{ return _method; }
-std::string HttpRequest::get_response() const	{ return _response; }
 std::string HttpRequest::get_target() const		{ return _target; }
 std::string HttpRequest::get_header(const std::string& key) const
 {

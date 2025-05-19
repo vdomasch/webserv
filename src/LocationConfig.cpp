@@ -14,6 +14,22 @@ LocationConfig::LocationConfig()
 	_location_directives[9] = "return";
 }
 
+LocationConfig::LocationConfig(std::string path)
+{
+	_location_directives[0] = "error_page";
+	_location_directives[1] = "client_max_body_size";
+	_location_directives[2] = "root";
+	_location_directives[3] = "index";
+	_location_directives[4] = "rewrite";
+	_location_directives[5] = "autoindex";
+	_location_directives[6] = "allow_methods";
+	_location_directives[7] = "cgi_path";
+	_location_directives[8] = "cgi_ext";
+	_location_directives[9] = "return";
+
+	_map_location["path"] = path;
+}
+
 //LocationConfig::LocationConfig(const LocationConfig& param) {}
 
 LocationConfig::~LocationConfig() {}
@@ -22,14 +38,20 @@ LocationConfig::~LocationConfig() {}
 std::string	LocationConfig::get_path()
 {
 	std::map<std::string, std::string>::iterator it = _map_location.find("path");
-	if (it != _map_location.end())
-		return it->second;
-	return "";
+	return (it != _map_location.end()) ? it->second : "";
 }
 
-std::string LocationConfig::get_root()	{ return _map_location["root"]; }
-std::string LocationConfig::get_index()	{ return _map_location["index"]; }
-std::string LocationConfig::get_path()	{ return _map_location[""]; }
+std::string LocationConfig::get_root()
+{
+	std::map<std::string, std::string>::iterator it = _map_location.find("root");
+	return (it != _map_location.end()) ? it->second : ""; 
+}
+
+std::string LocationConfig::get_index()
+{ 
+	std::map<std::string, std::string>::iterator it = _map_location.find("index");
+	return (it != _map_location.end()) ? it->second : "";
+}
 
 std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
 

@@ -1,10 +1,91 @@
-#include "webserv.hpp"
-#include "HttpResponse.hpp"
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "../includes/webserv.hpp"
 
-///////////////////////////////////////////////////
-/*std::string	handleIcoFile(t_fd_data *d)
+int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
+{
+	int	server_fd;
+	int intopt = 1;
+
+	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+	{
+		perror("cannot create socket"); 
+		return (-1); 
+	}
+	
+	bzero(servaddr, sizeof(*servaddr));
+	bzero(socket_data, sizeof(*socket_data));
+
+	servaddr->sin_family = AF_INET;
+	servaddr->sin_port = htons(SERV_PORT);
+	//servaddr->sin_addr.s_addr = htonl(INADDR_ANY); // bind to all ports
+	//OR 
+	servaddr->sin_addr.s_addr = inet_addr("127.0.0.1"); // if to localhost only
+
+	setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT | SO_REUSEADDR, &intopt, sizeof(intopt));
+	if (bind(server_fd, (struct sockaddr *)servaddr, sizeof(*servaddr)) < 0)
+	{
+		perror("cannot bind to socket"); 
+		return (-1); 
+	}
+	if (listen(server_fd, 10) < 0)
+	{
+		perror("Failed to listen ! ");
+		return (-1);
+	}
+	return (server_fd);
+}
+
+int accept_connexion(int server_fd, sockaddr_in *servaddr)
+{
+	int	my_socket;
+	int	addr_len = sizeof(servaddr);
+
+	//here servaddr is the connecting ip
+	if ((my_socket = accept(server_fd, (struct sockaddr *)servaddr, (socklen_t*)&addr_len))<0)
+	{
+		perror("In accept");
+		return(0); //exit ?
+	}
+	return (my_socket);
+}
+
+std::ifstream::pos_type filesize(const char *filename)
+{
+	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+	return in.tellg(); 
+}
+
+std::string	displayErrorPage(std::string serverFolder, int *errcode)
+{
+	char		buffer[BUFFER_SIZE] = {0};
+	std::string current_pwd(getcwd(NULL, 0));
+	std::string pathToErrPage;
+	int			bytes_read;
+	int			fd;
+
+
+	pathToErrPage = serverFolder + "/error_404.html"; // subject to change ? 
+
+	fd = open(pathToErrPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
+	if (fd < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		return ("void");
+	}
+	bytes_read = read(fd, buffer, BUFFER_SIZE);
+	if (bytes_read < 0)
+	{
+		*errcode = FAILEDSYSTEMCALL;
+		close(fd);
+		return ("void");
+	}
+	*errcode = 0;
+	close(fd);
+	std::string response(buffer);
+	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
+	return (response);
+}
+
+std::string	handleIcoFile(t_fd_data *d)
 {
 	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
 	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
@@ -39,9 +120,9 @@
 
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
 	
-}*/
+}
 
-/*bool	indexFileExists(t_fd_data *d, int debug)
+bool	indexFileExists(t_fd_data *d, int debug)
 {
 	struct stat fileinfo;
 
@@ -56,9 +137,9 @@
 	}
 	else
 		return (false);
-}*/
+}
 
-/*std::string	openAndReadFile(t_fd_data *d, int *errcode)
+std::string	openAndReadFile(t_fd_data *d, int *errcode)
 {
 	char			buffer[BUFFER_SIZE];
 	int				bytes_read;
@@ -91,9 +172,9 @@
 	d->content_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
-}*/
+}
 
-/*int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
+int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 {
 	struct stat fileinfo;  
 	std::string pathToCheck;
@@ -127,9 +208,9 @@
 			return (IS_EXISTINGFILE);
 		default: return (IS_EXISTINGFILE);
 	}
-}*/
+}
 
-/*void	storeFolderContent(t_fd_data *d, int *errcode)
+void	storeFolderContent(t_fd_data *d, int *errcode)
 {
 	struct dirent *pDirent;
     DIR *pDir;
@@ -158,9 +239,9 @@
 		return ;
 	}
 	
-}*/
+}
 
-/*void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
+void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
 {
 	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
 	{
@@ -175,13 +256,13 @@
 	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
 	if (parent == "/server_files")
 		parent = "/";
-}*/
+}
 
-/*bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
+bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
 	return a.lowerName < b.lowerName;
-}*/
+}
 
-/*void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
+void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
 {
 	for (std::vector<dirent>::const_iterator i = fileList.begin(); i != fileList.end(); ++i)
 	{
@@ -193,9 +274,9 @@
 	std::sort(sorted.begin(), sorted.end(), compareBySize);
 	// for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
 	// 	std::cout << j->baseName << std::endl;
-}*/
+}
 
-/*std::string	displayCorrectFileSize(const char * filename)
+std::string	displayCorrectFileSize(const char * filename)
 {
 	std::ostringstream		oss;
 	std::ifstream::pos_type	posSize;
@@ -219,9 +300,9 @@
 	oss.clear();
 	oss << size;
 	return (oss.str() + dico[i]);
-}*/
+}
 
-/*void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
+void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 {
 	struct stat					fileinfo;
 	time_t						timestamp;
@@ -294,9 +375,9 @@
 		oss << " </td>\n";
 		oss << "</tr>\n";
 	}
-}*/
+}
 
-/*void	setupHTMLpageStyle(std::ostringstream &oss)
+void	setupHTMLpageStyle(std::ostringstream &oss)
 {
 	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
 	oss << "<style>\n";
@@ -309,9 +390,9 @@
 	oss << "a.dir {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==\") left top no-repeat;\n}\n";
 	oss << "a.icon {\npadding-inline-start: 1.5em;\ntext-decoration: none;\nuser-select: auto;\n}\n";
 	oss << "</style>\n";
-}*/
+}
 
-/*std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
+std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 {
 	std::ostringstream	oss;
 	std::string			pageContent;
@@ -346,230 +427,186 @@
 	d->content_len = pageContent.length();
 	d->folderContent.clear();
 	return (pageContent);
-}*/
+}
 
-///////////////////////////////////////////////////
-
-/*bool search_file(const std::string& path, HttpRequest& req, const ServerConfig& server)
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
 {
-	static_cast<void>(server);
-	std::cout << "File found" << std::endl;
-	std::ifstream file(path.c_str(), std::ios::in);
-	if (!file)
-		return false;
+	std::string request(buffer);
+	std::string first_line;
+	std::string requested_file;
+	std::string response;
+	char		objType;
+	size_t		filename_start;
+	size_t		filename_end;
 
-	std::ostringstream ss;
-	ss << file.rdbuf();
-	file.close();
+	first_line = request.substr(0, request.find('\n'));
+	filename_start = first_line.find_first_of(' ');
+	filename_end = first_line.find_last_of(' ');
+	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
 
-	static_cast<void>(req);
-	if (req.getKeepAlive())
-		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "keep-alive") + ss.str());
+	printf("\033[34m------------------------------------\n");
+	printf("(%s)\n",request.c_str() );
+	printf("\033[32m------------------------------------\n");
+	printf("Requested : (%s)\n",requested_file.c_str() );
+	printf("------------------------------------\033[0m\n");
+
+	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
+
+	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : use actual index.html if exists, else list the content of the folder
+	{
+		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and index file was found, redirecting	
+			response = openAndReadFile(d, errcode);
+		else
+			response = buildCurrentIndexPage(d, errcode); // no index found, listing files instead (if auto-index on)
+	}
+	else if (objType == IS_EXISTINGFILE)
+		response = openAndReadFile(d, errcode);
 	else
-		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "close") + ss.str());
-	return true;
-}*/
-
-std::ifstream::pos_type filesize(const char *filename)
-{
-	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-	return in.tellg(); 
+		response = displayErrorPage(d->serverFolder, errcode); // check if error is file not found
+	return (response);
 }
 
-std::string displayErrorPage(std::string serverFolder, int *errcode)
+std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_fd_data *d)
 {
-	char buffer[BUFFER_SIZE] = {0};
-	std::string pathToErrPage = serverFolder + "/error_404.html";
+	std::string	responseCode;
+	std::ostringstream oss;
 
-	int fd = open(pathToErrPage.c_str(), O_RDONLY);
-	if (fd < 0)
+	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ?
 	{
-		*errcode = FAILEDSYSTEMCALL;
-		return "";
+		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
+		return (""); 
 	}
-	int bytes_read = read(fd, buffer, BUFFER_SIZE);
-	close(fd);
-	if (bytes_read < 0)
+	//--------------------------------------------------------//
+
+	oss << d->content_len;
+
+	switch (errcode)
 	{
-		*errcode = FAILEDSYSTEMCALL;
-		return "";
-	}
-	*errcode = 0;
-	return std::string(buffer, bytes_read);
-}
-
-std::string get_content_type(const std::string& path)
-{
-	size_t dot = path.find_last_of('.');
-	if (dot == std::string::npos) return "text/plain";
-
-	std::string ext = path.substr(dot);
-	if (ext == ".html") return "text/html";
-	if (ext == ".css") return "text/css";
-	if (ext == ".js") return "application/javascript";
-	if (ext == ".png") return "image/png";
-	if (ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
-	if (ext == ".ico") return "image/x-icon";
-	return "application/octet-stream";
-}
-
-void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
-{
-	for (std::map<std::string, ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
-	{
-		std::cout << "Checking server: " << it->first << std::endl;
-		std::map<std::string, LocationConfig> location_list = it->second.get_location_list();
-		for (std::map<std::string, LocationConfig>::iterator it2 = location_list.begin(); it2 != location_list.end(); ++it2)
-			std::cout << "Checking location: " << it2->first << std::endl;
-	}
-
-
-
-
-
-	static_cast<void>(fd_data);
-
-	std::string target = req.get_target();
-	std::cout << "Server name: " << server_name << std::endl;
-	ServerConfig &server_conf = server_list[server_name];
-	LocationConfig location;
-	try { location = server_conf.get_matching_location(target); }
-	catch (std::exception &e)
-	{
-		std::cerr << "Error getting matching location: " << e.what() << std::endl;
-		req.set_response("HTTP/1.1 404 Not Found\r\n\r\n");
-		return;
-	}
-	std::string location_path = location.get_path();
-	std::string root = location.get_root();
-
-	// Supprimer le préfixe location du target
-	std::string relative_path = target.substr(location_path.length());
-	if (relative_path.empty() || relative_path[0] != '/')
-		relative_path = "/" + relative_path;
-	std::string filepath = root + relative_path;
-
-	// Si le target finit par '/', on essaie un fichier index
-	if (!filepath.empty() && filepath[filepath.length() - 1] == '/')
-	{
-		std::string index = location.get_index();
-		if (!index.empty())
-			filepath += index;
-	}
-
-	int errcode = 0;
-	std::ifstream file(filepath.c_str(), std::ios::binary);
-
-	HttpResponse res;
-	std::string num_str("");
-
-	if (!file.is_open())
-	{
-		std::string body = displayErrorPage(root, &errcode);
-		res.set_status(404, "Not Found");
-		res.set_body(body);
-		res.add_header("Content-Type", "text/html");
-		try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-		req.set_response(res.generate_response());
-		return;
-	}
-
-	std::ostringstream content;
-	content << file.rdbuf();
-	std::string body = content.str();
-	std::string type = get_content_type(filepath);
-
-	res.set_status(200, "OK");
-	res.set_body(body);
-	res.add_header("Content-Type", type);
-	try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-
-	req.set_response(res.generate_response());
-}
-
-void	post_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
-{
-	static_cast<void>(server_list);
-	static_cast<void>(d);
-
-	std::cout << "POST request received" << std::endl;
-	std::cout << req << std::endl;
-
-	response = create_header("200 OK", "text/plain", "16", "keep-alive");
-}
-
-void	delete_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
-{
-	static_cast<void>(server_list);
-	static_cast<void>(d);
-	static_cast<void>(response);
+	case 0:
+		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
+		responseCode.append(oss.str());
+		responseCode.append("\r\n\r\n\n");
+		d->content_len = d->content_len;
+		d->content_type = "text/html";
+		break;
 	
-	std::cout << "DELETE request received" << std::endl;
-	std::cout << req << std::endl;
+	case 2:
+		d->content_len = d->content_len;
+		d->content_type = "image/x-icon";
+		return(requestBody);
 
-
+	default:
+		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
+		responseCode.append(oss.str());
+		responseCode.append("\r\n\r\n\n");
+		d->content_len = d->content_len;
+		d->content_type = "text/html";
+		break;
+	}
+	responseCode = responseCode + requestBody;
+	return (responseCode);
 }
 
-std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection)
+int	handle_client_request(int socket, t_fd_data *d)
 {
-	std::string header = "HTTP/1.1 " + status + "\r\n";
-	header += "Content-Type: " + content_type + "\r\n";
-	header += "Content-Length: " + content_length + "\r\n";
-	header += "Connection: " + connection + "\r\n\r\n";
-	return header;
+	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?????
+	std::string	requestBody;
+	std::string	finalMessage;
+	int			errcode;
+	ssize_t 	bytesRead;
+	
+	//Receive the new message :
+
+	bytesRead = read(socket , buffer, BUFFER_SIZE);
+	if (bytesRead < 0)
+	{
+		perror("Failed to read ! ");
+		return (-1);
+	}
+	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
+	memset(buffer, '\0', sizeof(buffer));
+	if (errcode == FAILEDSYSTEMCALL)
+	{
+		perror("\nAn error occured while trying to open the requested file :(\n\n");
+		exit(-1); // to check for leaks later
+	}
+	
+	//Sending a response :
+	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
+
+	printf("\033[35m\n#######################\n");
+	// printf("(%s)\n",finalMessage.c_str() );
+	printf(" \nERROR CODE(%d)\n",errcode);
+	printf("#######################\033[0m\n");
+
+	if (!finalMessage.empty())
+	{
+		if (d->content_type == "image/x-icon")
+		{
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
+			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
+		}
+		else
+			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
+		std::cout << "message sent from server !\n" << std::endl;
+	}
+	close(socket);
+	return (0);
 }
 
-
-
-/*void get_request(HttpRequest &req, std::map<std::string, ServerConfig>& servers, t_fd_data &fd_data, std::string server_name)
+int main(int argc, char **argv)
 {
-	std::string target = req.get_target();
-	ServerConfig &server_conf = servers[server_name];
-	LocationConfig location = server_conf.get_matching_location(target);
-	std::string location_path = location.get_path();
-	std::string root = location.get_root();
 
-	std::string relative_path = target.substr(location_path.length());
-	if (relative_path.empty() || relative_path[0] != '/')
-		relative_path = "/" + relative_path;
-	std::string filepath = root + relative_path;
+	(void)argv;
+	int my_socket;
+	int	server_fd;
+	struct sockaddr_in servaddr;
+	t_fd_data s_data; // to set select	
 
-	if (!filepath.empty() && filepath[filepath.length() - 1] == '/') {
-		std::string index = location.get_index();
-		if (!index.empty())
-			filepath += index;
+	server_fd = initialize_socket(&servaddr, &s_data);
+	if (server_fd < 0)
+	{
+		perror("cannot bind to socket");
+		return (0);
 	}
+	FD_ZERO(&s_data.saved_sockets);
+	FD_SET(server_fd, &s_data.saved_sockets);
 
-	int errcode = 0;
-	std::ifstream file(filepath.c_str(), std::ios::binary);
+	std::string current_pwd(getcwd(NULL, 0)); // check if null, then exit early
+	s_data.max_fd = server_fd;
+	s_data.serverFolder = current_pwd + "/server_files"; //after parsing, to replace
+	while(42)
+	{
+		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
+		s_data.ready_sockets = s_data.saved_sockets;
+		if (select(s_data.max_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0)
+		{
+			perror("Select failed ! ");
+			return (0);
+		}
 
-	HttpResponse res;
-	std::string num_str("");
-
-	if (!file.is_open()) {
-		std::string body = displayErrorPage(root, &errcode);
-		res.set_status(404, "Not Found");
-		res.set_body(body);
-		res.add_header("Content-Type", "text/html");
-		try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-		req.set_response(res.generate_response());
-		return;
+		for (int i = 0; i <= s_data.max_fd ; i++)
+		{
+			if (FD_ISSET(i, &s_data.ready_sockets))
+			{
+				printf("\n\033[32m========= i = %d =========\033[0m\n\n", i);
+				if (i == server_fd) // there is a new connection available on the server socket
+				{
+					my_socket = accept_connexion(server_fd, &servaddr); // accept the new connection
+					FD_SET(my_socket, &s_data.saved_sockets); //add new connection to current set
+					printf( "i is %d, server_fd is %d, my_socket is %d\n", i, server_fd, my_socket);
+					printf( "request from server_fd : %d\n", my_socket);
+					if (my_socket > s_data.max_fd) // to set the new max
+						s_data.max_fd = my_socket;
+				}
+				else
+				{
+					handle_client_request(i, &s_data);
+					FD_CLR(i, &s_data.saved_sockets);
+				}
+			}
+		}
+		my_socket = -1;
 	}
-
-	std::ostringstream content;
-	content << file.rdbuf();
-	std::string body = content.str();
-	std::string type = get_content_type(filepath);
-
-
-	res.set_status(200, "OK");
-	res.set_body(body);
-	res.add_header("Content-Type", type);
-	try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-
-	req.set_response(res.generate_response());
-}*/
+	return (argc * 0);
+}
