@@ -279,11 +279,6 @@ bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_c
 		std::cerr << "Error: Invalid root value '" << value << "', must ends with '/'!" << std::endl;
 		return 1;
 	}
-	/*if (value.size() < 2)
-	{
-		std::cerr << "Error: Invalid root value has no path!" << std::endl;
-		return 1;
-	}*/
 	_current_map["root"] = value;
 	return 0;
 }

@@ -14,8 +14,6 @@ LocationConfig::LocationConfig()
 	_location_directives[9] = "cgi_ext";
 }
 
-//LocationConfig::LocationConfig(const LocationConfig& param) {}
-
 LocationConfig::~LocationConfig() {}
 
 bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)

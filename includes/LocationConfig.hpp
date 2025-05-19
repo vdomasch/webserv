@@ -7,7 +7,6 @@ class LocationConfig
 {
 	public:
 		LocationConfig();
-		//LocationConfig(const LocationConfig&);
 		~LocationConfig();
 
 		bool	parse_location(std::istringstream &iss, std::string key);
