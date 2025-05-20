@@ -189,6 +189,11 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 			std::cerr << "Error: There are values after ';' for keyword allow_methods!" << std::endl;
 			return 1;
 		}
+		if (iss.eof() && key.find(";") == std::string::npos)
+		{
+			std::cerr << "Error: Semicolon is missing for keyword: allow_methods!" << std::endl;
+			return 1;
+		}
 		if (!is_valid_to_clean_semicolon(key))
 			return 1;
 		key = clean_semicolon(key);
@@ -206,7 +211,7 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 			std::cerr << "Error: Invalid allow_methods value '" << key << "'!" << std::endl;
 			return 1;
 		}
-	}
+	}	
 	return 0;
 }
 
