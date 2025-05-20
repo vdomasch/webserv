@@ -200,6 +200,13 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 		std::cerr << "Error: Keyword listen needs a port number!" << std::endl;
 		return 1;
 	}
+	if (_map_server.count("listen"))
+	{
+		std::cerr << "Error: Keyword listen already set!" << std::endl;
+		return 1;
+	}
+	std::cout << "DEBUG: " << value << std::endl;
+
 	while (!value.empty())
 	{
 		if (value.find_first_not_of("0123456789;") != std::string::npos)
