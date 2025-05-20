@@ -24,8 +24,10 @@ class ServerConfig
 		unsigned int							get_port_number();
 		std::string								get_string_port_number();
 		std::string								get_server_name();
+		std::string								get_host_ip() const;
 		std::map<std::string, LocationConfig>	get_location_list();
 		std::map<std::string, std::string>		get_map_server();
+
 
 		LocationConfig get_matching_location(const std::string& target);
 

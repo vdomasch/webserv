@@ -6,6 +6,8 @@
 # include <sys/select.h>
 # include <signal.h>
 # include <arpa/inet.h>
+# include <set>
+
 
 class Server
 {
@@ -23,6 +25,7 @@ class Server
 		t_fd_data		_socket_data;	// to keep track of all active sockets
 		//HttpRequest		_req;			// to parse the request
 
+		std::set<std::string>																_ip_port_bound;
 		std::map<int, int>																	_port_to_socket_map;
 		std::map<int, int>																	_socket_to_port_map;
 		std::map<int , HttpRequest>															_socket_states;
@@ -30,7 +33,7 @@ class Server
 
 		int		initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void	update_max_fd(int fd);
-		void	close_msg(int fd, const std::string &message, int err);
+		int		close_msg(int fd, const std::string &message, int err, int return_code);
 		void	running_loop(HTTPConfig &http_config, sockaddr_in &servaddr);
 		bool	is_server_socket(int fd);
 		void	shutdown_all_sockets();
