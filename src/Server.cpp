@@ -156,6 +156,34 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
 }
 
+std::string Server::get_server_name(int fd)
+{
+	std::map<int, int>::iterator it = _socket_to_port_map.find(fd);
+	if (it != _socket_to_port_map.end())
+	{
+		int port = it->second;
+		std::string port_str;
+		port_str = convert<std::string>(port); // get port to str
+
+		std::string host = _socket_states[fd].get_header("Host"); // get host from header
+		if (host.empty())
+			return port_str; // if host is empty, return port
+
+		std::string host_port = host.substr(host.find(":") + 1); // if host has port
+		if (host_port.empty())
+		{
+			return host + port_str; // if host has no port, return host + port
+		}
+		else if (port_str.find_first_not_of("0123456789") != std::string::npos) // if port is not a number
+		{
+			throw std::runtime_error("Invalid port number in Host header: " + host_port); // throw exception
+		}
+		else
+			return host; // retrun host
+	}
+	return ""; 
+}
+
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
 	static_cast<void>(http_config);
@@ -179,23 +207,22 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		return;
 	}
 
-	int port = _socket_to_port_map[fd];
+	std::string server_name;
+
+	try { server_name = get_server_name(fd); }
+	catch (std::exception &e)
+	{
+		std::cerr << "Error getting server name: " << e.what() << std::endl;
+		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+		close_msg(fd, "Bad request", 1, -1);
+		return;
+	}
+
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
-
-	std::string server_name("");
-
-	try { convert(port, server_name); }
-	catch (std::exception &e) { std::cerr << "Error converting port: " << e.what() << std::endl; }
-
-	std::string host_header = _socket_states[fd].get_header("Host");
-
-	if (!host_header.empty())
-		server_name += ":" + host_header;
 
 	if (_socket_states[fd].is_ready())
 	{
 		std::string method = _socket_states[fd].get_method();
-
 		if (_method_map.count(method))
 		{
 			_method_map[method](_socket_states[fd], server_list, _socket_data, server_name);
@@ -207,7 +234,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.set_status(405, "Method Not Allowed");
 			res.set_body("405 Method Not Allowed");
 			res.add_header("Content-Type", "text/plain");
-			res.add_header("Content-Length", convert(res.get_body().size(), server_name));
+			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
 			_socket_states[fd].set_response(res.generate_response());
 		}
 

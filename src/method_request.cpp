@@ -413,52 +413,69 @@ std::string get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
+std::string remove_prefix(std::string target, const std::string prefix)
+{
+	if (target.find(prefix) == 0)
+		target.erase(0, prefix.length());
+	return target;
+}
+
+std::string try_index_file(std::string &file_path, std::string index)
+{
+	if (file_path.empty() || file_path.at(file_path.size() - 1) != '/')
+		return file_path;
+
+	if (!index.empty())
+		file_path += index;
+	return file_path;
+}
+
 void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
-	for (std::map<std::string, ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
-	{
-		std::cout << "Checking server: " << it->first << std::endl;
-		std::map<std::string, LocationConfig> location_list = it->second.get_location_list();
-		for (std::map<std::string, LocationConfig>::iterator it2 = location_list.begin(); it2 != location_list.end(); ++it2)
-			std::cout << "Checking location: " << it2->first << std::endl;
-	}
-
-
-
-
-
 	static_cast<void>(fd_data);
 
 	std::string target = req.get_target();
 	std::cout << "Server name: " << server_name << std::endl;
-	ServerConfig &server_conf = server_list[server_name];
-	LocationConfig location;
-	try { location = server_conf.get_matching_location(target); }
+
+	std::map<std::string, ServerConfig>::iterator it_serv;
+	if ((it_serv = server_list.find(server_name)) == server_list.end())
+	{
+		server_name = server_name.substr(server_name.find(':') + 1, server_name.size());
+		if ((it_serv = server_list.find(server_name)) == server_list.end())
+		{
+			std::cerr << "Server not found: " << server_name << std::endl;
+			req.set_response("HTTP/1.1 404 Not Found\r\n\r\n");
+			return;
+		}
+	}
+
+	ServerConfig &server = it_serv->second;
+	std::string location;
+	std::string root;
+	std::map<std::string, LocationConfig>::iterator it_loc;
+	try
+	{
+		location = server.get_matching_location(target);
+		std::map<std::string, LocationConfig> location_list = server.get_location_list();
+		it_loc = location_list.find(location);
+		if (it_loc != location_list.end())
+			root = it_loc->second.get_root();
+		else
+			throw std::runtime_error("Location not found");
+	}
 	catch (std::exception &e)
 	{
 		std::cerr << "Error getting matching location: " << e.what() << std::endl;
 		req.set_response("HTTP/1.1 404 Not Found\r\n\r\n");
 		return;
 	}
-	std::string location_path = location.get_path();
-	std::string root = location.get_root();
 
-	// Supprimer le préfixe location du target
-	std::string relative_path = target.substr(location_path.length());
-	if (relative_path.empty() || relative_path[0] != '/')
-		relative_path = "/" + relative_path;
-	std::string filepath = root + relative_path;
-
-	// Si le target finit par '/', on essaie un fichier index
-	if (!filepath.empty() && filepath[filepath.length() - 1] == '/')
-	{
-		std::string index = location.get_index();
-		if (!index.empty())
-			filepath += index;
-	}
+	std::string file_path = root + remove_prefix(target, location); // Supprimer le préfixe location du target
+	
+	file_path = try_index_file(file_path, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
 
 	int errcode = 0;
-	std::ifstream file(filepath.c_str(), std::ios::binary);
+	std::ifstream file(file_path.c_str(), std::ios::binary);
 
 	HttpResponse res;
 	std::string num_str("");
@@ -469,7 +486,7 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 		res.set_status(404, "Not Found");
 		res.set_body(body);
 		res.add_header("Content-Type", "text/html");
-		try { res.add_header("Content-Length", convert(body.size(), num_str)); }
+		try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
 		req.set_response(res.generate_response());
 		return;
@@ -478,12 +495,12 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 	std::ostringstream content;
 	content << file.rdbuf();
 	std::string body = content.str();
-	std::string type = get_content_type(filepath);
+	std::string type = get_content_type(file_path);
 
 	res.set_status(200, "OK");
 	res.set_body(body);
 	res.add_header("Content-Type", type);
-	try { res.add_header("Content-Length", convert(body.size(), num_str)); }
+	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
 
 	req.set_response(res.generate_response());
@@ -526,12 +543,12 @@ std::string create_header(const std::string &status, const std::string &content_
 /*void get_request(HttpRequest &req, std::map<std::string, ServerConfig>& servers, t_fd_data &fd_data, std::string server_name)
 {
 	std::string target = req.get_target();
-	ServerConfig &server_conf = servers[server_name];
-	LocationConfig location = server_conf.get_matching_location(target);
-	std::string location_path = location.get_path();
+	ServerConfig &server = servers[server_name];
+	LocationConfig location = server.get_matching_location(target);
+	std::string location = location.get_path();
 	std::string root = location.get_root();
 
-	std::string relative_path = target.substr(location_path.length());
+	std::string relative_path = target.substr(location.length());
 	if (relative_path.empty() || relative_path[0] != '/')
 		relative_path = "/" + relative_path;
 	std::string filepath = root + relative_path;

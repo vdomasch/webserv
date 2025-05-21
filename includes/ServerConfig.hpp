@@ -3,7 +3,7 @@
 
 # include "LocationConfig.hpp"
 
-template <typename T, typename Y> Y& convert(const T& from, Y& to);
+template <typename Y, typename T> Y convert(const T& from);
 
 class ServerConfig
 {
@@ -18,7 +18,6 @@ class ServerConfig
 		bool			add_location(std::string key);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
 
-		LocationConfig getMatchingLocation(const std::string& target) const;
 
 		size_t									get_client_max_body_size();
 		unsigned int							get_port_number();
@@ -29,7 +28,7 @@ class ServerConfig
 		std::map<std::string, std::string>		get_map_server();
 
 
-		LocationConfig get_matching_location(const std::string& target);
+		std::string		get_matching_location(const std::string& target);
 
 		std::string		DEBUG_test();
 

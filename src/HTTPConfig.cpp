@@ -16,8 +16,7 @@ size_t	HTTPConfig::get_client_max_body_size()
 	std::map<std::string, std::string>::iterator it = _map_http.find("client_max_body_size");
 	if (it != _map_http.end() && it->second != "UNSET")
 	{
-		try { convert(it->second, client_max_body_size);
-		}
+		try { client_max_body_size = convert<int>(it->second); }
 		catch (std::exception &e) {
 			return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0);
 		}

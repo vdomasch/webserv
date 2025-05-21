@@ -3,7 +3,7 @@
 
 # include "parsing_utils.hpp"
 
-template <typename T, typename Y> Y& convert(const T& from, Y& to);
+template <typename Y, typename T> Y convert(const T& from);
 
 class LocationConfig
 {

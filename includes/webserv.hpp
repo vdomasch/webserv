@@ -45,15 +45,15 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 
 std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection);
 
-template <typename T, typename Y>
-Y&	convert(const T& from, Y& to)
-{
-    std::stringstream ss;
+template <typename Y, typename T>
+Y	convert(const T& from) {
+	std::stringstream ss;
 	ss << from;
-    ss >> to;
-    if (ss.fail() || !ss.eof())
+	Y result;
+	ss >> result;
+	if (ss.fail() || !ss.eof())
 		throw std::runtime_error("Conversion failed");
-	return to;
+	return result;
 }
 
 class orderedFiles

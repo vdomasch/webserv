@@ -14,7 +14,9 @@ int main(int argc, char **argv)
 	if (http_config.parse_http())
 		return (1);
 	//http_config.DEBUG_HTTP_show();
-		
+
+	std::cout << "root: " << http_config.get_server_list()["9090"].get_location_list()["/shops/"].get_root() << std::endl;
+
 	Server server;
 	
 	server.run_server(http_config);

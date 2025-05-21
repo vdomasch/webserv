@@ -34,7 +34,7 @@ size_t	ServerConfig::get_client_max_body_size()
 	std::map<std::string, std::string>::iterator it = _map_server.find("client_max_body_size");
 	if (it != _map_server.end())
 	{
-		try { convert(it->second, client_max_body_size); }
+		try { client_max_body_size = convert<int>(it->second); }
 		catch (std::exception &e) { return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0); }
 		if (client_max_body_size < 0)
 			return (std::cerr << "Error: client_max_body_size is negative!" << std::endl, 0);
@@ -345,35 +345,36 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 	return 0;
 }
 
-LocationConfig ServerConfig::get_matching_location(const std::string& target)
+std::string ServerConfig::get_matching_location(const std::string& target)
 {
-	LocationConfig *best_match = NULL;
+	std::string best_match;
 	size_t max_len = 0;
 
 	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
 	{
 		std::cout << "Checking location: " << it->first << std::endl;
-	}
 
-	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
-	{
 		const std::string& loc_path = it->first;
-		if (target.compare(0, loc_path.length(), loc_path) == 0 && loc_path.length() > max_len)
+		if (target.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
 		{
-			best_match = &it->second;
-			max_len = loc_path.length();
+			best_match = loc_path;
+			max_len = loc_path.size();
 		}
 	}
 
-	std::cout << "Best match for target '" << target << "' is location '" << best_match << "'" << std::endl;
-
-	if (best_match)
-		return *best_match;
+	if (!best_match.empty())
+	{
+		std::cout << "Best match for target '" << target << "' is location '" << best_match << "'" << std::endl;
+		return best_match;
+	}
 
 	// fallback: location /
 	std::map<std::string, LocationConfig>::const_iterator it = _location_list.find("/");
 	if (it != _location_list.end())
-		return it->second;
+	{
+		std::cout << "Falling back to default location '/'" << std::endl;
+		return "/";
+	}
 
 	throw std::runtime_error("No suitable location found for target: " + target);
 }
