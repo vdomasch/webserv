@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(false), _errcode(0) {}
+HttpRequest::HttpRequest(): _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0) {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -36,7 +36,19 @@ void HttpRequest::append_data(const std::string &data)
 	}
 }
 
-void HttpRequest::parse_headers()
+bool HttpRequest::check_keep_alive() const
+{
+	std::map<std::string, std::string>::const_iterator it = _headers_map.find("Connection");
+	if (it != _headers_map.end())
+	{
+		std::string connection = it->second;
+		std::transform(connection.begin(), connection.end(), connection.begin(), ::tolower);
+		return (connection != "close");
+	}
+	return true;
+}
+
+void	HttpRequest::parse_headers()
 {
 	std::istringstream stream(_header);
 	std::string line;
@@ -82,12 +94,18 @@ void HttpRequest::parse_headers()
 
 	if (_headers_map.count("Content-Length"))
 		_content_length = atoi(_headers_map["Content-Length"].c_str());
-
-	_keep_alive = (_headers_map.count("Connection") && _headers_map["Connection"] == "keep-alive");
+	
+	if (check_keep_alive())
+		_headers_map["Connection"] = "keep-alive";
+	else
+	{
+		_headers_map["Connection"] = "close";
+		_keep_alive = false;
+	}
 }
 
-bool HttpRequest::is_ready() const { return _state == COMPLETE; }
-bool HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0); } 
+bool	HttpRequest::is_ready() const { return _state == COMPLETE; }
+bool	HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0); } 
 
 /////////// GETTERS ///////////
 

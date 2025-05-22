@@ -160,12 +160,12 @@ bool	HTTPConfig::parse_http()
 					return 1;
 				if (server_temp.duplicate_server(_server_list))
 					return 1;
-				if (_server_list.find(server_temp.get_string_port_number()) == _server_list.end())
-					_server_list[server_temp.get_string_port_number()] = server_temp;
+				if (_server_list.find(server_temp.get_port_number()) == _server_list.end())
+					_server_list[server_temp.get_port_number()] = server_temp;
 				else if (is_server_name_already_used(_server_list, server_temp))
 					return 1;
 				else
-					_server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_string_port_number()] = server_temp;
+					_server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()] = server_temp;
 			}
 		}
 		else if (is_http(key))

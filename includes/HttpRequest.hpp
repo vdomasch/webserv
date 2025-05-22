@@ -51,7 +51,8 @@ class HttpRequest
 		int				_errcode;
 		std::string		_response;
 
-		void		parse_headers();
+		void	parse_headers();
+		bool 	check_keep_alive() const;
 };
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req);

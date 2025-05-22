@@ -154,14 +154,27 @@ bool	ServerConfig::select_current_location(std::istringstream &iss, std::string 
 	return 0;
 }
 
-unsigned int	ServerConfig::get_port_number()
+unsigned int	ServerConfig::get_uint_port_number()
 {
 	return (atol(_map_server["listen"].c_str()));
 }
 
-std::string	ServerConfig::get_string_port_number()
+std::string	ServerConfig::get_port_number()
 {
 	return (_map_server["listen"]);
+}
+
+bool ServerConfig::get_autoindex()
+{
+	std::map<std::string, std::string>::iterator it = _map_server.find("autoindex");
+	if (it != _map_server.end())
+	{
+		if (it->second == "on")
+			return true;
+		else if (it->second == "off")
+			return false;
+	}
+	return false;
 }
 
 std::string ServerConfig::DEBUG_test()
@@ -200,12 +213,12 @@ bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)
 	{
 		ServerConfig server_temp = ServerConfig(*this, *it);
-		if (server_list.find(server_temp.get_string_port_number()) == server_list.end())
-			server_list[server_temp.get_string_port_number()] = server_temp;
+		if (server_list.find(server_temp.get_port_number()) == server_list.end())
+			server_list[server_temp.get_port_number()] = server_temp;
 		else if (is_server_name_already_used(server_list, server_temp))
 			return 1;
 		else
-			server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_string_port_number()] = server_temp;
+			server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()] = server_temp;
 	}
 	_listen_ports.clear();
 	return 0;
@@ -345,33 +358,30 @@ bool	ServerConfig::handle_host(std::istringstream &iss, std::map<std::string, st
 	return 0;
 }
 
-std::string ServerConfig::get_matching_location(const std::string& target)
+std::string ServerConfig::get_matching_location(const std::string& target, bool autoindex)
 {
 	std::string best_match;
 	size_t max_len = 0;
 
 	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
 	{
-		std::cout << "Checking location: " << it->first << std::endl;
-
 		const std::string& loc_path = it->first;
 		if (target.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
 		{
 			best_match = loc_path;
 			max_len = loc_path.size();
+			autoindex = it->second.get_autoindex();
 		}
 	}
 
 	if (!best_match.empty())
-	{
-		std::cout << "Best match for target '" << target << "' is location '" << best_match << "'" << std::endl;
 		return best_match;
-	}
 
 	// fallback: location /
-	std::map<std::string, LocationConfig>::const_iterator it = _location_list.find("/");
+	std::map<std::string, LocationConfig>::iterator it = _location_list.find("/");
 	if (it != _location_list.end())
 	{
+		autoindex = it->second.get_autoindex();
 		std::cout << "Falling back to default location '/'" << std::endl;
 		return "/";
 	}

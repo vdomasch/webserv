@@ -20,15 +20,16 @@ class ServerConfig
 
 
 		size_t									get_client_max_body_size();
-		unsigned int							get_port_number();
-		std::string								get_string_port_number();
+		bool									get_autoindex();
+		unsigned int							get_uint_port_number();
+		std::string								get_port_number();
 		std::string								get_server_name();
 		std::string								get_host_ip() const;
 		std::map<std::string, LocationConfig>	get_location_list();
 		std::map<std::string, std::string>		get_map_server();
 
 
-		std::string		get_matching_location(const std::string& target);
+		std::string		get_matching_location(const std::string& target, bool autoindex);
 
 		std::string		DEBUG_test();
 

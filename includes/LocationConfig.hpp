@@ -20,6 +20,7 @@ class LocationConfig
 		std::string							get_path();
 		std::string							get_index();
 		int									get_client_max_body_size();
+		bool								get_autoindex();
 		std::map<std::string, std::string>	get_map_location();
 
 	private:

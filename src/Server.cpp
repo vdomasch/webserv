@@ -72,7 +72,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 	memset(&servaddr, 0, sizeof(servaddr));
 
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(server.get_port_number());
+	servaddr.sin_port = htons(server.get_uint_port_number());
 
 	std::string host_ip = server.get_host_ip();
 
@@ -83,9 +83,9 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 			return close_msg(server_fd, "Invalid IP address in config: " + host_ip, true, -1);
 
 	if (bind(server_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		return close_msg(server_fd, "Failed to bind port" + server.get_string_port_number(), true, -1);
+		return close_msg(server_fd, "Failed to bind port" + server.get_port_number(), true, -1);
 	if (listen(server_fd, 10) < 0)
-		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_string_port_number() , true, -1);
+		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_port_number() , true, -1);
 	return (server_fd);
 }
 
@@ -97,13 +97,13 @@ void	Server::run_server(HTTPConfig &http_config)
 	for (std::map<std::string, ServerConfig>::iterator it = servers_list.begin(); it != servers_list.end(); ++it)
 	{
 		ServerConfig server = it->second;
-		int port = server.get_port_number();
+		int port = server.get_uint_port_number();
 
 		// Only create a socket once per port
 		if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
 		{
 			std::string ip = server.get_host_ip();
-			std::string str_port = server.get_string_port_number();
+			std::string str_port = server.get_port_number();
 			std::string key = ip + ":" + str_port;
 
 			if (is_conflicting_binding(ip, str_port, _ip_port_bound))
@@ -190,6 +190,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
 
+	std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
 
 	if (bytes_read <= 0)
 	{
@@ -202,7 +203,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	_socket_states[fd].append_data(buffer);
 	if (_socket_states[fd].has_error())
 	{
-		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
 		return;
 	}
@@ -235,11 +236,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.set_body("405 Method Not Allowed");
 			res.add_header("Content-Type", "text/plain");
 			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
+			res.add_header("Connection", "close");
 			_socket_states[fd].set_response(res.generate_response());
 		}
 
 		std::string response = _socket_states[fd].get_response();
-		std::cout << "Response: " << response << std::endl;
+		std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
 		send(fd, response.c_str(), response.size(), 0);
 
 		if (!_socket_states[fd].getKeepAlive())

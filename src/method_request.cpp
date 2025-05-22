@@ -4,184 +4,199 @@
 #include <sys/socket.h>
 
 ///////////////////////////////////////////////////
-/*std::string	handleIcoFile(t_fd_data *d)
-{
-	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
-	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
-	std::ostringstream oss;
-	std::ifstream::pos_type dataFile;
+//std::string	handleIcoFile(t_fd_data *d)
+//{
+//	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
+//	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
+//	std::ostringstream oss;
+//	std::ifstream::pos_type dataFile;
 
-	if (!binfile.is_open()) 
-		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
-	else 
-	{
-		binfile.seekg(0, std::ios::end);
-		size_t file_size = binfile.tellg();
-		binfile.seekg(0, std::ios::beg);
-		std::vector<char> buffer2(file_size);
-		binfile.read(&buffer2[0], file_size);
-		binfile.close();
+//	if (!binfile.is_open()) 
+//		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
+//	else 
+//	{
+//		binfile.seekg(0, std::ios::end);
+//		size_t file_size = binfile.tellg();
+//		binfile.seekg(0, std::ios::beg);
+//		std::vector<char> buffer2(file_size);
+//		binfile.read(&buffer2[0], file_size);
+//		binfile.close();
 		
-		std::ostringstream response;
-		response << "HTTP/1.1 200 OK\r\n"
-		<< "Content-Type: image/x-icon\r\n"
-		<< "Content-Length: " << file_size << "\r\n"
-		<< "\r\n";
+//		std::ostringstream response;
+//		response << "HTTP/1.1 200 OK\r\n"
+//		<< "Content-Type: image/x-icon\r\n"
+//		<< "Content-Length: " << file_size << "\r\n"
+//		<< "\r\n";
 
-		d->binaryContent = buffer2;
+//		d->binaryContent = buffer2;
 		
-		dataFile = filesize(d->requestedFilePath.c_str());
-		oss << dataFile;
-		d->content_len = atof(oss.str().c_str());
+//		dataFile = filesize(d->requestedFilePath.c_str());
+//		oss << dataFile;
+//		d->content_len = atof(oss.str().c_str());
 
-		return(response.str().c_str());
-	}
+//		return(response.str().c_str());
+//	}
 
-	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
+//	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
 	
-}*/
+//}
 
-/*bool	indexFileExists(t_fd_data *d, int debug)
+//bool	indexFileExists(t_fd_data *d, int debug)
+//{
+//	struct stat fileinfo;
+
+
+//	if (debug) // check DEBUG_INDEX_EXISTS in webserv.hpp
+//		return (false);
+
+//	if (stat ((d->serverFolder + "/index.html").c_str(), &fileinfo) == 0) // does NOT have to be named index, to be replaced with the name of the index file parsed
+//	{
+//		d->requestedFilePath = d->serverFolder + "/index.html";
+//		return (true);
+//	}
+//	else
+//		return (false);
+//}
+
+//std::string	openAndReadFile(t_fd_data *d, int *errcode)
+//{
+//	char			buffer[BUFFER_SIZE];
+//	int				bytes_read;
+//	int				fd;
+//	unsigned int	len;
+
+//	len = d->requestedFilePath.length();
+//	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
+//	{
+//		*errcode = ICOHANDELING;
+//		return (handleIcoFile(d));
+//	}
+
+//	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
+//	if (fd < 0)
+//	{
+//		*errcode = FAILEDSYSTEMCALL;
+//		return ("void"); // to handle better
+//	}
+//	bytes_read = read(fd, buffer, BUFFER_SIZE);
+//	if (bytes_read < 0)
+//	{
+//		*errcode = FAILEDSYSTEMCALL;
+//		close(fd);
+//		return ("void"); //handle better
+//	}
+//	*errcode = 0;
+//	close(fd);
+//	std::string response(buffer);
+//	d->content_len = response.length();
+//	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
+//	return (response);
+//}
+
+///////////////////////////////////////////////////
+
+//bool search_file(const std::string& path, HttpRequest& req, const ServerConfig& server)
+//{
+//	static_cast<void>(server);
+//	std::cout << "File found" << std::endl;
+//	std::ifstream file(path.c_str(), std::ios::in);
+//	if (!file)
+//		return false;
+
+//	std::ostringstream ss;
+//	ss << file.rdbuf();
+//	file.close();
+
+//	static_cast<void>(req);
+//	if (req.getKeepAlive())
+//		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "keep-alive") + ss.str());
+//	else
+//		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "close") + ss.str());
+//	return true;
+//}
+
+std::ifstream::pos_type	filesize(const char *filename)
 {
-	struct stat fileinfo;
+	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+	return in.tellg(); 
+}
 
-
-	if (debug) // check DEBUG_INDEX_EXISTS in webserv.hpp
-		return (false);
-
-	if (stat ((d->serverFolder + "/index.html").c_str(), &fileinfo) == 0) // does NOT have to be named index, to be replaced with the name of the index file parsed
-	{
-		d->requestedFilePath = d->serverFolder + "/index.html";
-		return (true);
-	}
-	else
-		return (false);
-}*/
-
-/*std::string	openAndReadFile(t_fd_data *d, int *errcode)
+std::string displayErrorPage(std::string serverFolder, int *errcode)
 {
-	char			buffer[BUFFER_SIZE];
-	int				bytes_read;
-	int				fd;
-	unsigned int	len;
+	char buffer[BUFFER_SIZE] = {0};
+	std::string pathToErrPage = serverFolder + "/error_404.html";
 
-	len = d->requestedFilePath.length();
-	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
-	{
-		*errcode = ICOHANDELING;
-		return (handleIcoFile(d));
-	}
-
-	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
+	int fd = open(pathToErrPage.c_str(), O_RDONLY);
 	if (fd < 0)
 	{
 		*errcode = FAILEDSYSTEMCALL;
-		return ("void"); // to handle better
+		return "";
 	}
-	bytes_read = read(fd, buffer, BUFFER_SIZE);
+	int bytes_read = read(fd, buffer, BUFFER_SIZE);
+	close(fd);
 	if (bytes_read < 0)
 	{
 		*errcode = FAILEDSYSTEMCALL;
-		close(fd);
-		return ("void"); //handle better
+		return "";
 	}
 	*errcode = 0;
-	close(fd);
-	std::string response(buffer);
-	d->content_len = response.length();
-	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
-	return (response);
-}*/
+	return std::string(buffer, bytes_read);
+}
 
-/*int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
+std::string	get_content_type(const std::string& path)
+{
+	size_t dot = path.find_last_of('.');
+	if (dot == std::string::npos) return "text/plain";
+
+	std::string ext = path.substr(dot);
+	if (ext == ".html") return "text/html";
+	if (ext == ".css") return "text/css";
+	if (ext == ".js") return "application/javascript";
+	if (ext == ".png") return "image/png";
+	if (ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
+	if (ext == ".ico") return "image/x-icon";
+	return "application/octet-stream";
+}
+
+int	check_object_type(std::string& path, int *errcode)
 {
 	struct stat fileinfo;  
-	std::string pathToCheck;
-	std::string	fileContent;
-	
 
-	if (filename == "/") // special case, must act like the index page was asked
+    if (stat (path.c_str(), &fileinfo) != 0) // then file exists --> to secure better, check requestedFilePath too
 	{
-		d->requestedFilePath = d->serverFolder;
-		return (IS_INDEXDIR);
-	}
-	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
-	printf("Path to check is : (%s)\n\n", pathToCheck.c_str());
-
-    if (stat (pathToCheck.c_str(), &fileinfo) == 0) // then file exists --> to secure better, check requestedFilePath too
-		printf("\033[34mFound it --> \033[0m");
-	else
-	{
-		printf("\033[31mFile wasn't found ! Setting error code appropriately !\n\033[0m\n");
 		*errcode = MISSINGFILE;
 		return (MISSINGFILE);
 	}
-	d->requestedFilePath = pathToCheck;
-	switch (fileinfo.st_mode & S_IFMT) 
-	{
-		case S_IFDIR: 
-			printf("\033[34mis a dir !\n\033[0m");
-			return (IS_DIRECTORY);
-		case S_IFREG:
-			printf("\033[34mis a file !\n\033[0m");
-			return (IS_EXISTINGFILE);
-		default: return (IS_EXISTINGFILE);
-	}
-}*/
+	if (S_ISDIR(fileinfo.st_mode))
+        return IS_DIRECTORY;
+    else if (S_ISREG(fileinfo.st_mode))
+        return IS_EXISTINGFILE;
+	else
+		return FILE_NOT_FOUND;
+}
 
-/*void	storeFolderContent(t_fd_data *d, int *errcode)
+std::string	remove_prefix(std::string target, const std::string prefix)
 {
-	struct dirent *pDirent;
-    DIR *pDir;
+	if (target.find(prefix) == 0)
+		target.erase(0, prefix.length());
+	return target;
+}
 
-	pDir = opendir (d->requestedFilePath.c_str());
-	if (pDir == NULL) 
-	{
-        printf ("Cannot open directory '%s'\n", d->requestedFilePath.c_str());
-		*errcode = FAILEDSYSTEMCALL;
-        return ;
-    }
-	errno = 0;
-	while ((pDirent = readdir(pDir)) != NULL) // can fail, we check ernoo when null is found,and set ernoo to 0 before first call
-	{
-		std::string fname(pDirent->d_name );
-		
-		if ((fname == ".") || fname == "..") // skip previous and current folder objects
-			continue;
-		d->folderContent.push_back(*pDirent);
-    }
-	closedir (pDir);
-	if (errno != 0)
-	{
-		perror("Readdir failed ! "); 
-		*errcode = FAILEDSYSTEMCALL;
-		return ;
-	}
-	
-}*/
-
-/*void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
+std::string	try_index_file(const std::string &path, const std::string &index)
 {
-	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
-	{
-		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
-		parent = "/";
-		return ;
-	}
-	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
-	parent = filepath.substr(0, pos);
-	pos = parent.find_last_of('/');
-	parent = parent.substr(pos);
-	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
-	if (parent == "/server_files")
-		parent = "/";
-}*/
+	if (path.empty() || path.at(path.size() - 1) != '/')
+		return path;
+	if (!index.empty())
+		return path + index;
+	return path;
+}
 
-/*bool compareBySize(const orderedFiles& a, const orderedFiles& b) {
+bool	compareBySize(const orderedFiles& a, const orderedFiles& b)
+{
 	return a.lowerName < b.lowerName;
-}*/
+}
 
-/*void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
+void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
 {
 	for (std::vector<dirent>::const_iterator i = fileList.begin(); i != fileList.end(); ++i)
 	{
@@ -193,9 +208,9 @@
 	std::sort(sorted.begin(), sorted.end(), compareBySize);
 	// for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
 	// 	std::cout << j->baseName << std::endl;
-}*/
+}
 
-/*std::string	displayCorrectFileSize(const char * filename)
+std::string	displayCorrectFileSize(const char * filename)
 {
 	std::ostringstream		oss;
 	std::ifstream::pos_type	posSize;
@@ -219,9 +234,9 @@
 	oss.clear();
 	oss << size;
 	return (oss.str() + dico[i]);
-}*/
+}
 
-/*void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
+void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 {
 	struct stat					fileinfo;
 	time_t						timestamp;
@@ -294,9 +309,9 @@
 		oss << " </td>\n";
 		oss << "</tr>\n";
 	}
-}*/
+}
 
-/*void	setupHTMLpageStyle(std::ostringstream &oss)
+void	setupHTMLpageStyle(std::ostringstream &oss)
 {
 	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
 	oss << "<style>\n";
@@ -309,9 +324,57 @@
 	oss << "a.dir {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==\") left top no-repeat;\n}\n";
 	oss << "a.icon {\npadding-inline-start: 1.5em;\ntext-decoration: none;\nuser-select: auto;\n}\n";
 	oss << "</style>\n";
-}*/
+}
 
-/*std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
+void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
+{
+	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
+	{
+		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
+		parent = "/";
+		return ;
+	}
+	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
+	parent = filepath.substr(0, pos);
+	pos = parent.find_last_of('/');
+	parent = parent.substr(pos);
+	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
+	if (parent == "/server_files")
+		parent = "/";
+}
+
+void	storeFolderContent(t_fd_data *d, int *errcode)
+{
+	struct dirent *pDirent;
+    DIR *pDir;
+
+	pDir = opendir (d->requestedFilePath.c_str());
+	if (pDir == NULL) 
+	{
+        printf ("Cannot open directory '%s'\n", d->requestedFilePath.c_str());
+		*errcode = FAILEDSYSTEMCALL;
+        return ;
+    }
+	errno = 0;
+	while ((pDirent = readdir(pDir)) != NULL) // can fail, we check ernoo when null is found,and set ernoo to 0 before first call
+	{
+		std::string fname(pDirent->d_name );
+		
+		if ((fname == ".") || fname == "..") // skip previous and current folder objects
+			continue;
+		d->folderContent.push_back(*pDirent);
+    }
+	closedir (pDir);
+	if (errno != 0)
+	{
+		perror("Readdir failed ! "); 
+		*errcode = FAILEDSYSTEMCALL;
+		return ;
+	}
+	
+}
+
+std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 {
 	std::ostringstream	oss;
 	std::string			pageContent;
@@ -346,88 +409,6 @@
 	d->content_len = pageContent.length();
 	d->folderContent.clear();
 	return (pageContent);
-}*/
-
-///////////////////////////////////////////////////
-
-/*bool search_file(const std::string& path, HttpRequest& req, const ServerConfig& server)
-{
-	static_cast<void>(server);
-	std::cout << "File found" << std::endl;
-	std::ifstream file(path.c_str(), std::ios::in);
-	if (!file)
-		return false;
-
-	std::ostringstream ss;
-	ss << file.rdbuf();
-	file.close();
-
-	static_cast<void>(req);
-	if (req.getKeepAlive())
-		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "keep-alive") + ss.str());
-	else
-		req.set_response(create_header("200 OK", "text/html", tostr(ss.str().size()), "close") + ss.str());
-	return true;
-}*/
-
-std::ifstream::pos_type filesize(const char *filename)
-{
-	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-	return in.tellg(); 
-}
-
-std::string displayErrorPage(std::string serverFolder, int *errcode)
-{
-	char buffer[BUFFER_SIZE] = {0};
-	std::string pathToErrPage = serverFolder + "/error_404.html";
-
-	int fd = open(pathToErrPage.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		*errcode = FAILEDSYSTEMCALL;
-		return "";
-	}
-	int bytes_read = read(fd, buffer, BUFFER_SIZE);
-	close(fd);
-	if (bytes_read < 0)
-	{
-		*errcode = FAILEDSYSTEMCALL;
-		return "";
-	}
-	*errcode = 0;
-	return std::string(buffer, bytes_read);
-}
-
-std::string get_content_type(const std::string& path)
-{
-	size_t dot = path.find_last_of('.');
-	if (dot == std::string::npos) return "text/plain";
-
-	std::string ext = path.substr(dot);
-	if (ext == ".html") return "text/html";
-	if (ext == ".css") return "text/css";
-	if (ext == ".js") return "application/javascript";
-	if (ext == ".png") return "image/png";
-	if (ext == ".jpg" || ext == ".jpeg") return "image/jpeg";
-	if (ext == ".ico") return "image/x-icon";
-	return "application/octet-stream";
-}
-
-std::string remove_prefix(std::string target, const std::string prefix)
-{
-	if (target.find(prefix) == 0)
-		target.erase(0, prefix.length());
-	return target;
-}
-
-std::string try_index_file(std::string &file_path, std::string index)
-{
-	if (file_path.empty() || file_path.at(file_path.size() - 1) != '/')
-		return file_path;
-
-	if (!index.empty())
-		file_path += index;
-	return file_path;
 }
 
 void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
@@ -453,9 +434,10 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 	std::string location;
 	std::string root;
 	std::map<std::string, LocationConfig>::iterator it_loc;
+	bool autoindex = server.get_autoindex();
 	try
 	{
-		location = server.get_matching_location(target);
+		location = server.get_matching_location(target, autoindex);
 		std::map<std::string, LocationConfig> location_list = server.get_location_list();
 		it_loc = location_list.find(location);
 		if (it_loc != location_list.end())
@@ -470,28 +452,58 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 		return;
 	}
 
-	std::string file_path = root + remove_prefix(target, location); // Supprimer le préfixe location du target
-	
-	file_path = try_index_file(file_path, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::string path_no_index = root + remove_prefix(target, location); // Supprimer le préfixe location du target
+	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+
+	std::cout << "File path: " << file_path << std::endl;
 
 	int errcode = 0;
-	std::ifstream file(file_path.c_str(), std::ios::binary);
-
 	HttpResponse res;
-	std::string num_str("");
 
-	if (!file.is_open())
+	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
+		if (autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
+		{
+			fd_data.requestedFilePath = path_no_index;
+			fd_data.serverFolder = server.get_map_server()["root"];
+			fd_data.content_len = 0;
+			fd_data.folderContent.clear();
+			std::cout << "Directory found, generating index page" << std::endl;
+			std::string body = buildCurrentIndexPage(&fd_data, &errcode);
+			res.set_status(200, "OK");
+			res.set_body(body);
+			res.add_header("Content-Type", "text/html");
+			try { res.add_header("Content-Length", convert<std::string>(body.size())); }
+			catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+			req.set_response(res.generate_response());
+			PRINT_DEBUG2
+			return;
+		}
+		std::cerr << "File not found: " << file_path << std::endl;
 		std::string body = displayErrorPage(root, &errcode);
 		res.set_status(404, "Not Found");
 		res.set_body(body);
 		res.add_header("Content-Type", "text/html");
 		try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+		res.add_header("Connection", "close");
 		req.set_response(res.generate_response());
 		return;
 	}
 
+	std::ifstream file(file_path.c_str(), std::ios::binary);
+	if (!file.is_open())
+	{
+		std::cerr << "Error opening file: " << file_path << std::endl;
+		res.set_status(404, "Not Found");
+		res.set_body("File not found");
+		res.add_header("Content-Type", "text/plain");
+		try { res.add_header("Content-Length", convert<std::string>(res.get_body().size())); }
+		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+		req.set_response(res.generate_response());
+		return;
+	}
+	std::cout << "File found: " << file_path << std::endl;
 	std::ostringstream content;
 	content << file.rdbuf();
 	std::string body = content.str();
@@ -502,7 +514,6 @@ void	get_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_l
 	res.add_header("Content-Type", type);
 	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-
 	req.set_response(res.generate_response());
 }
 
@@ -537,56 +548,3 @@ std::string create_header(const std::string &status, const std::string &content_
 	header += "Connection: " + connection + "\r\n\r\n";
 	return header;
 }
-
-
-
-/*void get_request(HttpRequest &req, std::map<std::string, ServerConfig>& servers, t_fd_data &fd_data, std::string server_name)
-{
-	std::string target = req.get_target();
-	ServerConfig &server = servers[server_name];
-	LocationConfig location = server.get_matching_location(target);
-	std::string location = location.get_path();
-	std::string root = location.get_root();
-
-	std::string relative_path = target.substr(location.length());
-	if (relative_path.empty() || relative_path[0] != '/')
-		relative_path = "/" + relative_path;
-	std::string filepath = root + relative_path;
-
-	if (!filepath.empty() && filepath[filepath.length() - 1] == '/') {
-		std::string index = location.get_index();
-		if (!index.empty())
-			filepath += index;
-	}
-
-	int errcode = 0;
-	std::ifstream file(filepath.c_str(), std::ios::binary);
-
-	HttpResponse res;
-	std::string num_str("");
-
-	if (!file.is_open()) {
-		std::string body = displayErrorPage(root, &errcode);
-		res.set_status(404, "Not Found");
-		res.set_body(body);
-		res.add_header("Content-Type", "text/html");
-		try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-		req.set_response(res.generate_response());
-		return;
-	}
-
-	std::ostringstream content;
-	content << file.rdbuf();
-	std::string body = content.str();
-	std::string type = get_content_type(filepath);
-
-
-	res.set_status(200, "OK");
-	res.set_body(body);
-	res.add_header("Content-Type", type);
-	try { res.add_header("Content-Length", convert(body.size(), num_str)); }
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-
-	req.set_response(res.generate_response());
-}*/

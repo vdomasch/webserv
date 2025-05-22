@@ -2,13 +2,16 @@
 
 HttpResponse::HttpResponse(): _status_code(200), _status_message("OK") {}
 
-void HttpResponse::set_status(int code, const std::string& message)
+void	HttpResponse::set_status(int code, const std::string& message)
 {
     _status_code = code;
     _status_message = message;
 }
 
-void HttpResponse::set_body(const std::string& body)	{ _body = body; }
+void	HttpResponse::set_body(const std::string& body)	{ _body = body; }
+void	HttpResponse::set_keep_alive(bool keep_alive)	{ _keep_alive = keep_alive; }
+
+bool	HttpResponse::get_keep_alive() const			{ return _keep_alive; }
 std::string HttpResponse::get_body() const				{ return _body; }
 
 void HttpResponse::add_header(const std::string& key, const std::string& value)
