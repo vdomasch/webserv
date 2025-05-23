@@ -21,6 +21,8 @@ class HttpRequest
 		HttpRequest();
 		~HttpRequest();
 
+		bool		_is_error_request;
+
 		void		append_data(const std::string &data);
 		bool		is_ready() const;
 		bool		has_error() const;
@@ -34,6 +36,7 @@ class HttpRequest
 
 		void	set_response(const std::string& response);
 		void	set_errorcode(int code);
+		void	set_target(const std::string& target);
 
 	private:
 		std::string	_raw_data;

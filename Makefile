@@ -16,7 +16,8 @@ SRV_FILES = main			\
 			Server			\
 			HttpRequest		\
 			method_request	\
-			HttpResponse
+			HttpResponse	\
+			build_autoindex_page
 
 CLIENT_FILES = client
 

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0) {}
+HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0) {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -125,6 +125,7 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 void HttpRequest::set_response(const std::string& response)	{ _response = response; }
 void HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
+void HttpRequest::set_target(const std::string& target)		{ _target = target; }
 
 //////// OPERATOR OVERLOAD ///////////
 
