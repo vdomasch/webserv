@@ -1,2 +1,10 @@
 TO DO:
 	handle listen, IP + port ? (127.0.0.1:8080) si pas d'IP stocker 0.0.0.0 dans host
+	retirer host des mots cles
+	listen 8080 127.0.0.1:8080 ? Erreur ?
+	root slash au debut obligatoire
+	accepter un port+name et une IP
+	Quand declare dans deux partie server differentes, un meme port+servername sont acceptes, erreur ?
+
+
+/!\ ERREUR CHECKER LES IP EN FONCTION DU PORT /!\

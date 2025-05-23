@@ -179,6 +179,7 @@ bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)
 	{
 		ServerConfig server_temp = ServerConfig(*this, *it);
+		server_temp._map_server["host"] = _ip_and_ports_association[*it];
 		if (server_list.find(server_temp.get_string_port_number()) == server_list.end())
 			server_list[server_temp.get_string_port_number()] = server_temp;
 		else if (is_server_name_already_used(server_list, server_temp))
@@ -186,6 +187,7 @@ bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_
 		else
 			server_list[server_temp.get_string_port_number() + static_cast<std::string>(":") + server_temp.get_server_name()] = server_temp;
 	}
+	this->_map_server["host"] = _ip_and_ports_association[this->get_string_port_number()];
 	_listen_ports.clear();
 	return 0;
 }
@@ -197,7 +199,7 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 		iss >> value;
 	else
 	{
-		std::cerr << "Error: Keyword listen needs a port number!" << std::endl;
+		std::cerr << "Error: Keyword listen formats are PORT or IP:PORT!" << std::endl;
 		return 1;
 	}
 	if (_map_server.count("listen"))
@@ -205,48 +207,83 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 		std::cerr << "Error: Keyword listen already set!" << std::endl;
 		return 1;
 	}
-	std::cout << "DEBUG: " << value << std::endl;
-
 	while (!value.empty())
 	{
-		if (value.find_first_not_of("0123456789;") != std::string::npos)
+		if (value.find_first_not_of("0123456789;:.") != std::string::npos)
 		{
-			std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
+			std::cerr << "Error: listen value '" << value << "' is invalid!" << std::endl;
 			return 1;
 		}
-		if (value.length() > 6 || atol(value.c_str()) > 65535 || atol(value.c_str()) < 1024)
+		else if (value.find_first_of(":") != std::string::npos)
 		{
-			std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
-			return 1;
-		}
-		if (value.find(";") != std::string::npos)
-		{
-			if (!is_valid_to_clean_semicolon(value))
+			if (handle_listen_ip_port(value))
 				return 1;
-			value = clean_semicolon(value);
-			_listen_ports.push_back(value);
-			_map_server["listen"] = _listen_ports.begin()->c_str();
-			break ;
+			
 		}
 		else
 		{
-			_listen_ports.push_back(value);
-			_map_server["listen"] = _listen_ports.begin()->c_str();
+			if (handle_listen_port(value))
+				return 1;
 		}
-		value.empty();
-		if (!iss.eof())
-			iss >> value;
-		else
-		{
-			std::cerr << "Error: Semicolon is missing for keyword: listen!" << std::endl;
-			return 1;
-		}
+		if (value.find_first_of(";") != std::string::npos || !(iss >> value))
+			break;
 	}
-	if (!iss.eof())
+	if (!(iss.eof()))
 	{
-		std::cerr << "Error: There are values after ';' for keyword listen!" << std::endl;
+		std::cerr << "Error: There are values after ';' for keyword listen" << std::endl;
 		return 1;
 	}
+	if (value.find_first_of(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: listen!" << std::endl;
+		return 1;
+	}
+	if (_listen_ports.back().find_last_of(";") != std::string::npos)
+	{
+		if (!is_valid_to_clean_semicolon(_listen_ports.back()))
+			return 1;
+		_listen_ports.back() = clean_semicolon(_listen_ports.back());
+	}
+	return 0;
+}
+
+bool	ServerConfig::handle_listen_ip_port(std::string &value)
+{
+	std::string host_value;
+	std::string port_value;
+	if (value.length() < 12)
+	{
+		std::cerr << "Error: value '" << value << "' is invalid for keyword listen, format is 'x.x.x.x:xxxx'!" << std::endl;
+		return 1;
+	}
+	if (value.find_first_of(":") != value.find_last_of(":"))
+	{
+		std::cerr << "Error: Invalid listen value '" << value << "'!" << std::endl;
+		return 1;
+	}
+	host_value.assign(value, 0, value.find(":"));
+	value.erase(0, value.find(":") + 1);
+	port_value.assign(value, 0, value.find(";"));
+	handle_listen_port(port_value);
+	_ip_and_ports_association[port_value] = host_value;
+	return 0;
+}
+
+bool	ServerConfig::handle_listen_port(std::string &value)
+{
+	if (value.length() > 6 || atol(value.c_str()) > 65535 || atol(value.c_str()) < 1024)
+	{
+		std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
+		return 1;
+	}
+	_listen_ports.push_back(value);
+	_map_server["listen"] = _listen_ports.begin()->c_str();
+	if (_ip_and_ports_association.count(value))
+	{
+		std::cerr << "Error: Port '" << value << "' already set!" << std::endl;
+		return 1;
+	}
+	_ip_and_ports_association[value] = "0.0.0.0";
 	return 0;
 }
 
