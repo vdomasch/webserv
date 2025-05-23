@@ -1,5 +1,16 @@
 #include "../includes/webserv.hpp"
 
+void	init_base_datastruct(t_fd_data *socket_data)
+{
+	socket_data->serverFolder = "";
+	socket_data->requestedFilePath = "";
+	socket_data->max_sckt_fd = -1;
+	socket_data->content_type = "";
+	socket_data->content_len = 0;
+	FD_ZERO(&socket_data->saved_sockets);
+	FD_ZERO(&socket_data->ready_sockets);
+}
+
 int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 {
 	int	server_fd;
@@ -11,8 +22,8 @@ int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 		return (-1); 
 	}
 	
-	bzero(servaddr, sizeof(*servaddr));
-	bzero(socket_data, sizeof(*socket_data));
+	bzero(servaddr, sizeof(*servaddr)); // might be false idk
+	init_base_datastruct(socket_data);
 
 	servaddr->sin_family = AF_INET;
 	servaddr->sin_port = htons(SERV_PORT);
@@ -59,7 +70,6 @@ std::ifstream::pos_type filesize(const char *filename)
 std::string	displayErrorPage(std::string serverFolder, int *errcode)
 {
 	char		buffer[BUFFER_SIZE] = {0};
-	std::string current_pwd(getcwd(NULL, 0));
 	std::string pathToErrPage;
 	int			bytes_read;
 	int			fd;
@@ -86,6 +96,43 @@ std::string	displayErrorPage(std::string serverFolder, int *errcode)
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
 }
+
+std::string	handleGIF(t_fd_data *d) // UGLY AS FUCK, TO DELETE SOON
+{
+	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
+	std::ostringstream oss;
+	std::ifstream::pos_type dataFile;
+
+	if (!binfile.is_open()) 
+		std::cerr << "Could not open .gif file" << std::endl; // handle more errors
+	else 
+	{
+		binfile.seekg(0, std::ios::end);
+		size_t file_size = binfile.tellg();
+		binfile.seekg(0, std::ios::beg);
+		std::vector<char> buffer2(file_size);
+		binfile.read(&buffer2[0], file_size);
+		binfile.close();
+		
+		std::ostringstream response;
+		response << "HTTP/1.1 200 OK\r\n"
+		<< "Content-Type: image/gif\r\n"
+		<< "Content-Length: " << file_size << "\r\n"
+		<< "\r\n";
+
+		d->binaryContent = buffer2;
+		
+		dataFile = filesize(d->requestedFilePath.c_str());
+		oss << dataFile;
+		d->content_len = atof(oss.str().c_str());
+
+		return(response.str().c_str());
+	}
+
+	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
+	
+}
+
 
 std::string	handleIcoFile(t_fd_data *d)
 {
@@ -155,6 +202,13 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 		return (handleIcoFile(d));
 	}
 
+	//horrible,just here to test
+	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".gif")) //ugly hardcoding just to test the ico case
+	{
+		*errcode = GIFHANDELING;
+		return (handleGIF(d));
+	}
+
 	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
 	if (fd < 0)
 	{
@@ -188,6 +242,14 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 		d->requestedFilePath = d->serverFolder;
 		return (IS_INDEXDIR);
 	}
+	if (filename.find("cgi-bin") != std::string::npos) // is meant for CGI
+	{
+		char	*char_pwd = getcwd(NULL, 0);
+		std::string current_pwd(char_pwd); // ugly, to change asap, will do for now though
+		d->requestedFilePath = current_pwd + filename;
+		free(char_pwd);
+		return(IS_CGI);
+	}
 	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
 	printf("Path to check is : (%s)\n\n", pathToCheck.c_str());
 
@@ -200,6 +262,7 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 		return (MISSINGFILE);
 	}
 	d->requestedFilePath = pathToCheck;
+	
 	switch (fileinfo.st_mode & S_IFMT) 
 	{
 		case S_IFDIR: 
@@ -304,6 +367,25 @@ std::string	displayCorrectFileSize(const char * filename)
 	oss.clear();
 	oss << size;
 	return (oss.str() + dico[i]);
+}
+
+
+
+std::string	handleCGI(t_fd_data *d, int *errcode)
+{
+	std::string	CGIBody;
+
+	printf("beep beep boop ... i'm CGI ... \n\n");
+
+	//to delete
+	d->cg.testfd = d->serverSocketFd;
+	//
+	d->cg.setEnvCGI(d->requestedFilePath);
+	d->cg.executeCGI();
+
+	CGIBody = d->cg.grabCGIBody(); // errcode si fail read ?
+	*errcode = 0;
+	return CGIBody;
 }
 
 void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
@@ -428,6 +510,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	pageContent = oss.str().c_str();
+	oss.clear();
 	d->content_len = pageContent.length();
 	d->folderContent.clear();
 	return (pageContent);
@@ -465,6 +548,8 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	}
 	else if (objType == IS_EXISTINGFILE)
 		response = openAndReadFile(d, errcode);
+	else if (objType == IS_CGI)
+		response = handleCGI(d, errcode);
 	else
 		response = displayErrorPage(d->serverFolder, errcode); // check if error is file not found
 	return (response);
@@ -475,7 +560,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	std::string	responseCode;
 	std::ostringstream oss;
 
-	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ?
+	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ? --> it did when testing the CGI since we return empty string for now
 	{
 		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
 		return (""); 
@@ -497,6 +582,11 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	case 2:
 		d->content_len = d->content_len;
 		d->content_type = "image/x-icon";
+		return(requestBody);
+
+	case 3: //gifs i guess ? temporary 
+		d->content_len = d->content_len;
+		d->content_type = "image/gif";
 		return(requestBody);
 
 	default:
@@ -527,6 +617,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 		perror("Failed to read ! ");
 		return (-1);
 	}
+	d->serverSocketFd = socket;
 	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
@@ -539,13 +630,13 @@ int	handle_client_request(int socket, t_fd_data *d)
 	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
 
 	printf("\033[35m\n#######################\n");
-	// printf("(%s)\n",finalMessage.c_str() );
+	printf("(%s)\n",finalMessage.c_str() );
 	printf(" \nERROR CODE(%d)\n",errcode);
 	printf("#######################\033[0m\n");
 
 	if (!finalMessage.empty())
 	{
-		if (d->content_type == "image/x-icon")
+		if (d->content_type == "image/x-icon" || d->content_type == "image/gif" )
 		{
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
@@ -567,18 +658,23 @@ int main(int argc, char **argv)
 	struct sockaddr_in servaddr;
 	t_fd_data s_data; // to set select	
 
+
+	// s_data.cg.setEnvCGI("oui");  //only here to test out map doesn't segfault
+
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)
 	{
 		perror("cannot bind to socket");
 		return (0);
 	}
-	FD_ZERO(&s_data.saved_sockets);
 	FD_SET(server_fd, &s_data.saved_sockets);
 
-	std::string current_pwd(getcwd(NULL, 0)); // check if null, then exit early
+	char	*char_pwd = getcwd(NULL, 0);
+	std::string current_pwd(char_pwd); // check if null, then exit early + getcwd result should be freed
 	s_data.max_sckt_fd = server_fd;
 	s_data.serverFolder = current_pwd + "/server_files"; //after parsing, to replace
+	free(char_pwd);
+
 	while(42)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");

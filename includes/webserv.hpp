@@ -10,6 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+
+#ifndef WEBSERVER_HPP
+# define WEBSERVER_HPP
+
 #include <stdio.h>
 #include <iostream>//std::cout
 #include <sys/socket.h> //socket
@@ -24,25 +28,29 @@
 #include <vector> // .ico handling
 #include <stdlib.h> // atof
 #include <algorithm> // std::sort
- #include <dirent.h> // dirent for opendir
- #include <cmath> // floor for size
+#include <dirent.h> // dirent for opendir
+#include <cmath> // floor for size
+#include <fcntl.h>// open
+#include <map> // std::map
 
-
- #include <fcntl.h>// open
+#include "CGIContent.hpp"
 
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 50000 /// to change, must be 1024
+#define BUFFER_SIZE 5000 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
+#define IS_CGI 63
 #define FAILEDSYSTEMCALL -1
 #define MISSINGFILE -2
 #define ICOHANDELING 2
+#define GIFHANDELING 3
 #define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
 struct s_fd_data
 {
+	int			serverSocketFd; // temporary (i think ?), only to test out the cgi part
 	fd_set		ready_sockets;
 	fd_set		saved_sockets; // current sockets
 	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
@@ -53,6 +61,7 @@ struct s_fd_data
 	unsigned int		content_len;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;
+	CGIContent			cg;
 };
 typedef struct s_fd_data	t_fd_data;
 
@@ -65,3 +74,6 @@ class orderedFiles
 
 	orderedFiles(const std::string& name, const std::string& lowname, unsigned char n_type) : baseName(name), lowerName(lowname), type(n_type) {}
 };
+
+
+#endif

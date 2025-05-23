@@ -1,0 +1,185 @@
+#include "../includes/CGIContent.hpp"
+
+
+CGIContent::CGIContent()
+{
+	// printf("calling default ! \n");
+
+	this->_cgi_path = "default";
+	this->_argv = NULL;
+	this->_cgi_env = NULL;
+	this->_exitcode = -42;
+	this->pipe_in[0] = -42;
+	this->pipe_in[1] = -42;
+	this->pipe_out[0] = -42;
+	this->pipe_out[1] = -42;
+	//this->_cgi_env_map = NULL; not possible
+}
+
+CGIContent::CGIContent(std::string path)
+{
+	this->_cgi_path = path;
+	this->_argv = NULL;
+	this->_cgi_env = NULL;
+	this->_exitcode = -42;
+	this->pipe_in[0] = -42;
+	this->pipe_in[1] = -42;
+	this->pipe_out[0] = -42;
+	this->pipe_out[1] = -42;
+}
+
+CGIContent::~CGIContent()
+{
+	// if (this->_cgi_env)
+	// {
+	// 	for (int i = 0; this->_cgi_env[i]; i++)
+	// 		free(this->_cgi_env[i]);
+	// 	free(this->_cgi_env);
+	// }
+	// if (this->_argv)
+	// {
+	// 	for (int i = 0; this->_argv[i]; i++)
+	// 		free(_argv[i]);
+	// 	free(_argv);
+	// }
+	this->_cgi_env_map.clear();
+}
+
+CGIContent::CGIContent(CGIContent const &other)
+{
+	this->_cgi_path = other._cgi_path;
+	this->_argv =  other._argv;
+	this->_cgi_env =  other._cgi_env;
+	this->_cgi_env_map =  other._cgi_env_map;
+	this->_exitcode =  other._exitcode;
+}
+
+
+CGIContent &CGIContent::operator=(CGIContent const &copy)
+{
+	if (this != &copy)
+	{
+		this->_cgi_path = copy._cgi_path;
+		this->_cgi_env =  copy._cgi_env;
+		this->_cgi_env_map =  copy._cgi_env_map;
+		this->_exitcode =  copy._exitcode;
+		this->_argv =  copy._argv;
+	}
+	return (*this);
+}
+
+void 	CGIContent::setEnvCGI(std::string cgi_path) // string for now, replace by iterator of whatever struct we use
+{	
+	_cgi_env_map["CONTENT_TYPE"] = "default";
+	this->_cgi_env_map["CONTENT_LENGTH"] = "default";
+	this->_cgi_env_map["HTTP_COOKIE"] = "default";
+	this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
+	this->_cgi_env_map["PATH_INFO"] = "default";
+	this->_cgi_env_map["QUERY_STRING"] = "default";
+	this->_cgi_env_map["REMOTE_ADDR"] = "default";
+	this->_cgi_env_map["REMOTE_HOST"] = "default";
+	this->_cgi_env_map["REQUEST_METHOD"] = "default";   // POST, GET, HEAD ....
+	this->_cgi_env_map["SCRIPT_FILENAME"] = "default";	// full path to the CGI script
+	this->_cgi_env_map["SCRIPT_NAME"] = cgi_path;
+	this->_cgi_env_map["SERVER_NAME"] = "default";		// get server name from location
+	this->_cgi_env_map["SERVER_SOFTWARE"] = "AMANIX";
+
+	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ?
+
+	int i = 0;
+	for (std::map<std::string, std::string>::iterator it=this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
+	{
+		std::cout << it->first << " = " << it->second << "\n";
+		this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
+		i++;
+	}
+	printf("\n\n\n");
+	this->_cgi_env[i] = NULL;
+	// for (int i = 0; this->_cgi_env[i]; i++)
+	// 	printf("%s \n",this->_cgi_env[i]);
+
+	this->_cgi_path = cgi_path; // for debug, will be taken from config file
+
+
+	this->_argv = (char **)malloc(sizeof(char *) * 3);
+	this->_argv[0] = strdup("/usr/bin/python3");
+	this->_argv[1] = strdup(this->_cgi_path.c_str());
+	this->_argv[2] = NULL;
+	// std::cout << "\033[31m|-----###---" << this->_argv[0] << "---------------|\033[0m\n\n" << std::endl;
+	// std::cout << "\033[31m|------###--" << this->_argv[1] << "---------------|\033[0m\n\n" << std::endl;
+}
+
+void 	CGIContent::executeCGI()
+{
+	int	cgi_forkfd;
+	
+	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
+	{
+		std::cout << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		this->_exitcode = -1; // to change
+		return ;
+	}
+	if (pipe(this->pipe_out))
+	{
+		std::cout << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		this->_exitcode = -1; // to change
+		return ;
+	}
+	
+	cgi_forkfd = fork();
+	if (cgi_forkfd == 0)
+	{
+		dup2(pipe_in[0], STDIN_FILENO);
+		dup2(pipe_out[1], STDOUT_FILENO);
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		
+		// dup2(this->testfd, STDOUT_FILENO);
+		this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
+		
+		std::cerr << "EXECVE FAILED !\r\n";
+
+		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
+		// and is waiting to be read using pipe_out[0] (which is the read end of the pipe)
+		
+		exit(this->_exitcode); // if fails
+	}
+	else if (cgi_forkfd == -1)
+	{
+		std::cout << "\033[Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		this->_exitcode = -1; // to change
+		return ;
+	}
+	else
+		close(pipe_out[1]);
+}
+
+std::string 	CGIContent::grabCGIBody()
+{
+	std::string	result;
+	char		buffer[CGI_BUFFERSIZE];
+	int			bytes_read = 0;
+
+
+	while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
+	{
+		// printf("CGI READ : %d\n", bytes_read);
+		result.append(buffer, bytes_read);
+	}
+
+	//must also close when there is nothing to read i guess ?
+
+	if (bytes_read < 0) {
+		std::cerr << "Read error ! \n";
+		close(this->pipe_out[0]);
+		close(this->pipe_in[0]);
+	}
+	
+	std::string	cgi_output(result);
+	memset(buffer, 0, sizeof(buffer));
+	
+	return (cgi_output);
+}
+
