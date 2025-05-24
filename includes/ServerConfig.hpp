@@ -36,15 +36,18 @@ class ServerConfig
 		std::string		DEBUG_test();
 
 	private:
-		std::map<std::string, std::string>		_map_server;
-		std::vector<std::string>				_listen_ports;
-		std::map<std::string, LocationConfig>	_location_list;
-		std::string								_server_directives[16];
+
+		std::map<std::string, std::string> _map_server;
+		std::vector<std::string> _listen_ports;
+		std::map<std::string, std::string> _ip_and_ports_association;
+		std::map<std::string, LocationConfig> _location_list;
+		std::string _server_directives[16];
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
-		bool	handle_host(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
-
+		bool	handle_host(std::string host_value);
+		bool	handle_listen_ip_port(std::string &value);
+		bool	handle_listen_port(std::string &value);
 };
 
 #endif
