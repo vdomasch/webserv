@@ -53,7 +53,7 @@ std::string	try_index_file(const std::string &path, const std::string &index)
 	return path;
 }
 
-std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode);
+std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 
 void build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool close_connection)
 {
@@ -123,8 +123,6 @@ std::string find_error_page(const std::string& code, LocationConfig* loc, Server
 	return ""; // Pas trouvé
 }
 
-std::string generate_autoindex_html(const std::string& uri, const std::string& real_path);
-
 void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
@@ -184,7 +182,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 			fd_data.content_len = 0;
 			fd_data.folderContent.clear();
 			std::cout << "Directory found, generating index page" << std::endl;
-			std::string body = buildCurrentIndexPage(&fd_data, &errcode);
+			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
 			//body = generate_autoindex_html(target, path_no_index);
 			build_response(req, 200, "OK", "text/html", body, false);
 			return;

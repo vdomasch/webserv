@@ -2,9 +2,20 @@
 #include <ctime>
 #include <iomanip>
 
-static bool	compareBySize(const orderedFiles& a, const orderedFiles& b)
+//static bool	compareBySize(const orderedFiles& a, const orderedFiles& b)
+//{
+//	return a.lowerName < b.lowerName;
+//}
+
+static bool compareByDirThenName(const orderedFiles& a, const orderedFiles& b)
 {
-	return a.lowerName < b.lowerName;
+    // Dossiers avant fichiers
+    if (a.type == DT_DIR && b.type != DT_DIR)
+        return true;
+    if (a.type != DT_DIR && b.type == DT_DIR)
+        return false;
+    // Sinon, trie alphabétique
+    return a.lowerName < b.lowerName;
 }
 
 static void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dirent> &fileList)
@@ -16,7 +27,10 @@ static void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dir
 		sorted.push_back(orderedFiles(i->d_name, filename, i->d_type));
 	}
 
-	std::sort(sorted.begin(), sorted.end(), compareBySize);
+	std::sort(sorted.begin(), sorted.end(), compareByDirThenName); //change to sort folder + file in one loop for
+	//std::sort(sorted.begin(), sorted.end(), compareBySize);
+
+
 	// for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
 	// 	std::cout << j->baseName << std::endl;
 }
@@ -58,17 +72,15 @@ static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 	{
 		std::string	m_fpath(i->baseName);
 		std::string fullPath = d->requestedFilePath + "/" + m_fpath;
-		std::string	fileHref;
 
 		if (i->type == DT_DIR)
 		{
-			fileHref += "/";
-			oss << "<tr><td><a class=\"icon dir\" href=\"" << fileHref << "\">" << m_fpath << "/</a></td>";
+			oss << "<tr><td><a class=\"icon dir\" href=\"" << m_fpath << "\">" << m_fpath << "/</a></td>";
 			oss << "<td> - </td>";
 		}
 		else
 		{
-			oss << "<tr><td><a class=\"icon file\" href=\"" << fileHref << "\">" << m_fpath << "</a></td>";
+			oss << "<tr><td><a class=\"icon file\" href=\"" << m_fpath << "\">" << m_fpath << "</a></td>";
 			oss << "<td> " << displayCorrectFileSize(fullPath.c_str()) << " </td>";
 		}
 
@@ -105,16 +117,19 @@ static void	storeFolderContent(t_fd_data *d, int *errcode)
 
 std::string getParentHref(const std::string& path)
 {
-    if (path == "/" || path.empty()) return "/";
-    std::size_t pos = path.find_last_of('/');
-    if (pos == std::string::npos || pos == 0) return "/";
-    return path.substr(0, pos);
+	if (path == "/" || path.empty())
+		return "/";
+
+	std::size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos || pos == 0)
+		return "/";
+	return path.substr(0, pos);
 }
 
 static void	setupHTMLpageStyle(std::ostringstream &oss)
 {
 	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
-    oss << "<style>body{font-family:monospace;}table{width:100%;}td{padding:4px;}";
+	oss << "<style>body{font-family:monospace;}table{width:100%;}td{padding:4px;}";
 	oss << "div {\nmargin-bottom: 10px;\npadding-bottom: 10px; display: block;\n}\n";
 	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
 	oss << "table {\nborder-collapse: collapse; width:80%; font-size: 15px; text-align:left\n}\n";
@@ -126,17 +141,17 @@ static void	setupHTMLpageStyle(std::ostringstream &oss)
 	oss << "</style>\n";
 }
 
-std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
+std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 {
 	std::ostringstream	oss;
 	storeFolderContent(d, errcode);
 	if (*errcode == FAILEDSYSTEMCALL)
 		return (""); // to handle better ??
 
-	setupHTMLpageStyle(oss); // contains the <style> of the html
+	setupHTMLpageStyle(oss);
 
-	oss << "<title>Index of " + d->requestedFilePath + "</title>\n</head>\n<body>\n<h1> Index of " + d->requestedFilePath + "/" "</h1>\n";
-	oss << "<div><a class=\"icon up\" href=\"" + getParentHref(d->requestedFilePath) + "\">[parent directory]</a>\n</div>\n";
+	oss << "<title>Index of " + path + "</title>\n</head>\n<body>\n<h1> Index of " + path + "</h1>\n";
+	oss << "<div><a class=\"icon up\" href=\"" + getParentHref(path) + "\">[parent directory]</a>\n</div>\n";
 	oss << "<table>\n<thead>\n<th> Name </th>\n<th> Size </th>\n<th> Date Modified </th>\n</thead>\n<tbody>\n";
 
 	sendSizeAndLastChange(d, oss); // extract the info about file size and last access
