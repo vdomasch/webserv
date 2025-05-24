@@ -12,3 +12,6 @@ POST:
 
 DELETE:
 	to do
+TO DO:
+	handle listen, IP + port ? (127.0.0.1:8080) si pas d'IP stocker 0.0.0.0 dans host
+

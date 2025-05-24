@@ -13,7 +13,7 @@ class ServerConfig
 		~ServerConfig();
 
 		bool			parse_server(std::istringstream &iss, std::string key);
-		bool			select_current_location(std::istringstream &iss, std::string key, std::string current_location_path);
+		bool			select_current_location_to_parse(std::istringstream &iss, std::string key, std::string current_location_path);
 		bool			set_server_values(std::istringstream &iss, std::string key);
 		bool			add_location(std::string key);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
@@ -32,6 +32,7 @@ class ServerConfig
 
 		std::string		get_matching_location(const std::string& target, bool autoindex);
 
+		bool			select_current_location_to_check_gci(std::string current_location_path);
 		std::string		DEBUG_test();
 
 	private:

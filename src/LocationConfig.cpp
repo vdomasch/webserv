@@ -9,9 +9,9 @@ LocationConfig::LocationConfig()
 	_location_directives[4] = "rewrite";
 	_location_directives[5] = "autoindex";
 	_location_directives[6] = "allow_methods";
-	_location_directives[7] = "cgi_path";
-	_location_directives[8] = "cgi_ext";
-	_location_directives[9] = "return";
+	_location_directives[7] = "return";
+	_location_directives[8] = "cgi_path";
+	_location_directives[9] = "cgi_ext";
 }
 
 LocationConfig::LocationConfig(std::string path)
@@ -115,8 +115,19 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		if (handle_root(iss, _map_location))
 			return 1;
 	}
+	else if (key == "cgi_path")
+	{
+		if (handle_cgi_path(iss, _map_location))
+			return 1;
+	}
+	else if (key == "cgi_ext")
+	{
+		if (handle_cgi_ext(iss, _map_location))
+			return 1;
+	}
 	else
 	{
+		std::cout << "DEBUG: " << key << std::endl;
 		if (_map_location.count(key))
 		{
 			std::cerr << "Error: Keyword " << key << " already set!" << std::endl;
@@ -139,7 +150,7 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 
 bool	LocationConfig::is_location_variable(std::string key)
 {
-	for (int i = 0; i < 11; i++)
+	for (int i = 0; i < 10; i++)
 		if (key == _location_directives[i])
 			return true;
 	return false;
@@ -154,4 +165,93 @@ std::string	LocationConfig::DEBUG_test()
 	}
 	str += "\n";
 	return str;
+}
+
+bool	LocationConfig::check_cgi()
+{
+	if (_map_location.count("cgi_path") != _map_location.count("cgi_ext"))
+	{
+		if (_map_location.count("cgi_path") == 0)
+			std::cerr << "Error: Missing cgi_path!" << std::endl;
+		else
+			std::cerr << "Error: Missing cgi_ext!" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
+bool	LocationConfig::handle_cgi_path(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::string value;
+	if (!(iss >> value))
+	{
+		std::cerr << "Error: Keyword cgi_path has no value!" << std::endl;
+		return 1;
+	}	
+	if (_current_map.count("cgi_path"))
+	{
+		std::cerr << "Error: Keyword cgi_path already set!" << std::endl;
+		return 1;
+	}
+	if (!is_valid_to_clean_semicolon(value))
+		return 1;
+	if (value.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: cgi_path!" << std::endl;
+		return 1;
+	}
+	value = clean_semicolon(value);
+	if (value.find_first_of("/") == 0 || value.find_last_of("/") == value.length() - 1)
+	{
+		std::cerr << "Error: Invalid cgi_path value '" << value << "', must not start or end with '/'!" << std::endl;
+		return 1;
+	}
+	_current_map["cgi_path"] = value;
+	if (iss >> value)
+	{
+		std::cerr << "Error: Keyword cgi_path has too many values!" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
+bool	LocationConfig::handle_cgi_ext(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::string value;
+	std::string tmp;
+	if (!(iss >> tmp))
+	{
+		std::cerr << "Error: Keyword cgi_ext has no value!" << std::endl;
+		return 1;
+	}
+	if (_current_map.count("cgi_ext"))
+	{
+		std::cerr << "Error: Keyword cgi_ext already set!" << std::endl;
+		return 1;
+	}
+	value = tmp;
+	while (iss >> tmp)
+	{
+		if (tmp.at(0) != '.')
+		{
+			std::cerr << "Error: Invalid cgi_ext value '" << tmp << "'!" << std::endl;
+			return 1;
+		}
+		value += " " + tmp;
+	}
+	if (value.find(";") == std::string::npos)
+	{
+		std::cerr << "Error: Semicolon is missing for keyword: cgi_ext!" << std::endl;
+		return 1;
+	}
+	if (value.find_first_of(";") != value.length() - 1)
+	{
+		std::cerr << "Error: Invalid cgi_ext value, semicolon must be only ';' at the end!" << std::endl;
+		return 1;
+	}
+	if (!is_valid_to_clean_semicolon(value))
+		return 1;
+	value = clean_semicolon(value);
+	_current_map["cgi_ext"] = value;
+	return 0;
 }

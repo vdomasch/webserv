@@ -11,12 +11,10 @@ ServerConfig::ServerConfig() {
 	_server_directives[7] = "keepalive_timeout";
 	_server_directives[8] = "autoindex";
 	_server_directives[9] = "allow_methods";
-	_server_directives[10] = "cgi_path";
-	_server_directives[11] = "cgi_ext";
-	_server_directives[12] = "return";
-	_server_directives[13] = "rewrite";
-	_server_directives[14] = "access_log";
-	_server_directives[15] = "error_log";
+	_server_directives[10] = "return";
+	_server_directives[11] = "rewrite";
+	_server_directives[12] = "access_log";
+	_server_directives[13] = "error_log";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
@@ -147,7 +145,7 @@ bool	ServerConfig::add_location(std::string key)
 	return true;
 }
 
-bool	ServerConfig::select_current_location(std::istringstream &iss, std::string key, std::string current_location_path)
+bool	ServerConfig::select_current_location_to_parse(std::istringstream &iss, std::string key, std::string current_location_path)
 {
 	if (_location_list[current_location_path].parse_location(iss, key))
 		return 1;
@@ -234,6 +232,13 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 		std::cerr << "Error: Keyword listen needs a port number!" << std::endl;
 		return 1;
 	}
+	if (_map_server.count("listen"))
+	{
+		std::cerr << "Error: Keyword listen already set!" << std::endl;
+		return 1;
+	}
+	std::cout << "DEBUG: " << value << std::endl;
+
 	while (!value.empty())
 	{
 		if (value.find_first_not_of("0123456789;") != std::string::npos)
@@ -387,4 +392,11 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	}
 
 	throw std::runtime_error("No suitable location found for target: " + target);
+}
+
+bool	ServerConfig::select_current_location_to_check_gci(std::string current_location_path)
+{
+	if (_location_list[current_location_path].check_cgi())
+		return 1;
+	return 0;
 }

@@ -189,6 +189,11 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 			std::cerr << "Error: There are values after ';' for keyword allow_methods!" << std::endl;
 			return 1;
 		}
+		if (iss.eof() && key.find(";") == std::string::npos)
+		{
+			std::cerr << "Error: Semicolon is missing for keyword: allow_methods!" << std::endl;
+			return 1;
+		}
 		if (!is_valid_to_clean_semicolon(key))
 			return 1;
 		key = clean_semicolon(key);
@@ -206,7 +211,7 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 			std::cerr << "Error: Invalid allow_methods value '" << key << "'!" << std::endl;
 			return 1;
 		}
-	}
+	}	
 	return 0;
 }
 
@@ -277,11 +282,6 @@ bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_c
 	if (value.find_last_of("/") != value.length() - 1)
 	{
 		std::cerr << "Error: Invalid root value '" << value << "', must ends with '/'!" << std::endl;
-		return 1;
-	}
-	if (value.size() < 2)
-	{
-		std::cerr << "Error: Invalid root value has no path!" << std::endl;
 		return 1;
 	}
 	_current_map["root"] = value;
