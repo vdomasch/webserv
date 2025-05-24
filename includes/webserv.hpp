@@ -42,9 +42,9 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name);
 void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name);
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode);
-
 std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection);
+
+void build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool close_connection);
 
 template <typename Y, typename T>
 Y	convert(const T& from) {

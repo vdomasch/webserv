@@ -1,33 +1,14 @@
-Utilitee de host ?
-accepter .cgi?
-
-error_page
-	Gerer les bonnes pages d'erreur dans is_error_page_code et find(.html)
-	Location:
-		error_page doesn't return error when ';' is missing ? A tous les levels ?
-
 GET:
-	probleme lors de la reception sur le navigateur (favicon.ico ?)
-	Peaufiner les index des locations
-	se mettre en accord avec ben pour le port
+	- problem no icon on webpage
+	- return appropriate error_page, function already there but header settings to review:
+		405: Method not allowed -> need to check which one is allowed for specified path
+	- check system error like stat()
+	- secure path (reject unauthorized path request)
+
+	! After that I think it's done !
 
 POST:
 	to do
 
 DELETE:
 	to do
-
-TO DO:
-
-inverser le PORT:SERVERNAME
-
-
-IIIIIIIII	MM     MM	PPPPPPPP	  OOOOO		RRRRRRRRR	TTTTTTTTT	AAAAAAAAA	NN		N	TTTTTTTTT	
-	I		M M   M M	P		P	 O	   O	R		R		T		A		A	N N		N		T		
-	I		M  M M  M	P		P	O		O	R		R		T		A 	 	A	N  N	N		T		::
-	I		M	M	M	PPPPPPPP	O		O	RRRRRRR			T		AAAAAAAAA	N	NN	N		T			PATH OF LOCATION DEMANDER A BENJAMIN
-	I		M		M	P			 O	   O	R	   R		T		A		A	N	  N N		T		::
-IIIIIIIII	M		M	P			  OOOOO		R       R		T		A		A	N	   NN		T		
-
-
-

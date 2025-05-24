@@ -234,6 +234,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			HttpResponse res;
 			res.set_status(405, "Method Not Allowed");
 			res.set_body("405 Method Not Allowed");
+			res.add_header("Allow", "GET, POST, DELETE");
 			res.add_header("Content-Type", "text/plain");
 			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
 			res.add_header("Connection", "close");
