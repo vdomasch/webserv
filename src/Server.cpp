@@ -226,7 +226,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
-			_method_map[method](_socket_states[fd], server_list, _socket_data, server_name);
+			_method_map[method](http_config, _socket_states[fd], server_list, _socket_data, server_name);
 		}
 		else
 		{
@@ -331,16 +331,6 @@ int Server::close_msg(int fd, const std::string &message, int err, int return_co
 	FD_CLR(fd, &_socket_data.saved_sockets);
 	update_max_fd(fd);
 	return return_code;
-
-	/*if (err)
-		std::cerr << "\033[31mClose Message Error: " << "\033[0m" << std::endl;
-	else if (!message.empty())
-		;
-	else
-		std::cout << "\033[30m" << message << fd << " closed" << "\033[0m" << std::endl;
-	close(fd);
-	FD_CLR(fd, &_socket_data.saved_sockets);
-	update_max_fd(fd);*/
 }
 
 bool	Server::is_server_socket(int fd)

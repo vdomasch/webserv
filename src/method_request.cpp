@@ -123,6 +123,8 @@ std::string find_error_page(const std::string& code, LocationConfig* loc, Server
 	return ""; // Pas trouvé
 }
 
+std::string generate_autoindex_html(const std::string& uri, const std::string& real_path);
+
 void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
@@ -183,7 +185,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 			fd_data.folderContent.clear();
 			std::cout << "Directory found, generating index page" << std::endl;
 			std::string body = buildCurrentIndexPage(&fd_data, &errcode);
-			//std::string body = generate_autoindex_html(target, path_no_index);
+			//body = generate_autoindex_html(target, path_no_index);
 			build_response(req, 200, "OK", "text/html", body, false);
 			return;
 		}
@@ -208,27 +210,22 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	build_response(req, 200, "OK", type, body, req.getKeepAlive());
 }
 
-void	post_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
+void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
+	static_cast<void>(http_config);
+	static_cast<void>(req);
+	static_cast<void>(server_name);
 	static_cast<void>(server_list);
-	static_cast<void>(d);
-
-	std::cout << "POST request received" << std::endl;
-	std::cout << req << std::endl;
-
-	response = create_header("200 OK", "text/plain", "16", "keep-alive");
+	static_cast<void>(fd_data);
 }
 
-void	delete_request(HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
+void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
 {
+	static_cast<void>(http_config);
+	static_cast<void>(req);
 	static_cast<void>(server_list);
 	static_cast<void>(d);
 	static_cast<void>(response);
-	
-	std::cout << "DELETE request received" << std::endl;
-	std::cout << req << std::endl;
-
-
 }
 
 std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection)
