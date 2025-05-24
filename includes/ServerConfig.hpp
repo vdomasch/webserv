@@ -30,7 +30,7 @@ class ServerConfig
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
-		bool	handle_host(std::istringstream &iss, std::map<std::string, std::string> &_map_server);
+		bool	handle_host(std::string host_value);
 		bool	handle_listen_ip_port(std::string &value);
 		bool	handle_listen_port(std::string &value);
 };
