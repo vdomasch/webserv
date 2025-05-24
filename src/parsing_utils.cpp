@@ -279,9 +279,9 @@ bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_c
 		return 1;
 	}
 	value = clean_semicolon(value);
-	if (value.find_last_of("/") != value.length() - 1)
+	if (value.find_first_of("/") != 0 || value.find_last_of("/") != value.length() - 1)
 	{
-		std::cerr << "Error: Invalid root value '" << value << "', must ends with '/'!" << std::endl;
+		std::cerr << "Error: Invalid root value '" << value << "', must starts and ends with '/'!" << std::endl;
 		return 1;
 	}
 	_current_map["root"] = value;
