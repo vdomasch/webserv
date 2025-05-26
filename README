@@ -22,3 +22,6 @@ TO DO:
 /!\ ERREUR CHECKER LES IP EN FONCTION DU PORT /!\
 	html fonctionne sans {
 
+
+!!! PROBLEM OUT_OF_RANGE error thrown in normalize_path()
+

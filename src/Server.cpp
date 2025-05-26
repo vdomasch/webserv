@@ -167,19 +167,19 @@ std::string Server::get_server_name(int fd)
 
 		std::string host = _socket_states[fd].get_header("host"); // get host from header
 		if (host.empty())
-			return port_str + ";"; // if host is empty, return port
+			return port_str; // if host is empty, return port
 
 		std::string host_port = host.substr(host.find(":") + 1); // if host has port
 		if (host_port.empty())
 		{
-			return host + port_str + ";"; // if host has no port, return host + port
+			return host + port_str; // if host has no port, return host + port
 		}
 		else if (port_str.find_first_not_of("0123456789") != std::string::npos) // if port is not a number
 		{
 			throw std::runtime_error("Invalid port number in Host header: " + host_port); // throw exception
 		}
 		else
-			return host + ";"; // retrun host
+			return host; // retrun host
 	}
 	return ""; 
 }

@@ -180,7 +180,9 @@ LocationConfig find_location(HttpRequest &req, ServerConfig &server, std::string
 		std::map<std::string, LocationConfig> location_list = server.get_location_list();
 		it_loc = location_list.find(location_name);
 		if (it_loc != location_list.end())
+		{
 			return (it_loc->second);
+		}
 		else
 			throw std::runtime_error("Location not found");
 	//}
@@ -217,6 +219,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		location = find_location(req, server, location_name, target, autoindex); // is autoindex modified ?
 	}
 	catch (std::exception &e) {
+		PRINT_DEBUG2
 		std::cerr << "Error finding location: " << e.what() << std::endl;
 		build_response(req, 404, "Not Found", "text/html", displayErrorPage(find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
 		return;
@@ -246,12 +249,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 
 	//std::string path_no_index = root + normalize_path(remove_prefix(target, location_name));
 	/////////////////////////////////////////
-
 	std::string path_no_index = location.get_root() + normalize_path(remove_prefix(target, location_name)); // Supprimer le préfixe location du target
+	PRINT_DEBUG2
 	std::string file_path = try_index_file(path_no_index, location.get_index()); // Si le target finit par '/', on essaie un fichier index
 
 	//HttpResponse res;
-
+	PRINT_DEBUG2
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
 		if (autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
@@ -278,6 +281,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		build_response(req, 404, "Not Found", "text/html", displayErrorPage(find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
 		return;
 	}
+	PRINT_DEBUG2
 	std::cout << "File found: " << file_path << std::endl;
 	std::ostringstream content;
 	content << file.rdbuf();
