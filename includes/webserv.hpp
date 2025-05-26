@@ -46,6 +46,8 @@
 #define MISSINGFILE -2
 #define ICOHANDELING 2
 #define GIFHANDELING 3
+#define CSSHANDELING 4
+#define IMGHANDELING 5
 #define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
 struct s_fd_data

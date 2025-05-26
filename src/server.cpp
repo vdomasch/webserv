@@ -203,12 +203,11 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	}
 
 	//horrible,just here to test
-	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".gif")) //ugly hardcoding just to test the ico case
+	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".gif"))
 	{
 		*errcode = GIFHANDELING;
 		return (handleGIF(d));
 	}
-
 	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
 	if (fd < 0)
 	{
@@ -222,7 +221,10 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 		close(fd);
 		return ("void"); //handle better
 	}
-	*errcode = 0;
+	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".css"))
+		*errcode = CSSHANDELING;
+	else
+		*errcode = 0;
 	close(fd);
 	std::string response(buffer);
 	d->content_len = response.length();
@@ -466,16 +468,7 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 void	setupHTMLpageStyle(std::ostringstream &oss)
 {
 	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
-	oss << "<style>\n";
-	oss << "#parentDirLinkBox {\nmargin-bottom: 10px;\npadding-bottom: 10px;\n}\n";
-	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
-	oss << "table {\nborder-collapse: collapse;\n}\n";
-	oss << "td.detailsColumn {padding-inline-start: 2em;\ntext-align: end;\nwhite-space: nowrap;\n}\n";
-	oss << "a.up {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACM0lEQVR42myTA+w1RxRHz+zftmrbdlTbtq04qRGrCmvbDWp9tq3a7tPcub8mj9XZ3eHOGQdJAHw77/LbZuvnWy+c/CIAd+91CMf3bo+bgcBiBAGIZKXb19/zodsAkFT+3px+ssYfyHTQW5tr05dCOf3xN49KaVX9+2zy1dX4XMk+5JflN5MBPL30oVsvnvEyp+18Nt3ZAErQMSFOfelCFvw0HcUloDayljZkX+MmamTAMTe+d+ltZ+1wEaRAX/MAnkJdcujzZyErIiVSzCEvIiq4O83AG7LAkwsfIgAnbncag82jfPPdd9RQyhPkpNJvKJWQBKlYFmQA315n4YPNjwMAZYy0TgAweedLmLzTJSTLIxkWDaVCVfAbbiKjytgmm+EGpMBYW0WwwbZ7lL8anox/UxekaOW544HO0ANAshxuORT/RG5YSrjlwZ3lM955tlQqbtVMlWIhjwzkAVFB8Q9EAAA3AFJ+DR3DO/Pnd3NPi7H117rAzWjpEs8vfIqsGZpaweOfEAAFJKuM0v6kf2iC5pZ9+fmLSZfWBVaKfLLNOXj6lYY0V2lfyVCIsVzmcRV9Y0fx02eTaEwhl2PDrXcjFdYRAohQmS8QEFLCLKGYA0AeEakhCCFDXqxsE0AQACgAQp5w96o0lAXuNASeDKWIvADiHwigfBINpWKtAXJvCEKWgSJNbRvxf4SmrnKDpvZavePu1K/zu/due1X/6Nj90MBd/J2Cic7WjBp/jUdIuA8AUtd65M+PzXIAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
-	oss << "a.file {\n    background : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAABnRSTlMAAAAAAABupgeRAAABEElEQVR42nRRx3HDMBC846AHZ7sP54BmWAyrsP588qnwlhqw/k4v5ZwWxM1hzmGRgV1cYqrRarXoH2w2m6qqiqKIR6cPtzc3xMSML2Te7XZZlnW7Pe/91/dX47WRBHuA9oyGmRknzGDjab1ePzw8bLfb6WRalmW4ip9FDVpYSWZgOp12Oh3nXJ7nxoJSGEciteP9y+fH52q1euv38WosqA6T2gGOT44vry7BEQtJkMAMMpa6JagAMcUfWYa4hkkzAc7fFlSjwqCoOUYAF5RjHZPVCFBOtSBGfgUDji3c3jpibeEMQhIMh8NwshqyRsBJgvF4jMs/YlVR5KhgNpuBLzk0OcUiR3CMhcPaOzsZiAAA/AjmaB3WZIkAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
-	oss << "a.dir {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==\") left top no-repeat;\n}\n";
-	oss << "a.icon {\npadding-inline-start: 1.5em;\ntext-decoration: none;\nuser-select: auto;\n}\n";
-	oss << "</style>\n";
+	oss << "<link rel=\"stylesheet\" href=\"/assets/css_files/autoindex.css\">"; //request is sent 2 times ?
 }
 
 std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
@@ -579,15 +572,28 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 		d->content_type = "text/html";
 		break;
 	
-	case 2:
+	case ICOHANDELING:
 		d->content_len = d->content_len;
 		d->content_type = "image/x-icon";
 		return(requestBody);
 
-	case 3: //gifs i guess ? temporary 
+	case GIFHANDELING: //gifs i guess ? temporary 
 		d->content_len = d->content_len;
 		d->content_type = "image/gif";
 		return(requestBody);
+
+	case IMGHANDELING: //gifs i guess ? temporary 
+		d->content_len = d->content_len;
+		d->content_type = "image/gif";
+		return(requestBody);
+
+	case CSSHANDELING:
+		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Lenght: ";
+		responseCode.append(oss.str());
+		responseCode.append("\r\n\r\n\n");
+		d->content_len = d->content_len;
+		d->content_type = "text/css";
+		break;
 
 	default:
 		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
