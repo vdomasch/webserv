@@ -165,7 +165,7 @@ std::string Server::get_server_name(int fd)
 		std::string port_str;
 		port_str = convert<std::string>(port); // get port to str
 
-		std::string host = _socket_states[fd].get_header("Host"); // get host from header
+		std::string host = _socket_states[fd].get_header("host"); // get host from header
 		if (host.empty())
 			return port_str; // if host is empty, return port
 
