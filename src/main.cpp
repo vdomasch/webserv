@@ -12,6 +12,6 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
-	//http_config.DEBUG_HTTP_show();
+	http_config.DEBUG_HTTP_show();
 	return (0);
 }
