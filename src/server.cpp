@@ -97,14 +97,15 @@ std::string	displayErrorPage(std::string serverFolder, int *errcode)
 	return (response);
 }
 
-std::string	handleGIF(t_fd_data *d) // UGLY AS FUCK, TO DELETE SOON
+
+std::string	handleBinaryFiles(t_fd_data *d)
 {
 	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
 	std::ostringstream oss;
 	std::ifstream::pos_type dataFile;
 
 	if (!binfile.is_open()) 
-		std::cerr << "Could not open .gif file" << std::endl; // handle more errors
+		std::cerr << "Could not open binary file.." << std::endl; // handle more errors
 	else 
 	{
 		binfile.seekg(0, std::ios::end);
@@ -115,58 +116,14 @@ std::string	handleGIF(t_fd_data *d) // UGLY AS FUCK, TO DELETE SOON
 		binfile.close();
 		
 		std::ostringstream response;
-		response << "HTTP/1.1 200 OK\r\n"
-		<< "Content-Type: image/gif\r\n"
-		<< "Content-Length: " << file_size << "\r\n"
-		<< "\r\n";
-
+		response << "Content-Length: " << file_size << "\r\n\r\n";
 		d->binaryContent = buffer2;
 		
 		dataFile = filesize(d->requestedFilePath.c_str());
 		oss << dataFile;
 		d->content_len = atof(oss.str().c_str());
-
 		return(response.str().c_str());
 	}
-
-	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
-	
-}
-
-
-std::string	handleIcoFile(t_fd_data *d)
-{
-	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
-	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
-	std::ostringstream oss;
-	std::ifstream::pos_type dataFile;
-
-	if (!binfile.is_open()) 
-		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
-	else 
-	{
-		binfile.seekg(0, std::ios::end);
-		size_t file_size = binfile.tellg();
-		binfile.seekg(0, std::ios::beg);
-		std::vector<char> buffer2(file_size);
-		binfile.read(&buffer2[0], file_size);
-		binfile.close();
-		
-		std::ostringstream response;
-		response << "HTTP/1.1 200 OK\r\n"
-		<< "Content-Type: image/x-icon\r\n"
-		<< "Content-Length: " << file_size << "\r\n"
-		<< "\r\n";
-
-		d->binaryContent = buffer2;
-		
-		dataFile = filesize(d->requestedFilePath.c_str());
-		oss << dataFile;
-		d->content_len = atof(oss.str().c_str());
-
-		return(response.str().c_str());
-	}
-
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
 	
 }
@@ -188,6 +145,52 @@ bool	indexFileExists(t_fd_data *d, int debug)
 		return (false);
 }
 
+void		identifyFileExtension(std::string filename, int *errcode)
+{
+	int len = filename.length();
+	if (len < 4)
+	{
+		errcode = 0;
+		return ;
+	}
+	std::string	extension = filename.substr(len - 4, len - 1);
+	if (extension == ".ico" || extension == ".gif" || extension == ".png" || extension == ".jpg")
+		*errcode = ICOHANDELING;
+	else if (extension == ".css")
+		*errcode = CSSHANDELING;
+	else
+		*errcode = 0;
+
+
+	std::string	(extension_dictionary[4]) = {".ico", ".gif", ".png", ".jpg"};
+	int type = -1;
+	while(++type < 4)
+	{
+		if (extension == extension_dictionary[type])
+			break ;
+	}
+
+	switch (type)
+	{
+	case 0:
+		*errcode = ICOHANDELING;
+		break;
+	case 1:
+		*errcode = GIFHANDELING;
+		break;
+	case 2:
+		*errcode = PNGHANDELING;
+		break;
+	case 3:
+		*errcode = JPGHANDELING;
+		break;
+	
+	default:
+		*errcode = 0;
+		break;
+	}
+}
+
 std::string	openAndReadFile(t_fd_data *d, int *errcode)
 {
 	char			buffer[BUFFER_SIZE];
@@ -196,18 +199,9 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	unsigned int	len;
 
 	len = d->requestedFilePath.length();
-	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
-	{
-		*errcode = ICOHANDELING;
-		return (handleIcoFile(d));
-	}
-
-	//horrible,just here to test
-	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".gif"))
-	{
-		*errcode = GIFHANDELING;
-		return (handleGIF(d));
-	}
+	identifyFileExtension(d->requestedFilePath, errcode);
+	if (*errcode && *errcode != CSSHANDELING) // if image, recover the binary data
+		return (handleBinaryFiles(d));
 	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
 	if (fd < 0)
 	{
@@ -237,6 +231,7 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	struct stat fileinfo;  
 	std::string pathToCheck;
 	std::string	fileContent;
+	int			statErr = 0;
 	
 
 	if (filename == "/") // special case, must act like the index page was asked
@@ -255,11 +250,13 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
 	printf("Path to check is : (%s)\n\n", pathToCheck.c_str());
 
-    if (stat (pathToCheck.c_str(), &fileinfo) == 0) // then file exists --> to secure better, check requestedFilePath too
+	statErr = stat (pathToCheck.c_str(), &fileinfo);
+    if (statErr == 0) // then file exists --> to secure better, check requestedFilePath too
 		printf("\033[34mFound it --> \033[0m");
 	else
 	{
-		printf("\033[31mFile wasn't found ! Setting error code appropriately !\n\033[0m\n");
+		printf("\033[31mFile wasn't found ! (%d) Setting error code appropriately !\n\033[0m\n", errno);
+		perror("ERRNO SAYS : ");
 		*errcode = MISSINGFILE;
 		return (MISSINGFILE);
 	}
@@ -551,6 +548,7 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_fd_data *d)
 {
 	std::string	responseCode;
+	std::string	headerStart;
 	std::ostringstream oss;
 
 	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ? --> it did when testing the CGI since we return empty string for now
@@ -564,44 +562,55 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 
 	switch (errcode)
 	{
-	case 0:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		d->content_len = d->content_len;
-		d->content_type = "text/html";
-		break;
+		case ICOHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\n";
+			headerStart.append(requestBody);
+			d->content_len = d->content_len;
+			d->content_type = "image/x-icon";
+			d->is_binaryContent = true;
+			return(headerStart);
 	
-	case ICOHANDELING:
-		d->content_len = d->content_len;
-		d->content_type = "image/x-icon";
-		return(requestBody);
-
-	case GIFHANDELING: //gifs i guess ? temporary 
-		d->content_len = d->content_len;
-		d->content_type = "image/gif";
-		return(requestBody);
-
-	case IMGHANDELING: //gifs i guess ? temporary 
-		d->content_len = d->content_len;
-		d->content_type = "image/gif";
-		return(requestBody);
-
-	case CSSHANDELING:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		d->content_len = d->content_len;
-		d->content_type = "text/css";
-		break;
-
-	default:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		d->content_len = d->content_len;
-		d->content_type = "text/html";
-		break;
+		case GIFHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\n";
+			headerStart.append(requestBody);
+			d->content_len = d->content_len;
+			d->content_type = "image/gif";
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case PNGHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n";
+			headerStart.append(requestBody);
+			d->content_len = d->content_len;
+			d->content_type = "image/png";
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case JPGHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n";
+			headerStart.append(requestBody);
+			d->content_len = d->content_len;
+			d->content_type = "image/jpeg";
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case CSSHANDELING:
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Lenght: ";
+			responseCode.append(oss.str());
+			responseCode.append("\r\n\r\n\n");
+			d->content_len = d->content_len;
+			d->content_type = "text/css";
+			d->is_binaryContent = false;
+			break;
+	
+		default:
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
+			responseCode.append(oss.str());
+			responseCode.append("\r\n\r\n\n");
+			d->content_len = d->content_len;
+			d->content_type = "text/html";
+			d->is_binaryContent = false;
+			break;
 	}
 	responseCode = responseCode + requestBody;
 	return (responseCode);
@@ -642,13 +651,17 @@ int	handle_client_request(int socket, t_fd_data *d)
 
 	if (!finalMessage.empty())
 	{
-		if (d->content_type == "image/x-icon" || d->content_type == "image/gif" )
+		if (d->is_binaryContent == true)
 		{
+			printf("\033[31mWas indeed binary !\033[0m\n");
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
 		}
 		else
+		{
+			printf("\033[31mThat shit was NOT binary !\033[0m\n");
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
+		}
 		std::cout << "message sent from server !\n" << std::endl;
 	}
 	close(socket);

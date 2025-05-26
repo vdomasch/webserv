@@ -47,7 +47,8 @@
 #define ICOHANDELING 2
 #define GIFHANDELING 3
 #define CSSHANDELING 4
-#define IMGHANDELING 5
+#define PNGHANDELING 5
+#define JPGHANDELING 6
 #define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
 struct s_fd_data
@@ -61,6 +62,7 @@ struct s_fd_data
 
 	std::string			content_type; // only for .ico for the moment
 	unsigned int		content_len;
+	bool				is_binaryContent; //used for the final send, to know is we need to send binaryContent;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;
 	CGIContent			cg;
