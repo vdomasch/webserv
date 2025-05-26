@@ -127,7 +127,6 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 	}
 	else
 	{
-		std::cout << "DEBUG: " << key << std::endl;
 		if (_map_location.count(key))
 		{
 			std::cerr << "Error: Keyword " << key << " already set!" << std::endl;
