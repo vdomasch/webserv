@@ -146,6 +146,8 @@ bool	HTTPConfig::parse_http()
 		}
 		else if (is_http(key))
 		{
+			if (http_check_bracket(iss, key))
+				return 1;
 			if (set_http_values(iss, key))
 				return 1;
 		}
@@ -178,10 +180,22 @@ bool	HTTPConfig::parse_http()
 	return 0;
 }
 
+bool	HTTPConfig::http_check_bracket(std::istringstream &iss, std::string key)
+{
+	if (key == "http")
+	{
+		if (!(iss >> key) || key != "{")
+		{
+			std::cerr << "Error: Keyword http must be followed by '{'!" << std::endl;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 bool	HTTPConfig::set_http_values(std::istringstream &iss, std::string key)
 {
 	std::string value;
-
 	if (key == "client_max_body_size")
 	{
 		if (_map_http["client_max_body_size"] != "UNSET")
