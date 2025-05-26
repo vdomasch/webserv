@@ -239,9 +239,11 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 	}
 	if (_listen_ports.back().find_last_of(";") != std::string::npos)
 	{
+		std::cout << "DEBUG before clean_semicolon: " << _listen_ports.back() << std::endl;
 		if (!is_valid_to_clean_semicolon(_listen_ports.back()))
 			return 1;
 		_listen_ports.back() = clean_semicolon(_listen_ports.back());
+		std::cout << "DEBUG after clean_semicolon: " << _listen_ports.back() << std::endl;
 	}
 	return 0;
 }
@@ -278,8 +280,6 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 		std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
 	}
-	_listen_ports.push_back(value);
-	_map_server["listen"] = _listen_ports.begin()->c_str();
 	if (_ip_and_ports_association.count(value))
 	{
 		std::cerr << "Error: Port '" << value << "' already set!" << std::endl;
@@ -287,6 +287,8 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 	}
 	std::string value_tmp;
 	value_tmp.assign(value, 0, value.find(";"));
+	_listen_ports.push_back(value_tmp);
+	_map_server["listen"] = _listen_ports.begin()->c_str();
 	_ip_and_ports_association[value_tmp] = "0.0.0.0";
 	return 0;
 }
