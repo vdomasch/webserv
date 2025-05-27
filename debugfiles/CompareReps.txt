@@ -145,3 +145,8 @@ TERM=xterm-256color
 Direction:
 - Parent writes to pipe_in[1] ---> Child reads from pipe_in[0] (via dup2'd STDIN)
 - Child writes to pipe_out[1] ---> Parent reads from pipe_out[0] (via dup2'd STDOUT)
+
+
+
+
+---------------------------------------------------------------------------------------------------------

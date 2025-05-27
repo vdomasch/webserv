@@ -32,6 +32,7 @@
 #include <cmath> // floor for size
 #include <fcntl.h>// open
 #include <map> // std::map
+#include <string> //string::npos
 
 #include "CGIContent.hpp"
 

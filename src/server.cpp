@@ -74,9 +74,8 @@ std::string	displayErrorPage(std::string serverFolder, int *errcode)
 	int			bytes_read;
 	int			fd;
 
-
+	memset(buffer, '\0', sizeof(buffer));
 	pathToErrPage = serverFolder + "/error_404.html"; // subject to change ? 
-
 	fd = open(pathToErrPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
 	if (fd < 0)
 	{
@@ -198,6 +197,7 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	int				fd;
 	unsigned int	len;
 
+	memset(buffer, '\0', sizeof(buffer));
 	len = d->requestedFilePath.length();
 	identifyFileExtension(d->requestedFilePath, errcode);
 	if (*errcode && *errcode != CSSHANDELING) // if image, recover the binary data
@@ -309,17 +309,38 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 
 void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
 {
+
+
+	// printf("\033[32m\nCurrent requested is (%s) and serverFolder is : (%s) !\033[0m\n\n", filepath.c_str(), server_folder.c_str());
 	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
 	{
 		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
 		parent = "/";
 		return ;
 	}
-	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
-	parent = filepath.substr(0, pos);
-	pos = parent.find_last_of('/');
-	parent = parent.substr(pos);
+
+	std::string	extendedServerFolder = server_folder + "/";
+	parent = filepath.substr(extendedServerFolder.find_last_of("/"));
+	printf("\033[31m\nSpecial parent is (%s) !\033[0m\n\n", parent.c_str());
+	std::size_t pos = parent.find_last_of('/');
+	if (pos == 0)
+	{
+		parent = "/";
+		return ;
+	}
+
+	if (pos != std::string::npos)
+		parent = parent.substr(0, pos);
 	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
+
+	// OLD METHOD
+	// std::size_t pos = filepath.find_last_of('/');   //check if it fails i guess ?
+	// parent = filepath.substr(0, pos);
+	// printf("\033[31mParent is (%s) !\033[0m\n", parent.c_str());
+	// pos = parent.find_last_of('/');
+	// parent = parent.substr(pos);
+
+
 	if (parent == "/server_files")
 		parent = "/";
 }
@@ -399,31 +420,35 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		
 		std::string	m_fpath(i->baseName);
 		std::string	fileHref;
+		std::string	extendedServerFolder;
 
-		if (i->type != DT_DIR)
+		if (i->type != DT_DIR) // if not a dir, leave
 			continue ;
-		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/"; // a changerrrrrrr
+
+		extendedServerFolder = d->serverFolder + "/";
+		fileHref = d->requestedFilePath.substr(extendedServerFolder.find_last_of("/")) + "/";
+
 		if (fileHref == "/server_files/")
 			fileHref = ""; 
-		oss << "<tr><td>\n";
+		oss << "<tr><td>";
 		oss << "<a class";
 		oss << "=\"icon dir\" href=\"";
 		oss << fileHref + i->baseName;
 		oss << "\">";
 		oss << m_fpath + "/";
 		oss << " ";
-		oss << "</a>\n";
+		oss << "</a>";
 		oss << "</td>\n";
 
 		//Handle size
-		oss << "<td> - </td>\n"; // no size needed for folders
+		oss << "<td>-</td>\n"; // no size needed for folders
 
 		//handle last file modification
 		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
 		timestamp = fileinfo.st_mtime;
-		oss << "<td> ";
-		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
-		oss << " </td>\n";
+		oss << "<td>";
+		oss << ctime(&timestamp); //might be C ? is it allowed ?
+		oss << "</td>\n";
 		oss << "</tr>\n";
 	}
 	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
@@ -431,41 +456,57 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		
 		std::string	m_fpath(i->baseName);
 		std::string	fileHref;
+		std::string	extendedServerFolder;
+		
+		if (i->type == DT_DIR) //if not a file, leave
+		continue ;
+		
+		// printf("request if(%s)\n", d->requestedFilePath.c_str());
+		extendedServerFolder = d->serverFolder + "/";
+		fileHref = d->requestedFilePath.substr(extendedServerFolder.find_last_of("/")) + "/";
+		// printf("\n\nHref is : (%s)\n\n", fileHref.c_str());
+		
+		//  EDIT : FIXED I THINK
+		//  (OLD) 
+		//	fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/" is wrong.
+		//  This is not a correct method, since /home/lchapard/Documents/Webserv/server_files/assets/css_files/myfile.css
+		//  will give a href of /css_files/myfile.css, which when searched by the server in the next loop, will give
+		//  /home/lchapard/Documents/Webserv/server_files  +  /css_files/myfile.css, with the asset folder missing,
+		//  preventing us from finding the file
 
-		if (i->type == DT_DIR)
-			continue ;
 
-		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/";
 		if (fileHref == "/server_files/") //temporary fix for when we reach last folder
 			fileHref = ""; 
-		oss << "<tr><td>\n";
+		oss << "<tr><td>";
 		oss << "<a class";
-		oss << "=\"icon file\" href=\"\n";
+		oss << "=\"icon file\" href=\"";
 		oss << fileHref + i->baseName;
 		oss << "\">";
 		oss << m_fpath + "/";
-		oss << "</a>\n";
+		oss << "</a>";
 		oss << "</td>\n";
 	
 		//handle size
-		oss << "<td> ";
+		oss << "<td>";
 		oss << displayCorrectFileSize((d->requestedFilePath + "/" + m_fpath).c_str());
-		oss << " </td>\n";
+		oss << "</td>\n";
 
 		//handle last file modification
 		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
 		timestamp = fileinfo.st_mtime;
-		oss << "<td> ";
+		oss << "<td>";
 		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
-		oss << " </td>\n";
+		oss << "</td>\n";
 		oss << "</tr>\n";
 	}
 }
 
 void	setupHTMLpageStyle(std::ostringstream &oss)
 {
-	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
-	oss << "<link rel=\"stylesheet\" href=\"/assets/css_files/autoindex.css\">"; //request is sent 2 times ?
+	oss << "<!DOCTYPE html>\n";
+	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\" charset=\"UTF-8\">\n";
+	oss << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "<link rel=\"stylesheet\" href=\"/assets/css_files/autoindex.css\">\n";
 }
 
 std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
@@ -480,16 +521,16 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 		return (""); // to handle better ??
 
 	setupHTMLpageStyle(oss); // contains the <style> of the html 
-	oss << "<title> Index of";
+	oss << "<title> Index of ";
 	oss << d->requestedFilePath + "/";
 	oss << "</title>\n</head>\n<body >\n";
 	oss << "<h1> Index of " + d->requestedFilePath + "/" "</h1>\n";
 
-	oss << "<div id=\"parentDirLinkBox\" style=\"display: block;\">";
+	oss << "<div id=\"parentDirLinkBox\" style=\"display: block;\">\n";
 	oss << "<a id=\"parentDirLink\" class=\"icon up\" href=\"";
 	oss << parentFolder;
-	oss << "\">";
-	oss << "<span id=\"parentDirText\">[parent directory]</span>";
+	oss << "\">\n";
+	oss << "<span id=\"parentDirText\">[parent directory]</span>\n";
     oss << "</a>\n</div>\n";
 
 	oss << "<table style=\"width:80%; font-size: 15px\">\n<thead>\n";
@@ -521,8 +562,6 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	filename_end = first_line.find_last_of(' ');
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
 
-	printf("\033[34m------------------------------------\n");
-	printf("(%s)\n",request.c_str() );
 	printf("\033[32m------------------------------------\n");
 	printf("Requested : (%s)\n",requested_file.c_str() );
 	printf("------------------------------------\033[0m\n");
@@ -618,7 +657,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 
 int	handle_client_request(int socket, t_fd_data *d)
 {
-	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?????
+	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?? --> i might be stupid
 	std::string	requestBody;
 	std::string	finalMessage;
 	int			errcode;
@@ -626,6 +665,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 	
 	//Receive the new message :
 
+	memset(buffer, '\0', sizeof(buffer));
 	bytesRead = read(socket , buffer, BUFFER_SIZE);
 	if (bytesRead < 0)
 	{
@@ -633,6 +673,11 @@ int	handle_client_request(int socket, t_fd_data *d)
 		return (-1);
 	}
 	d->serverSocketFd = socket;
+
+	printf("\033[34m------------------------------------\n");
+	printf("(%s)\n",buffer );
+	printf("------------------------------------\n\033[0m");
+
 	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
@@ -653,15 +698,11 @@ int	handle_client_request(int socket, t_fd_data *d)
 	{
 		if (d->is_binaryContent == true)
 		{
-			printf("\033[31mWas indeed binary !\033[0m\n");
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
 		}
 		else
-		{
-			printf("\033[31mThat shit was NOT binary !\033[0m\n");
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
-		}
 		std::cout << "message sent from server !\n" << std::endl;
 	}
 	close(socket);
