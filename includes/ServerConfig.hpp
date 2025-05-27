@@ -41,7 +41,7 @@ class ServerConfig
 		std::vector<std::string> _listen_ports;
 		std::map<std::string, std::string> _ip_and_ports_association;
 		std::map<std::string, LocationConfig> _location_list;
-		std::string _server_directives[16];
+		std::string _server_directives[13];
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);

@@ -2,19 +2,18 @@
 
 ServerConfig::ServerConfig() {
 	_server_directives[0] = "listen";
-	//_server_directives[1] = "host";
-	_server_directives[2] = "server_name";
-	_server_directives[3] = "error_page";
+	_server_directives[1] = "server_name";
+	_server_directives[2] = "root";
+	_server_directives[3] = "index";
 	_server_directives[4] = "client_max_body_size";
-	_server_directives[5] = "root";
-	_server_directives[6] = "index";
+	_server_directives[5] = "allow_methods";
+	_server_directives[6] = "error_page";
 	_server_directives[7] = "keepalive_timeout";
 	_server_directives[8] = "autoindex";
-	_server_directives[9] = "allow_methods";
+	_server_directives[9] = "error_log";
 	_server_directives[10] = "return";
 	_server_directives[11] = "rewrite";
 	_server_directives[12] = "access_log";
-	_server_directives[13] = "error_log";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
@@ -271,9 +270,11 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 	}
 	if (_listen_ports.back().find_last_of(";") != std::string::npos)
 	{
+		std::cout << "DEBUG before clean_semicolon: " << _listen_ports.back() << std::endl;
 		if (!is_valid_to_clean_semicolon(_listen_ports.back()))
 			return 1;
 		_listen_ports.back() = clean_semicolon(_listen_ports.back());
+		std::cout << "DEBUG after clean_semicolon: " << _listen_ports.back() << std::endl;
 	}
 	return 0;
 }
@@ -310,8 +311,6 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 		std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
 	}
-	_listen_ports.push_back(value);
-	_map_server["listen"] = _listen_ports.begin()->c_str();
 	if (_ip_and_ports_association.count(value))
 	{
 		std::cerr << "Error: Port '" << value << "' already set!" << std::endl;
@@ -319,6 +318,8 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 	}
 	std::string value_tmp;
 	value_tmp.assign(value, 0, value.find(";"));
+	_listen_ports.push_back(value_tmp);
+	_map_server["listen"] = _listen_ports.begin()->c_str();
 	_ip_and_ports_association[value_tmp] = "0.0.0.0";
 	return 0;
 }
