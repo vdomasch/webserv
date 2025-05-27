@@ -2,19 +2,18 @@
 
 ServerConfig::ServerConfig() {
 	_server_directives[0] = "listen";
-	//_server_directives[1] = "host";
-	_server_directives[2] = "server_name";
-	_server_directives[3] = "error_page";
+	_server_directives[1] = "server_name";
+	_server_directives[2] = "root";
+	_server_directives[3] = "index";
 	_server_directives[4] = "client_max_body_size";
-	_server_directives[5] = "root";
-	_server_directives[6] = "index";
+	_server_directives[5] = "allow_methods";
+	_server_directives[6] = "error_page";
 	_server_directives[7] = "keepalive_timeout";
 	_server_directives[8] = "autoindex";
-	_server_directives[9] = "allow_methods";
+	_server_directives[9] = "error_log";
 	_server_directives[10] = "return";
 	_server_directives[11] = "rewrite";
 	_server_directives[12] = "access_log";
-	_server_directives[13] = "error_log";
 }
 
 ServerConfig::ServerConfig(const ServerConfig& param, std::string port)
