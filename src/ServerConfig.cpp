@@ -381,7 +381,7 @@ bool	ServerConfig::handle_host(std::string value)
 	return 0;
 }
 
-std::string ServerConfig::get_matching_location(const std::string& target, bool autoindex)
+std::string ServerConfig::get_matching_location(const std::string& target, bool &autoindex)
 {
 	std::string best_match;
 	size_t max_len = 0;
