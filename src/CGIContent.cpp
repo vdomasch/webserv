@@ -70,12 +70,12 @@ CGIContent &CGIContent::operator=(CGIContent const &copy)
 
 void 	CGIContent::setEnvCGI(std::string cgi_path) // string for now, replace by iterator of whatever struct we use
 {	
-	_cgi_env_map["CONTENT_TYPE"] = "default";
-	this->_cgi_env_map["CONTENT_LENGTH"] = "default";
+	this->_cgi_env_map["CONTENT_TYPE"] = "."; // must be multipart/form-data; boundary=----geckoformboundarybd99e35cc28a823db41353c9f75082e9
+	this->_cgi_env_map["CONTENT_LENGTH"] = "."; // ln in header
 	this->_cgi_env_map["HTTP_COOKIE"] = "default";
 	this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
 	this->_cgi_env_map["PATH_INFO"] = "default";
-	this->_cgi_env_map["QUERY_STRING"] = "default";
+	this->_cgi_env_map["QUERY_STRING"] = "?name=GougouGaga"; // to test if i can extract it
 	this->_cgi_env_map["REMOTE_ADDR"] = "default";
 	this->_cgi_env_map["REMOTE_HOST"] = "default";
 	this->_cgi_env_map["REQUEST_METHOD"] = "default";   // POST, GET, HEAD ....
@@ -84,7 +84,7 @@ void 	CGIContent::setEnvCGI(std::string cgi_path) // string for now, replace by 
 	this->_cgi_env_map["SERVER_NAME"] = "default";		// get server name from location
 	this->_cgi_env_map["SERVER_SOFTWARE"] = "AMANIX";
 
-	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ?
+	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
 
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it=this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)

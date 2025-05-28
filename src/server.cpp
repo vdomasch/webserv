@@ -153,14 +153,6 @@ void		identifyFileExtension(std::string filename, int *errcode)
 		return ;
 	}
 	std::string	extension = filename.substr(len - 4, len - 1);
-	if (extension == ".ico" || extension == ".gif" || extension == ".png" || extension == ".jpg")
-		*errcode = ICOHANDELING;
-	else if (extension == ".css")
-		*errcode = CSSHANDELING;
-	else
-		*errcode = 0;
-
-
 	std::string	(extension_dictionary[4]) = {".ico", ".gif", ".png", ".jpg"};
 	int type = -1;
 	while(++type < 4)
@@ -311,7 +303,8 @@ void	findParentFolder(std::string &parent, std::string filepath, std::string ser
 {
 
 
-	// printf("\033[32m\nCurrent requested is (%s) and serverFolder is : (%s) !\033[0m\n\n", filepath.c_str(), server_folder.c_str());
+	// IMPORTANT ! server_files is to be replaced with the folder provided in config file !!!!!!!
+	//
 	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
 	{
 		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
@@ -428,8 +421,10 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		extendedServerFolder = d->serverFolder + "/";
 		fileHref = d->requestedFilePath.substr(extendedServerFolder.find_last_of("/")) + "/";
 
-		if (fileHref == "/server_files/")
-			fileHref = ""; 
+		if (fileHref == "/server_files/") // i don´t think it happens anymore
+			fileHref = "";
+		// In any case, server_files is to be replaced with actual folder name
+
 		oss << "<tr><td>";
 		oss << "<a class";
 		oss << "=\"icon dir\" href=\"";
@@ -476,7 +471,10 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 
 
 		if (fileHref == "/server_files/") //temporary fix for when we reach last folder
-			fileHref = ""; 
+			fileHref = "";
+		// server_files is to be replaced with actual folder name
+
+
 		oss << "<tr><td>";
 		oss << "<a class";
 		oss << "=\"icon file\" href=\"";
@@ -568,7 +566,7 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
-	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : use actual index.html if exists, else list the content of the folder
+	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : uses actual index.html if exists, else list the content of the folder
 	{
 		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and index file was found, redirecting	
 			response = openAndReadFile(d, errcode);
@@ -672,8 +670,15 @@ int	handle_client_request(int socket, t_fd_data *d)
 		perror("Failed to read ! ");
 		return (-1);
 	}
+	else if (bytesRead == 0) //can happen with multiple request at the same time
+	{
+		printf("Read 0 bytes ... Closing..\n");
+		close(socket);
+		return (0);
+	}
 	d->serverSocketFd = socket;
 
+	// printf("(%lu)\n",bytesRead );
 	printf("\033[34m------------------------------------\n");
 	printf("(%s)\n",buffer );
 	printf("------------------------------------\n\033[0m");

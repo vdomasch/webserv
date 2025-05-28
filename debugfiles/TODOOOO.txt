@@ -1,7 +1,5 @@
 Mozilla : 
 
-
-
 POST /index.html HTTP/1.1
 Host: localhost:8080
 User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0
@@ -22,7 +20,6 @@ Priority: u=0, i
 
 
 Chrome : 
-
 
 POST /index.html HTTP/1.1
 Host: localhost:8080
@@ -59,8 +56,6 @@ gouougaga ?gdfgfdgfdgfd
 
 
 ENV : 
-
-
 
 GJS_DEBUG_TOPICS=JS ERROR;JS LOG
 USER=lchapard
@@ -150,3 +145,9 @@ Direction:
 
 
 ---------------------------------------------------------------------------------------------------------
+
+
+TODO :
+
+-> "server_files" instances to replace by actual var + check the last folder thing idk
+-> see link between program and cgi.FieldStorage()
