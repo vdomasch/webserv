@@ -309,8 +309,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			}
 		}
 	}
+	static_cast<void>(http_config);
 	std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl;
-	shutdown_all_sockets();
 }
 
 void	Server::update_max_fd(int fd)

@@ -26,8 +26,8 @@ class ServerConfig
 		std::string								get_server_name();
 		std::string								get_host_ip() const;
 		std::string								get_root();
-		std::map<std::string, LocationConfig>	get_location_list();
-		std::map<std::string, std::string>		get_map_server();
+		std::map<std::string, LocationConfig>&	get_location_list();
+		std::map<std::string, std::string>&		get_map_server();
 
 
 		std::string		get_matching_location(const std::string& target, bool &autoindex);

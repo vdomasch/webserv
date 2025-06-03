@@ -44,10 +44,12 @@ std::string	remove_prefix(std::string target, const std::string prefix)
 	return target;
 }
 
-std::string	try_index_file(const std::string &path, const std::string &index)
+std::string	try_index_file(const bool autoindex, const std::string &path, const std::string &index)
 {
-	if (path.empty() || path.at(path.size() - 1) != '/')
+	if (!autoindex)
 		return path;
+	if (path.empty() || path.at(path.size() - 1) != '/')
+		//return path;
 	if (!index.empty())
 		return path + index;
 	return path;
@@ -70,11 +72,11 @@ void build_response(HttpRequest &req, int status_code, const std::string &status
 	req.set_response(res.generate_response());
 }
 
-std::string displayErrorPage(const std::string& error_uri, HTTPConfig& http_config, HttpRequest& req, std::map<std::string, ServerConfig>& server_list, t_fd_data& fd_data, const std::string& server_name, bool is_error_request)
+std::string displayErrorPage(const std::string code, const std::string message, const std::string& error_uri, HTTPConfig& http_config, HttpRequest& req, std::map<std::string, ServerConfig>& server_list, t_fd_data& fd_data, const std::string& server_name, bool is_error_request)
 {
     if (error_uri.empty() || is_error_request)
 	{
-		return "<html><body><h1>404 Page Not Found</h1></body></html>";
+		return "<html><body><h1>" + code + " " +  message + "</h1></body></html>";
 	}
 
 	req.set_target(error_uri);
@@ -99,7 +101,7 @@ std::string find_error_page(const std::string& code, LocationConfig* loc, Server
 	// Vérifie Location (si fourni)
 	if (loc)
 	{
-		std::map<std::string, std::string> map = loc->get_map_location();
+		std::map<std::string, std::string>& map = loc->get_map_location();
 		std::map<std::string, std::string>::iterator it = map.find(code);
 		if (it != map.end())
 		{
@@ -109,16 +111,18 @@ std::string find_error_page(const std::string& code, LocationConfig* loc, Server
 	}
 
 	// Vérifie Server
-	std::map<std::string, std::string> map = serv.get_map_server();
+	std::map<std::string, std::string>& map = serv.get_map_server();
 	std::map<std::string, std::string>::iterator it = map.find(code);
 	if (it != map.end())
 		return it->second;
 
 	// Vérifie HTTP global
 	map = http.get_http_map();
+	PRINT_DEBUG2
 	it = map.find(code);
 	if (it != http.get_http_map().end())
 		return it->second;
+	PRINT_DEBUG2
 
 	return ""; // Pas trouvé
 }
@@ -142,6 +146,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		}
 	}
 
+
 	ServerConfig &server = it_serv->second;
 	std::string location_name;
 	std::string root;
@@ -150,7 +155,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	try
 	{
 		location_name = server.get_matching_location(target, autoindex);
-		std::map<std::string, LocationConfig> location_list = server.get_location_list();
+		std::map<std::string, LocationConfig>& location_list = server.get_location_list();
 		it_loc = location_list.find(location_name);
 		if (it_loc != location_list.end())
 			root = it_loc->second.get_root();
@@ -162,19 +167,35 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		std::cerr << "Error getting matching location: " << e.what() << std::endl;
 		std::string err;
 
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage(find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
+		return;
+	}
+	if (root == "")
+	{
+		std::cerr << "Error: Root directory not set for location: " << location_name << std::endl;
+		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
+		return;
+	}
+
+	if (check_object_type(root, &errcode) != IS_DIRECTORY)
+	{
+		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
+		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
 		return;
 	}
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
-	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::string file_path = try_index_file(autoindex, path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
 
 	std::cout << "File path: " << file_path << std::endl;
-
-	//HttpResponse res;
-
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
+		if (!autoindex)
+		{
+			std::cerr << "Forbidden request: " << file_path << std::endl;
+			build_response(req, 403, "Forbidden", "text/html", displayErrorPage("403", "Forbidden Request", find_error_page("403", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
+			return;
+		}
 		if (autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
 		{
 			fd_data.requestedFilePath = path_no_index;
@@ -183,12 +204,11 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 			fd_data.folderContent.clear();
 			std::cout << "Directory found, generating index page" << std::endl;
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
-			//body = generate_autoindex_html(target, path_no_index);
 			build_response(req, 200, "OK", "text/html", body, false);
 			return;
 		}
 		std::cerr << "File not found: " << file_path << std::endl;
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage(find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
 		return;
 	}
 
@@ -196,7 +216,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	if (!file.is_open())
 	{
 		std::cerr << "Error opening file: " << file_path << std::endl;
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage(find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
 		return;
 	}
 	std::cout << "File found: " << file_path << std::endl;

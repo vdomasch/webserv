@@ -53,7 +53,7 @@ std::string LocationConfig::get_index()
 	return (it != _map_location.end()) ? it->second : "";
 }
 
-std::map<std::string, std::string> LocationConfig::get_map_location()	{ return _map_location; }
+std::map<std::string, std::string>& LocationConfig::get_map_location()	{ return _map_location; }
 
 bool	LocationConfig::get_autoindex()
 {
