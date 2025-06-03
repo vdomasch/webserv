@@ -21,4 +21,5 @@ bool		handle_allow_methods(std::istringstream &iss, std::map<std::string, std::s
 bool		handle_index(std::istringstream &iss, std::map<std::string, std::string> &_current_map);
 bool		handle_root(std::istringstream &iss, std::map<std::string, std::string> &_current_map);
 
+
 #endif

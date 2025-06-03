@@ -17,6 +17,8 @@ class ServerConfig
 		bool			set_server_values(std::istringstream &iss, std::string key);
 		bool			add_location(std::string key);
 		bool			duplicate_server(std::map<std::string, ServerConfig> &server_list);
+		bool			is_allow_methods_declared(std::map<std::string, std::string> &_current_map);
+		void			set_get(std::map<std::string, std::string> &_current_map);
 
 
 		size_t									get_client_max_body_size();

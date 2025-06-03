@@ -182,6 +182,7 @@ bool	handle_autoindex(std::istringstream &iss, std::map<std::string, std::string
 bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
 {
 	std::string key;
+	//_current_map["allow_methods"] = "true";
 	while (iss >> key)
 	{
 		if (!iss.eof() && key.find(";") != std::string::npos)

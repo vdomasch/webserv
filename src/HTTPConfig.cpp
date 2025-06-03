@@ -315,7 +315,7 @@ void	HTTPConfig::DEBUG_HTTP_show()
 
 bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
 {
-	std::map<std::string, std::string> server_map = server_temp.get_map_server();
+	std::map<std::string, std::string>& server_map = server_temp.get_map_server();
 	if (server_map.find("listen") == server_map.end())
 	{
 		std::cerr << "Error: Mandatory keyword 'listen' missing!" << std::endl;
@@ -336,6 +336,7 @@ bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
 		std::cerr << "Error: Mandatory keyword 'server_name' missing!" << std::endl;
 		return true;
 	}
+	if (!server_temp.is_allow_methods_declared(server_map))
+		server_temp.set_get(server_map);
 	return false;
 }
-

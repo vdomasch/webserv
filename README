@@ -1,16 +1,3 @@
-GET:
-	- problem no icon on webpage
-	- return appropriate error_page, function already there but header settings to review:
-		405: Method not allowed -> need to check which one is allowed for specified path
-	- check system error like stat()
-	- secure path (reject unauthorized path request)
-
-	! After that I think it's done !
-
-POST:
-	to do
-
-DELETE:
-	to do
-	
 TO DO:
+	GET must be allowed if allow_methods isn't specified
+	If allow_methods is specified, only the one declared are accepted
