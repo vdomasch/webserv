@@ -195,7 +195,7 @@ std::string ServerConfig::get_server_name()
 	return _map_server["server_name"];
 }
 
-std::map<std::string, std::string> ServerConfig::get_map_server()
+std::map<std::string, std::string>& ServerConfig::get_map_server()
 {
 	return _map_server;
 }
@@ -270,11 +270,9 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 	}
 	if (_listen_ports.back().find_last_of(";") != std::string::npos)
 	{
-		std::cout << "DEBUG before clean_semicolon: " << _listen_ports.back() << std::endl;
 		if (!is_valid_to_clean_semicolon(_listen_ports.back()))
 			return 1;
 		_listen_ports.back() = clean_semicolon(_listen_ports.back());
-		std::cout << "DEBUG after clean_semicolon: " << _listen_ports.back() << std::endl;
 	}
 	return 0;
 }
@@ -417,4 +415,17 @@ bool	ServerConfig::select_current_location_to_check_gci(std::string current_loca
 	if (_location_list[current_location_path].check_cgi())
 		return 1;
 	return 0;
+}
+
+bool	ServerConfig::is_allow_methods_declared(std::map<std::string, std::string> &_current_map)
+{
+	if (_current_map.count("GET") || _current_map.count("POST") || _current_map.count("DELETE"))
+		return true;
+	return false;
+}
+
+void	ServerConfig::set_get(std::map<std::string, std::string> &_current_map)
+{
+	//_current_map["allow_methods"] = "true";
+	_current_map["GET"] = "true";
 }
