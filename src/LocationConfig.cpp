@@ -55,7 +55,7 @@ std::string LocationConfig::get_index()
 
 std::map<std::string, std::string>& LocationConfig::get_map_location()	{ return _map_location; }
 
-bool	LocationConfig::get_autoindex()
+bool	LocationConfig::get_autoindex(bool autoindex)
 {
 	std::map<std::string, std::string>::iterator it = _map_location.find("autoindex");
 	if (it != _map_location.end())
@@ -65,7 +65,7 @@ bool	LocationConfig::get_autoindex()
 		else if (it->second == "off")
 			return false;
 	}
-	return false;
+	return autoindex;
 }
 
 int	LocationConfig::get_client_max_body_size()

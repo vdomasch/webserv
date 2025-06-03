@@ -44,12 +44,8 @@ std::string	remove_prefix(std::string target, const std::string prefix)
 	return target;
 }
 
-std::string	try_index_file(const bool autoindex, const std::string &path, const std::string &index)
+std::string	try_index_file(const std::string &path, const std::string &index)
 {
-	if (!autoindex)
-		return path;
-	if (path.empty() || path.at(path.size() - 1) != '/')
-		//return path;
 	if (!index.empty())
 		return path + index;
 	return path;
@@ -118,11 +114,9 @@ std::string find_error_page(const std::string& code, LocationConfig* loc, Server
 
 	// Vérifie HTTP global
 	map = http.get_http_map();
-	PRINT_DEBUG2
 	it = map.find(code);
 	if (it != http.get_http_map().end())
 		return it->second;
-	PRINT_DEBUG2
 
 	return ""; // Pas trouvé
 }
@@ -152,6 +146,9 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	std::string root;
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	bool autoindex = server.get_autoindex();
+	PRINT_DEBUG2
+	std::cout << "autoindex: " << (autoindex ? "on" : "off") << std::endl;
+	PRINT_DEBUG2
 	try
 	{
 		location_name = server.get_matching_location(target, autoindex);
@@ -185,7 +182,11 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	}
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
-	std::string file_path = try_index_file(autoindex, path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+
+	PRINT_DEBUG2
+	std::cout << "autoindex: " << (autoindex ? "on" : "off") << std::endl;
+	PRINT_DEBUG2
 
 	std::cout << "File path: " << file_path << std::endl;
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)

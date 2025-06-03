@@ -391,7 +391,7 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 		{
 			best_match = loc_path;
 			max_len = loc_path.size();
-			autoindex = it->second.get_autoindex();
+			autoindex = it->second.get_autoindex(autoindex);
 		}
 	}
 
@@ -402,7 +402,7 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	std::map<std::string, LocationConfig>::iterator it = _location_list.find("/");
 	if (it != _location_list.end())
 	{
-		autoindex = it->second.get_autoindex();
+		autoindex = it->second.get_autoindex(autoindex);
 		std::cout << "Falling back to default location '/'" << std::endl;
 		return "/";
 	}
