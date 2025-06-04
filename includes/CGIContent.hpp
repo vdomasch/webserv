@@ -37,7 +37,7 @@ class CGIContent
 
 		int	pipe_in[2];
 		int	pipe_out[2];
-		int									testfd; // to delete
+		int									cgi_forkfd;
 
 
 	CGIContent();

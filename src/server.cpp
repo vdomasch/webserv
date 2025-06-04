@@ -9,8 +9,10 @@ void	init_base_datastruct(t_fd_data *socket_data)
 	socket_data->Content_Length = "default";
 	socket_data->Content_Type = "default";
 	socket_data->is_binaryContent = false;
-	FD_ZERO(&socket_data->saved_sockets);
-	FD_ZERO(&socket_data->ready_sockets);
+	FD_ZERO(&socket_data->ready_readsockets);
+	FD_ZERO(&socket_data->ready_writesockets);
+	FD_ZERO(&socket_data->saved_readsockets);
+	FD_ZERO(&socket_data->saved_writesockets);
 }
 
 int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
@@ -391,14 +393,20 @@ std::string	handleCGI(t_fd_data *d, int *errcode)
 	std::string	CGIBody;
 
 	printf("beep beep boop ... i'm CGI ... \n\n");
-
-	//to delete
-	d->cg.testfd = d->serverSocketFd;
-	//
 	d->cg.setEnvCGI(d->requestedFilePath, d->Content_Type, d->Content_Length, d->method_name);
 	d->cg.executeCGI();
 	d->cg.sendCGIBody(&d->binaryContent);
 	CGIBody = d->cg.grabCGIBody(); // errcode si fail read ?
+
+	//test, avoid zombie i guess ?
+	int status = 0;
+	waitpid(d->cg.cgi_forkfd, &status, 0);
+	if(WEXITSTATUS(status) != 0)
+	{
+		//do correct error code
+		
+	}
+
 	*errcode = 0;
 	return CGIBody;
 }
@@ -563,6 +571,8 @@ std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporar
 	filename_end = first_line.find_last_of(' ');
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
 	
+
+	// std::cout << "REQUEST AT THE START IS " << request.length() << "\n";
 	printf("Full request :\n");
 	printf("\033[34m------------------------------------\n");
 	printf("(%s)\n",request.c_str() );
@@ -584,6 +594,7 @@ std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporar
 		d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
 
 		curated_body = request.substr(header_end + 4);
+		// std::cout << "CURATED LEN IS " << curated_body.length() << "\n";
 		printf("\033[33m------------------------------------\n");
 		printf("POST body : (%s)\n",curated_body.c_str() );
 		printf("------------------------------------\033[0m\n");
@@ -593,15 +604,15 @@ std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporar
 	return (requested_file);
 }
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode, int bytes_read)
 {
-	std::string request(buffer);
+	std::string request(buffer, bytes_read);
 	
 	std::string requested_file;
 	std::string response;
 	char		objType;
 	
-
+	std::cout << "BUFF SIZE ISSSSSSSSSSSSSSSSSSS" << request.size() << "\n";
 	requested_file = isolateFileAttributes(request, d);
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
@@ -689,6 +700,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 
 	memset(buffer, '\0', sizeof(buffer));
 	bytesRead = read(socket , buffer, BUFFER_SIZE);
+
 	if (bytesRead < 0)
 	{
 		perror("Failed to read ! ");
@@ -700,10 +712,8 @@ int	handle_client_request(int socket, t_fd_data *d)
 		close(socket);
 		return (0);
 	}
-	d->serverSocketFd = socket;
-
-	// printf("(%lu)\n",bytesRead );
-	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
+	printf("(%lu)\n",bytesRead );
+	requestBody = analyse_request(buffer, d, &errcode, bytesRead); // decide how to interpret the request
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
 	{
@@ -749,7 +759,7 @@ int main(int argc, char **argv)
 		perror("cannot bind to socket");
 		return (0);
 	}
-	FD_SET(server_fd, &s_data.saved_sockets);
+	FD_SET(server_fd, &s_data.saved_readsockets);
 
 	char	*char_pwd = getcwd(NULL, 0);
 	std::string current_pwd(char_pwd); // check if null, then exit early + getcwd result should be freed
@@ -760,21 +770,21 @@ int main(int argc, char **argv)
 	while(42)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
-		s_data.ready_sockets = s_data.saved_sockets;
-		if (select(s_data.max_sckt_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0) // must also check write
+		s_data.ready_readsockets = s_data.saved_readsockets;
+		if (select(s_data.max_sckt_fd + 1, &s_data.ready_readsockets, NULL, NULL, NULL) < 0) // must also check write
 		{
 			perror("Select failed ! ");
 			return (0);
 		}
 		for (int i = 0; i <= s_data.max_sckt_fd ; i++)
 		{
-			if (FD_ISSET(i, &s_data.ready_sockets))
+			if (FD_ISSET(i, &s_data.ready_readsockets))
 			{
 				printf("\n\033[32m========= i = %d =========\033[0m\n\n", i);
 				if (i == server_fd) // there is a new connection available on the server socket
 				{
 					my_socket = accept_connexion(server_fd, &servaddr); // accept the new connection
-					FD_SET(my_socket, &s_data.saved_sockets); //add new connection to current set
+					FD_SET(my_socket, &s_data.saved_readsockets); //add new connection to current set
 					printf( "i is %d, server_fd is %d, my_socket is %d\n", i, server_fd, my_socket);
 					printf( "request from server_fd : %d\n", my_socket);
 					if (my_socket > s_data.max_sckt_fd) // to set the new max
@@ -783,7 +793,7 @@ int main(int argc, char **argv)
 				else
 				{
 					handle_client_request(i, &s_data);
-					FD_CLR(i, &s_data.saved_sockets);
+					FD_CLR(i, &s_data.saved_readsockets);
 				}
 			}
 		}

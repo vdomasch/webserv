@@ -1,0 +1,9 @@
+fileitem: FieldStorage('filePicker', 'a.txt', b'gouougaga ?gdfgfdgfdgfd')
+filename: a.txt
+data length: 23
+saved to: /home/lchapard/Documents/Webserv/cgi-bin/../server_files/upload/a.txt
+
+fileitem: FieldStorage('filePicker', 'dog-rainy-dog.gif', b'GIF89av\x01v\x01\xf7\xa6')
+filename: dog-rainy-dog.gif
+data length: 12
+saved to: /home/lchapard/Documents/Webserv/cgi-bin/../server_files/upload/dog-rainy-dog.gif

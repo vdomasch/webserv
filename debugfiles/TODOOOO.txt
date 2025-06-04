@@ -150,4 +150,31 @@ Direction:
 TODO :
 
 -> "server_files" instances to replace by actual var + check the last folder thing idk
--> see link between program and cgi.FieldStorage()
+
+
+---------------------------------------------------------------------------------------------------------
+
+2. What’s Wrong / Potential Deadlock
+Ordering Problem
+You call executeCGI() (forks child and sets up pipes).
+You call sendCGIBody() (parent writes POST body to child’s stdin, then closes the pipe).
+You call grabCGIBody() (parent reads child CGI’s output).
+But:
+If your POST body is large and the child CGI process (the script) doesn’t read from stdin immediately, the write() in sendCGIBody() can block once the pipe buffer is full.
+Similarly, if the CGI script writes a lot to stdout, but the parent isn’t reading (because it waits for sendCGIBody() to complete), the CGI child can block trying to write, causing a deadlock.
+
+This is a classic "pipe deadlock" pattern.
+
+
+
+
+
+
+
+
+Summary Table
+fd	                  Add to readfds?	      Add to writefds?	        When?
+server_fd	            Yes                 	No	                      Always in readfds for accept()
+client connection	    Yes	                  Yes	                      Readfds always, writefds only if you have data to send
+CGI pipe (to child)	  No	                  Yes	                      If you have POST/body data left to write to CGI stdin
+CGI pipe (from child)	Yes	                  No	                      If you want to read CGI stdout

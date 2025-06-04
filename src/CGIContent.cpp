@@ -123,9 +123,7 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 }
 
 void 	CGIContent::executeCGI()
-{
-	int	cgi_forkfd;
-	
+{	
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
 		std::cout << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
@@ -140,8 +138,8 @@ void 	CGIContent::executeCGI()
 	}
 	
 
-	cgi_forkfd = fork();
-	if (cgi_forkfd == 0)
+	this->cgi_forkfd = fork();
+	if (this->cgi_forkfd == 0)
 	{
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
@@ -150,7 +148,6 @@ void 	CGIContent::executeCGI()
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		
-		// dup2(this->testfd, STDOUT_FILENO);
 		this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
 		
 		std::cerr << "EXECVE FAILED !\r\n";
@@ -160,7 +157,7 @@ void 	CGIContent::executeCGI()
 		
 		exit(this->_exitcode); // if fails
 	}
-	else if (cgi_forkfd == -1)
+	else if (this->cgi_forkfd == -1)
 	{
 		std::cout << "\033[Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
 		this->_exitcode = -1; // to change
@@ -178,37 +175,45 @@ std::string 	CGIContent::grabCGIBody()
 	std::string	result;
 	char		buffer[CGI_BUFFERSIZE];
 	int			bytes_read = 0;
+	int			total_read = 0;
 
 
 	while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
 	{
 		// printf("CGI READ : %d\n", bytes_read);
-		result.append(buffer, bytes_read);
+		result.append(buffer, bytes_read);  //might be an issue with binary data ?
+		total_read += bytes_read;
 	}
-
-	//must also close when there is nothing to read i guess ?
-
 	if (bytes_read < 0) {
 		std::cerr << "Read error ! \n";
 		close(this->pipe_out[0]);
 		close(this->pipe_in[0]);
 	}
 	
-	std::string	cgi_output(result);
+	close(this->pipe_out[0]);
+	// close(this->pipe_in[0]);
+	// std::string	cgi_output(result, total_read);
 	memset(buffer, 0, sizeof(buffer));
 	
-	return (cgi_output);
+	return (result);
 }
 
 
 int	CGIContent::sendCGIBody(std::vector<char> *body)
 {
-	ssize_t written = write(pipe_in[1], body->data(), body->size());
-    if (written < 0) {
-        perror("write");
-		return (-1);
-    }
-    close(pipe_in[1]);    // Signal EOF to child
+	size_t total_written = 0;
+	while (total_written < body->size()) 
+	{
+		ssize_t written = write(pipe_in[1], body->data() + total_written, body->size() - total_written);
+		if (written <= 0) {
+			perror("write failed !");
+			return (-1);
+			
+		}
+		total_written += written;
+		printf("[%lu]", total_written);
+	}
+	close(pipe_in[1]);	// Signal EOF to child
 	return (0);
 }
 

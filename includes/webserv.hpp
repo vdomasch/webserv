@@ -33,12 +33,14 @@
 #include <fcntl.h>// open
 #include <map> // std::map
 #include <string> //string::npos
+#include <sys/types.h> //waitpid
+#include <sys/wait.h> //waitpid
 
 #include "CGIContent.hpp"
 
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 10000 /// to change, must be 1024
+#define BUFFER_SIZE 100000 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
@@ -54,9 +56,10 @@
 
 struct s_fd_data
 {
-	int			serverSocketFd; // temporary (i think ?), only to test out the cgi part
-	fd_set		ready_sockets;
-	fd_set		saved_sockets; // current sockets
+	fd_set		ready_readsockets;
+	fd_set		ready_writesockets;
+	fd_set		saved_readsockets; // current sockets
+	fd_set		saved_writesockets; // current sockets
 	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
 	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
 	std::string	method_name; // the name of the method used and truncated from the original request
