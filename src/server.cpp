@@ -5,8 +5,10 @@ void	init_base_datastruct(t_fd_data *socket_data)
 	socket_data->serverFolder = "";
 	socket_data->requestedFilePath = "";
 	socket_data->max_sckt_fd = -1;
-	socket_data->content_type = "";
-	socket_data->content_len = 0;
+	socket_data->response_len = 0;
+	socket_data->Content_Length = "default";
+	socket_data->Content_Type = "default";
+	socket_data->is_binaryContent = false;
 	FD_ZERO(&socket_data->saved_sockets);
 	FD_ZERO(&socket_data->ready_sockets);
 }
@@ -120,7 +122,7 @@ std::string	handleBinaryFiles(t_fd_data *d)
 		
 		dataFile = filesize(d->requestedFilePath.c_str());
 		oss << dataFile;
-		d->content_len = atof(oss.str().c_str());
+		//d->response_len = atof(oss.str().c_str()); // pretty much useless now ?
 		return(response.str().c_str());
 	}
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
@@ -213,7 +215,7 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 		*errcode = 0;
 	close(fd);
 	std::string response(buffer);
-	d->content_len = response.length();
+	d->response_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
 }
@@ -393,9 +395,9 @@ std::string	handleCGI(t_fd_data *d, int *errcode)
 	//to delete
 	d->cg.testfd = d->serverSocketFd;
 	//
-	d->cg.setEnvCGI(d->requestedFilePath);
+	d->cg.setEnvCGI(d->requestedFilePath, d->Content_Type, d->Content_Length, d->method_name);
 	d->cg.executeCGI();
-
+	d->cg.sendCGIBody(&d->binaryContent);
 	CGIBody = d->cg.grabCGIBody(); // errcode si fail read ?
 	*errcode = 0;
 	return CGIBody;
@@ -423,7 +425,7 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 
 		if (fileHref == "/server_files/") // i don´t think it happens anymore
 			fileHref = "";
-		// In any case, server_files is to be replaced with actual folder name
+		// In any case, server_files is to be replaced with actual folder name from config file
 
 		oss << "<tr><td>";
 		oss << "<a class";
@@ -540,30 +542,67 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	*errcode = 0;
 	pageContent = oss.str().c_str();
 	oss.clear();
-	d->content_len = pageContent.length();
+	d->response_len = pageContent.length();
 	d->folderContent.clear();
 	return (pageContent);
+}
+
+std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporary just to make cleaner, will be deleted and replaced
+{
+	size_t		filename_start;
+	size_t		filename_end;
+	size_t		header_end;
+	std::string requested_file;
+	std::string c_type;
+	std::string c_len;
+	std::string first_line;
+	std::string curated_body; // temporary, should idealy be able to hold binary
+	
+	first_line = request.substr(0, request.find('\n'));
+	filename_start = first_line.find_first_of(' ');
+	filename_end = first_line.find_last_of(' ');
+	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
+	
+	printf("Full request :\n");
+	printf("\033[34m------------------------------------\n");
+	printf("(%s)\n",request.c_str() );
+	printf("------------------------------------\n");
+	printf("\033[32m------------------------------------\n");
+	printf("Requested : (%s)\n",requested_file.c_str() );
+	printf("------------------------------------\033[0m\n");
+
+
+	d->method_name = first_line.substr(0, filename_start);
+	header_end = request.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+		return ("[isolateFileName] Header is invalid, \\r\\n\\r\\n was not found in request."); // handle better ?
+	else if (d->method_name == "POST")
+	{
+		c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
+		d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
+		c_len = request.substr(request.find("Content-Length:") + 16); // same thing
+		d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
+
+		curated_body = request.substr(header_end + 4);
+		printf("\033[33m------------------------------------\n");
+		printf("POST body : (%s)\n",curated_body.c_str() );
+		printf("------------------------------------\033[0m\n");
+		std::vector<char> binary_body(curated_body.begin(), curated_body.end());
+		d->binaryContent = binary_body;
+	}
+	return (requested_file);
 }
 
 std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
 {
 	std::string request(buffer);
-	std::string first_line;
+	
 	std::string requested_file;
 	std::string response;
 	char		objType;
-	size_t		filename_start;
-	size_t		filename_end;
+	
 
-	first_line = request.substr(0, request.find('\n'));
-	filename_start = first_line.find_first_of(' ');
-	filename_end = first_line.find_last_of(' ');
-	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
-
-	printf("\033[32m------------------------------------\n");
-	printf("Requested : (%s)\n",requested_file.c_str() );
-	printf("------------------------------------\033[0m\n");
-
+	requested_file = isolateFileAttributes(request, d);
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
 	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : uses actual index.html if exists, else list the content of the folder
@@ -593,41 +632,30 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
 		return (""); 
 	}
-	//--------------------------------------------------------//
-
-	oss << d->content_len;
-
+	oss << d->response_len;
 	switch (errcode)
 	{
 		case ICOHANDELING:
 			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\n";
 			headerStart.append(requestBody);
-			d->content_len = d->content_len;
-			d->content_type = "image/x-icon";
 			d->is_binaryContent = true;
 			return(headerStart);
 	
 		case GIFHANDELING:
 			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\n";
 			headerStart.append(requestBody);
-			d->content_len = d->content_len;
-			d->content_type = "image/gif";
 			d->is_binaryContent = true;
 			return(headerStart);
 	
 		case PNGHANDELING:
 			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n";
 			headerStart.append(requestBody);
-			d->content_len = d->content_len;
-			d->content_type = "image/png";
 			d->is_binaryContent = true;
 			return(headerStart);
 	
 		case JPGHANDELING:
 			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n";
 			headerStart.append(requestBody);
-			d->content_len = d->content_len;
-			d->content_type = "image/jpeg";
 			d->is_binaryContent = true;
 			return(headerStart);
 	
@@ -635,8 +663,6 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Lenght: ";
 			responseCode.append(oss.str());
 			responseCode.append("\r\n\r\n\n");
-			d->content_len = d->content_len;
-			d->content_type = "text/css";
 			d->is_binaryContent = false;
 			break;
 	
@@ -644,8 +670,6 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
 			responseCode.append(oss.str());
 			responseCode.append("\r\n\r\n\n");
-			d->content_len = d->content_len;
-			d->content_type = "text/html";
 			d->is_binaryContent = false;
 			break;
 	}
@@ -679,10 +703,6 @@ int	handle_client_request(int socket, t_fd_data *d)
 	d->serverSocketFd = socket;
 
 	// printf("(%lu)\n",bytesRead );
-	printf("\033[34m------------------------------------\n");
-	printf("(%s)\n",buffer );
-	printf("------------------------------------\n\033[0m");
-
 	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
@@ -722,9 +742,6 @@ int main(int argc, char **argv)
 	int	server_fd;
 	struct sockaddr_in servaddr;
 	t_fd_data s_data; // to set select	
-
-
-	// s_data.cg.setEnvCGI("oui");  //only here to test out map doesn't segfault
 
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)

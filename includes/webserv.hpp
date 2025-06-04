@@ -38,7 +38,7 @@
 
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 5000 /// to change, must be 1024
+#define BUFFER_SIZE 10000 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
@@ -59,10 +59,12 @@ struct s_fd_data
 	fd_set		saved_sockets; // current sockets
 	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
 	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
+	std::string	method_name; // the name of the method used and truncated from the original request
 	int			max_sckt_fd;
 
-	std::string			content_type; // only for .ico for the moment
-	unsigned int		content_len;
+	std::string			Content_Type; // right now, is used for POST requests
+	std::string			Content_Length; // right now, is used for POST requests
+	unsigned int		response_len; // Was previously content_len, is used only for the response header right now.
 	bool				is_binaryContent; //used for the final send, to know is we need to send binaryContent;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;

@@ -68,32 +68,45 @@ CGIContent &CGIContent::operator=(CGIContent const &copy)
 	return (*this);
 }
 
-void 	CGIContent::setEnvCGI(std::string cgi_path) // string for now, replace by iterator of whatever struct we use
+void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method) // string for now, replace by iterator of whatever struct we use
 {	
-	this->_cgi_env_map["CONTENT_TYPE"] = "."; // must be multipart/form-data; boundary=----geckoformboundarybd99e35cc28a823db41353c9f75082e9
-	this->_cgi_env_map["CONTENT_LENGTH"] = "."; // ln in header
-	this->_cgi_env_map["HTTP_COOKIE"] = "default";
-	this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
-	this->_cgi_env_map["PATH_INFO"] = "default";
-	this->_cgi_env_map["QUERY_STRING"] = "?name=GougouGaga"; // to test if i can extract it
-	this->_cgi_env_map["REMOTE_ADDR"] = "default";
-	this->_cgi_env_map["REMOTE_HOST"] = "default";
-	this->_cgi_env_map["REQUEST_METHOD"] = "default";   // POST, GET, HEAD ....
-	this->_cgi_env_map["SCRIPT_FILENAME"] = "default";	// full path to the CGI script
-	this->_cgi_env_map["SCRIPT_NAME"] = cgi_path;
-	this->_cgi_env_map["SERVER_NAME"] = "default";		// get server name from location
-	this->_cgi_env_map["SERVER_SOFTWARE"] = "AMANIX";
+	std::string	script_name_var;
+	size_t		pos;
+
+
+	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
+	script_name_var = cgi_path.substr(pos);
+	printf("type (%s)\n", type.c_str());
+	printf("len (%s)\n", len.c_str());
+	printf("script_name_var (%s)\n", script_name_var.c_str());
+	printf("method (%s)\n", method.c_str());
+
+	// this->_cgi_env_map["HTTP_COOKIE"] = "default";
+	// this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
+	// this->_cgi_env_map["PATH_INFO"] = "default";
+	// this->_cgi_env_map["REMOTE_ADDR"] = "default";
+	// this->_cgi_env_map["REMOTE_HOST"] = "default";
+	// this->_cgi_env_map["SERVER_SOFTWARE"] = "AMANIX";
+	// this->_cgi_env_map["SERVER_NAME"] = "default";
+
+	this->_cgi_env_map["CONTENT_LENGTH"] = len; // ln in header
+	this->_cgi_env_map["CONTENT_TYPE"] = type; // must be of form "multipart/form-data; boundary=----geckoformboundarybd99e35cc2"
+	this->_cgi_env_map["QUERY_STRING"] = ""; // to test if i can extract it
+	this->_cgi_env_map["REQUEST_METHOD"] = method;   // POST, GET, HEAD ....
+	this->_cgi_env_map["SCRIPT_FILENAME"] = cgi_path;	// full path to the CGI script
+	this->_cgi_env_map["SCRIPT_NAME"] = script_name_var; // truncated path to cgi
+
 
 	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
 
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it=this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
 	{
-		std::cout << it->first << " = " << it->second << "\n";
+		// std::cout << it->first << " = " << it->second << "\n";
 		this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
 		i++;
 	}
-	printf("\n\n\n");
+	// printf("\n\n\n");
 	this->_cgi_env[i] = NULL;
 	// for (int i = 0; this->_cgi_env[i]; i++)
 	// 	printf("%s \n",this->_cgi_env[i]);
@@ -126,6 +139,7 @@ void 	CGIContent::executeCGI()
 		return ;
 	}
 	
+
 	cgi_forkfd = fork();
 	if (cgi_forkfd == 0)
 	{
@@ -153,7 +167,10 @@ void 	CGIContent::executeCGI()
 		return ;
 	}
 	else
-		close(pipe_out[1]);
+	{
+		close(pipe_in[0]);    // Parent doesn't read from pipe_in
+    	close(pipe_out[1]);   // Parent doesn't write to pipe_out
+	}
 }
 
 std::string 	CGIContent::grabCGIBody()
@@ -181,5 +198,17 @@ std::string 	CGIContent::grabCGIBody()
 	memset(buffer, 0, sizeof(buffer));
 	
 	return (cgi_output);
+}
+
+
+int	CGIContent::sendCGIBody(std::vector<char> *body)
+{
+	ssize_t written = write(pipe_in[1], body->data(), body->size());
+    if (written < 0) {
+        perror("write");
+		return (-1);
+    }
+    close(pipe_in[1]);    // Signal EOF to child
+	return (0);
 }
 

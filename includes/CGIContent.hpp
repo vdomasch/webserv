@@ -46,9 +46,10 @@ class CGIContent
 	CGIContent(CGIContent const &other);
 	CGIContent &operator=(CGIContent const &rhs);
 
-	void			setEnvCGI(std::string cgi_path);
+	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
 	void 			executeCGI();
 	std::string		grabCGIBody();
+	int				sendCGIBody(std::vector<char> *body);
 	//getters et setters
 };
 
