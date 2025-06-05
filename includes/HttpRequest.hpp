@@ -22,6 +22,7 @@ class HttpRequest
 		~HttpRequest();
 
 		bool		_is_error_request;
+		
 
 		void		append_data(const std::string &data);
 		bool		is_ready() const;
@@ -33,6 +34,7 @@ class HttpRequest
 		std::string get_method() const;
 		std::string get_target() const;
 		std::string get_header(const std::string& key) const;
+		std::string get_body() const;
 
 		void	set_response(const std::string& response);
 		void	set_errorcode(int code);
@@ -53,6 +55,8 @@ class HttpRequest
 		bool			_keep_alive;
 		int				_errcode;
 		std::string		_response;
+		bool			_is_multipart;
+		std::string		_boundary;
 
 		void	parse_headers();
 		bool 	check_keep_alive() const;

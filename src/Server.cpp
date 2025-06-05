@@ -149,6 +149,14 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 		close_msg(client_socket, "Too many connections", 1, -1);
 		return;
 	}
+
+	int flags = fcntl(client_socket, F_GETFL, 0);
+	if (flags < 0 || fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) < 0)
+	{
+		close_msg(client_socket, "Failed to set non-blocking mode", 1, -1);
+		return;
+	}
+
 	FD_SET(client_socket, &_socket_data.saved_sockets);
 	if (client_socket > _socket_data.max_fd)
 		_socket_data.max_fd = client_socket;
@@ -187,25 +195,36 @@ std::string Server::get_server_name(int fd)
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
 	static_cast<void>(http_config);
-	char buffer[BUFFER_SIZE] = {0};
+
+	std::cout << "\n\033[34m++ Receiving data on socket " << fd << " ++\033[0m\n" << std::endl;
+	char buffer[BUFFER_SIZE];
+	if (_socket_states[fd].is_ready())
+		std::cout << "[DEBUG] Request is ready. Skipping recv." << std::endl;
+	else
+		std::cout << "[DEBUG] Request not ready. Waiting for more data..." << std::endl;
+
 	ssize_t bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-
 	std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
-
-	if (bytes_read <= 0)
+	if (bytes_read < 0)
+		return;
+	if (bytes_read == 0)
 	{
-		close_msg(fd, "Disconnected or read error", 0, -1);
+		close_msg(fd, "Disconnected", 0, -1);
 		return;
 	}
-
-	buffer[bytes_read] = '\0';
-	std::cout << "Received data: " << buffer << std::endl;
-	_socket_states[fd].append_data(buffer);
+	_socket_states[fd].append_data(std::string(buffer, bytes_read));
+	
 	if (_socket_states[fd].has_error())
 	{
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
 		return;
+	}
+
+	if (!_socket_states[fd].is_ready())
+	{
+		std::cout << "Request not ready yet, waiting for more data..." << std::endl;
+		return ; // Pas encore prêt, attendre plus de données
 	}
 
 	std::string server_name;
@@ -286,7 +305,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
-
 		// Parcours des sockets actifs
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
@@ -301,7 +319,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				{
 					std::cout << "Handling request on socket " << i << std::endl;
 					// Initialisation si première interaction
-					if (_socket_states.find(i) == _socket_states.end()) _socket_states[i] = HttpRequest();
+					if (_socket_states.find(i) == _socket_states.end())
+						_socket_states[i] = HttpRequest();
 
 					// Traitement de la requête
 					handle_client_request(http_config, i);

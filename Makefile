@@ -15,9 +15,11 @@ SRV_FILES = main			\
 			parsing_utils	\
 			Server			\
 			HttpRequest		\
-			method_request	\
+			get_request		\
+			post_request	\
 			HttpResponse	\
-			build_autoindex_page
+			build_autoindex_page \
+			methods_utils	\
 
 CLIENT_FILES = client
 

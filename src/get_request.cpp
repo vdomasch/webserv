@@ -1,5 +1,4 @@
 #include "webserv.hpp"
-#include "HttpResponse.hpp"
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -20,23 +19,6 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-int	check_object_type(std::string& path, int *errcode)
-{
-	struct stat fileinfo;  
-
-    if (stat (path.c_str(), &fileinfo) != 0) // then file exists --> to secure better, check requestedFilePath too
-	{
-		*errcode = MISSINGFILE;
-		return (MISSINGFILE);
-	}
-	if (S_ISDIR(fileinfo.st_mode))
-        return IS_DIRECTORY;
-    else if (S_ISREG(fileinfo.st_mode))
-        return IS_EXISTINGFILE;
-	else
-		return FILE_NOT_FOUND;
-}
-
 std::string	remove_prefix(std::string target, const std::string prefix)
 {
 	if (target.find(prefix) == 0)
@@ -46,88 +28,24 @@ std::string	remove_prefix(std::string target, const std::string prefix)
 
 std::string	try_index_file(const std::string &path, const std::string &index)
 {
-	if (!index.empty())
+	if (path.empty())
+		return "";
+	if (!index.empty() && path.at(path.size() - 1) == '/')
 		return path + index;
 	return path;
 }
 
 std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 
-void build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool close_connection)
-{
-	HttpResponse res;
-	res.set_status(status_code, status_msg);
-	res.set_body(body);
-	res.add_header("Content-Type", content_type);
-	if (close_connection)
-		res.add_header("Connection", "close");
-	else
-		res.add_header("Connection", "keep-alive");
-	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-	req.set_response(res.generate_response());
-}
-
-std::string displayErrorPage(const std::string code, const std::string message, const std::string& error_uri, HTTPConfig& http_config, HttpRequest& req, std::map<std::string, ServerConfig>& server_list, t_fd_data& fd_data, const std::string& server_name, bool is_error_request)
-{
-    if (error_uri.empty() || is_error_request)
-	{
-		return "<html><body><h1>" + code + " " +  message + "</h1></body></html>";
-	}
-
-	req.set_target(error_uri);
-	req._is_error_request = true;
-
-	get_request(http_config, req, server_list, fd_data, server_name);
-
-	if (req.get_response().empty())
-	{
-		std::cerr << "Error: No response from server" << std::endl;
-		return "<html><body><h1>500 Internal Server Error</h1></body></html>";
-	}
-	else if (req.get_response().find("\r\n\r\n") != std::string::npos)
-		return req.get_response().substr(req.get_response().find("\r\n\r\n") + 4);
-	return req.get_response();
-}
-
-//std::string generate_autoindex_html(const std::string& uri, const std::string& real_path);
-
-std::string find_error_page(const std::string& code, LocationConfig* loc, ServerConfig& serv, HTTPConfig& http)
-{
-	// Vérifie Location (si fourni)
-	if (loc)
-	{
-		std::map<std::string, std::string>& map = loc->get_map_location();
-		std::map<std::string, std::string>::iterator it = map.find(code);
-		if (it != map.end())
-		{
-			std::string res = it->second;
-			return res;
-		}
-	}
-
-	// Vérifie Server
-	std::map<std::string, std::string>& map = serv.get_map_server();
-	std::map<std::string, std::string>::iterator it = map.find(code);
-	if (it != map.end())
-		return it->second;
-
-	// Vérifie HTTP global
-	map = http.get_http_map();
-	it = map.find(code);
-	if (it != http.get_http_map().end())
-		return it->second;
-
-	return ""; // Pas trouvé
-}
-
 void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
 
-	std::string target = req.get_target();
+	std::string target = normalize_path(req.get_target());
+	std::cout << "Target: " << target << std::endl;
 	std::cout << "Server name: " << server_name << std::endl;
 
+	std::cout << "is_error_request: " << req._is_error_request << std::endl;
 	std::map<std::string, ServerConfig>::iterator it_serv;
 	if ((it_serv = server_list.find(server_name)) == server_list.end())
 	{
@@ -135,20 +53,16 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		if ((it_serv = server_list.find(server_name)) == server_list.end())
 		{
 			std::cerr << "Server not found: " << server_name << std::endl;
-			req.set_response("HTTP/1.1 404 Not Found\r\n\r\n");
+			build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", "", http_config, req, server_list, fd_data, server_name, req._is_error_request), req._is_error_request);
 			return;
 		}
 	}
-
 
 	ServerConfig &server = it_serv->second;
 	std::string location_name;
 	std::string root;
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	bool autoindex = server.get_autoindex();
-	PRINT_DEBUG2
-	std::cout << "autoindex: " << (autoindex ? "on" : "off") << std::endl;
-	PRINT_DEBUG2
 	try
 	{
 		location_name = server.get_matching_location(target, autoindex);
@@ -183,10 +97,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
-
-	PRINT_DEBUG2
-	std::cout << "autoindex: " << (autoindex ? "on" : "off") << std::endl;
-	PRINT_DEBUG2
 
 	std::cout << "File path: " << file_path << std::endl;
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
@@ -229,15 +139,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	build_response(req, 200, "OK", type, body, req.getKeepAlive());
 }
 
-void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
-{
-	static_cast<void>(http_config);
-	static_cast<void>(req);
-	static_cast<void>(server_name);
-	static_cast<void>(server_list);
-	static_cast<void>(fd_data);
-}
-
 void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
 {
 	static_cast<void>(http_config);
@@ -245,13 +146,4 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	static_cast<void>(server_list);
 	static_cast<void>(d);
 	static_cast<void>(response);
-}
-
-std::string create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection)
-{
-	std::string header = "HTTP/1.1 " + status + "\r\n";
-	header += "Content-Type: " + content_type + "\r\n";
-	header += "Content-Length: " + content_length + "\r\n";
-	header += "Connection: " + connection + "\r\n\r\n";
-	return header;
 }

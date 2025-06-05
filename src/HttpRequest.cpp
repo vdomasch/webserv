@@ -8,10 +8,9 @@ HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
-	_raw_data += data;
-
 	if (_state == RECEIVING_HEADER)
 	{
+		_raw_data += data;
 		size_t pos = _raw_data.find("\r\n\r\n");
 		if (pos != std::string::npos)
 		{
@@ -19,20 +18,26 @@ void HttpRequest::append_data(const std::string &data)
 			_body = _raw_data.substr(pos + 4);
 			parse_headers();
 			_header_parsed = true;
-			// Exemple simplifié : extraire Content-Length
-			size_t cl = _header.find("Content-Length:");
-			if (cl != std::string::npos)
-			{
-				_content_length = atoi(_header.substr(cl + 15).c_str());
+			if (!_is_multipart && _content_length == 0)
+				_state = COMPLETE;
+			else
 				_state = RECEIVING_BODY;
-			}
-			else _state = COMPLETE; // Pas de body
 		}
 	}
-
-  	if (_state == RECEIVING_BODY && _body.length() >= _content_length)
+	else if (_state == RECEIVING_BODY)
 	{
-		_state = COMPLETE;
+		_body += data;
+		if (_is_multipart) 
+		{
+			// multipart → fin du body par le boundary final
+			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
+				_state = COMPLETE;
+		}
+		else
+		{
+			if (_body.length() >= _content_length)
+				_state = COMPLETE;
+		}
 	}
 }
 
@@ -93,8 +98,30 @@ void	HttpRequest::parse_headers()
 	}
 
 	if (_headers_map.count("Content-Length"))
-		_content_length = atoi(_headers_map["Content-Length"].c_str());
-	
+	{
+		try { _content_length = convert<size_t>(_headers_map["Content-Length"]); }
+		catch (const std::exception &e)	{
+			std::cerr << "Error converting Content-Length: " << e.what() << std::endl;
+			_state = ERROR;
+			_errcode = 400; // Bad Request
+			return;
+		}
+	}
+
+	if (_headers_map.count("Content-Type"))
+	{
+		std::string content_type = _headers_map["Content-Type"];
+		if (content_type.find("multipart/form-data") != std::string::npos)
+		{
+			size_t pos = content_type.find("boundary=");
+			if (pos != std::string::npos)
+			{
+				_boundary = "--" + content_type.substr(pos + 9); // "boundary=..." → on ajoute les "--"
+				_is_multipart = true;
+			}
+		}
+	}
+
 	if (check_keep_alive())
 		_headers_map["Connection"] = "keep-alive";
 	else
@@ -113,6 +140,12 @@ std::string HttpRequest::get_response() const	{ return _response; }
 bool		HttpRequest::getKeepAlive() const	{ return _keep_alive; }
 std::string HttpRequest::get_method() const		{ return _method; }
 std::string HttpRequest::get_target() const		{ return _target; }
+std::string HttpRequest::get_body() const
+{
+	if (_state == RECEIVING_BODY || _state == COMPLETE)
+		return _body;
+	return "";
+}
 std::string HttpRequest::get_header(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers_map.find(key);
