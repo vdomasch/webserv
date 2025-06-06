@@ -8,9 +8,10 @@ HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
+	_raw_data += data;
+	bool was_in_header = false;
 	if (_state == RECEIVING_HEADER)
 	{
-		_raw_data += data;
 		size_t pos = _raw_data.find("\r\n\r\n");
 		if (pos != std::string::npos)
 		{
@@ -23,10 +24,12 @@ void HttpRequest::append_data(const std::string &data)
 			else
 				_state = RECEIVING_BODY;
 		}
+		was_in_header = true;
 	}
-	else if (_state == RECEIVING_BODY)
+	if (_state == RECEIVING_BODY)
 	{
-		_body += data;
+		if (!was_in_header)
+			_body += data;
 		if (_is_multipart) 
 		{
 			// multipart → fin du body par le boundary final
@@ -136,10 +139,12 @@ bool	HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0);
 
 /////////// GETTERS ///////////
 
-std::string HttpRequest::get_response() const	{ return _response; }
-bool		HttpRequest::getKeepAlive() const	{ return _keep_alive; }
-std::string HttpRequest::get_method() const		{ return _method; }
-std::string HttpRequest::get_target() const		{ return _target; }
+std::string HttpRequest::get_response() const		{ return _response; }
+bool		HttpRequest::getKeepAlive() const		{ return _keep_alive; }
+bool 		HttpRequest::get_is_multipart() const	{ return _is_multipart; }
+std::string HttpRequest::get_method() const			{ return _method; }
+std::string HttpRequest::get_target() const			{ return _target; }
+std::string HttpRequest::get_boundary() const		{ return _boundary; }
 std::string HttpRequest::get_body() const
 {
 	if (_state == RECEIVING_BODY || _state == COMPLETE)

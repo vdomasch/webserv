@@ -30,11 +30,14 @@ class HttpRequest
 
 
 		bool		getKeepAlive() const;
+		bool 		get_is_multipart() const;
 		std::string	get_response() const;
 		std::string get_method() const;
 		std::string get_target() const;
 		std::string get_header(const std::string& key) const;
 		std::string get_body() const;
+		std::string get_boundary() const;
+
 
 		void	set_response(const std::string& response);
 		void	set_errorcode(int code);
@@ -53,9 +56,9 @@ class HttpRequest
 		size_t			_content_length;
 		bool			_header_parsed;
 		bool			_keep_alive;
+		bool			_is_multipart;
 		int				_errcode;
 		std::string		_response;
-		bool			_is_multipart;
 		std::string		_boundary;
 
 		void	parse_headers();

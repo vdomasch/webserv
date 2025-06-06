@@ -11,6 +11,143 @@ std::string	get_timestamp()
 	return std::string(buf);
 }
 
+std::string	get_content_extension(const std::string& content_type)
+{
+	if (content_type == "text/html") return ".html";
+	if (content_type == "text/plain") return ".txt";
+	if (content_type == "text/css") return ".css";
+	if (content_type == "text/xml") return ".xml"; // For compatibility with old servers
+	if (content_type == "application/javascript" || content_type == "application/x-javascript") return ".js";
+	if (content_type == "application/xml") return ".xml";
+	if (content_type == "application/x-www-form-urlencoded") return ".url"; 
+	if (content_type == "image/gif") return ".gif";
+	if (content_type == "image/png") return ".png";
+	if (content_type == "image/webp") return ".webp";
+	if (content_type == "image/jpeg" || content_type == "image/jpg") return ".jpg";
+	if (content_type == "image/x-icon") return ".ico";
+	if (content_type == "application/x-shockwave-flash") return ".swf";
+	if (content_type == "application/x-tar") return ".tar";
+	if (content_type == "application/x-7z-compressed") return ".7z";
+	if (content_type == "application/x-rar-compressed") return ".rar";
+	if (content_type == "application/pdf") return ".pdf";
+	if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
+	if (content_type == "application/octet-stream") return ".bin"; // Default for binary files
+	return ".bin";
+}
+
+std::string	get_extension(const std::string& head)
+{
+	size_t pos = head.find("Content-Type: ");
+	if (pos == std::string::npos)
+		return ".bin";
+	pos += 14; // Length of "Content-Type: "
+
+	size_t end_pos = head.find("\r\n");
+	if (end_pos == std::string::npos)
+		return ".bin"; // Default extension if not found
+	std::string content_type = head.substr(pos, end_pos - pos);
+	std::cout << "Content-Type found: " << content_type << std::endl;
+	return get_content_extension(content_type);
+}
+
+std::string	get_filename(const std::string& head)
+{
+	size_t pos = head.find("filename=\"");
+	if (pos == std::string::npos)
+		return "upload_"; // Default filename if not found
+	pos += 10; // Length of "filename=\""
+
+	size_t end_pos = head.find("\"", pos);
+	if (end_pos == std::string::npos)
+		return "upload_"; // Default filename if not found
+	return head.substr(pos, end_pos - pos);
+}
+
+std::string create_filename(std::string& root, const std::string& head)
+{
+	int errcode = 0;
+	PRINT_DEBUG2
+	std::string filename = get_filename(head);
+	std::string extension = get_extension(head);
+
+	if (filename.find(extension) == std::string::npos)
+	{
+		std::string file = root + filename;
+		std::string file_ext = file + extension; 
+		if (check_object_type(file, &errcode) == IS_EXISTINGFILE)
+			filename += "_" + get_timestamp() + extension;
+		else if (check_object_type(file_ext, &errcode) == IS_EXISTINGFILE)
+			filename += "_" + get_timestamp();
+		else
+			filename += extension;
+		std::cout << "Filename without extension: " << filename << std::endl;
+	}
+	else
+	{
+		PRINT_DEBUG
+		std::string file = root + filename;
+		if (check_object_type(file, &errcode) == IS_EXISTINGFILE)
+			filename = filename.erase(filename.find(extension)) + "_" + get_timestamp() + extension;
+		std::cout << "Filename with extension: " << filename << std::endl;
+	}
+
+	PRINT_DEBUG
+	return root + filename;
+}
+
+/*void	parse_header(std::string &header)
+{
+	// Ici, on suppose que header contient les en-têtes HTTP à traiter
+	std::cout << "Parsing header: " << header << std::endl;
+
+	// Exemple de traitement basique des en-têtes
+	size_t pos = header.find("\r\n");
+	if (pos != std::string::npos)
+	{
+		std::string first_line = header.substr(0, pos);
+		std::cout << "First line: " << first_line << std::endl;
+		header.erase(0, pos + 2); // Supprimer la première ligne
+	}
+
+	// Traiter les autres en-têtes si nécessaire
+	while ((pos = header.find("\r\n")) != std::string::npos)
+	{
+		std::string line = header.substr(0, pos);
+		std::cout << "Header line: " << line << std::endl;
+		header.erase(0, pos + 2); // Supprimer la ligne traitée
+	}
+}*/
+
+void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
+{
+	// Ici, on suppose que req.get_body() contient les données POST à traiter
+	std::cout << "Parsing POST request body: " << req.get_body() << std::endl << std::endl << std::endl;
+
+	body = req.get_body();
+	if (body.empty())
+	{
+		std::cerr << "Error: POST body is empty." << std::endl;
+		req.set_errorcode(400); // Bad Request
+		return;
+	}
+	if (req.get_is_multipart())
+	{
+		std::string delimiter = req.get_boundary();
+		if (delimiter.empty())
+		{
+			std::cerr << "Error: No boundary found in multipart POST request." << std::endl;
+			req.set_errorcode(400); // Bad Request
+			return;
+		}
+		if (body.find(delimiter) != std::string::npos)
+			body = body.substr(body.find(delimiter) + delimiter.size(), body.rfind(delimiter) - delimiter.size());
+
+		size_t pos = body.find("\r\n\r\n");
+		head = body.substr(0, pos);
+		body = body.substr(pos + 4);
+	}
+}
+
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	static_cast<void>(http_config);
@@ -19,7 +156,6 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 	static_cast<void>(server_list);
 	static_cast<void>(fd_data);
 
-	PRINT_DEBUG
 	std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
 
 	int errcode = 0;
@@ -52,19 +188,30 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		else
 			throw std::runtime_error("Location not found");
 	} catch (std::exception &e) {
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), true);
+		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
 		return;
 	}
 
 	// Vérifier que le dossier existe
 	if (check_object_type(root, &errcode) != IS_DIRECTORY)
 	{
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Root Invalid", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), true);
+		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Root Invalid", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
 		return;
 	}
 
+	std::string head;
+	std::string body;
+	parse_post_body(req, head, body);
+
+
 	// Générer un nom de fichier unique (timestamp ou compteur)
-	std::string file_path = root + "/upload_" + get_timestamp() + ".dat";
+	//std::string file_path = root + "upload_" + get_timestamp() + ".dat";
+
+	std::string file_path = create_filename(root, head);
+	
+	//std::string file_path = root + get_filename(head) + get_extension(head);
+
+	std::cout << "File path: " << file_path << std::endl;
 
 	// Écrire le corps de la requête dans un fichier
 	std::ofstream out(file_path.c_str(), std::ios::binary);
@@ -73,11 +220,12 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		build_response(req, 500, "Internal Server Error", "text/html", "Failed to store POST data", false);
 		return;
 	}
-	out << req.get_body(); // Stockage brut, sans analyse de type MIME
+	out << body; // Stockage brut, sans analyse de type MIME
 	out.close();
 
 	std::ostringstream response_body;
-	response_body << "<html><body><h1>POST Success</h1><p>File saved as: " << file_path << "</p></body></html>";
+	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
+	response_body << "<html><body><h1>POST Success</h1><p>File saved as: " << req.get_target() + filename << "</p></body></html>";
 
-	build_response(req, 201, "Created", "text/html", response_body.str(), false);
+	build_response(req, 201, "Created", "text/html", response_body.str(), req.getKeepAlive());
 }

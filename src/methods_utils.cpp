@@ -29,16 +29,16 @@ std::string	normalize_path(const std::string &path)
 	return normalized;
 }
 
-void	build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool close_connection)
+void	build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool keep_alive_connection)
 {
 	HttpResponse res;
 	res.set_status(status_code, status_msg);
 	res.set_body(body);
 	res.add_header("Content-Type", content_type);
-	if (close_connection)
-		res.add_header("Connection", "close");
-	else
+	if (keep_alive_connection)
 		res.add_header("Connection", "keep-alive");
+	else
+		res.add_header("Connection", "close");
 	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
 	req.set_response(res.generate_response());

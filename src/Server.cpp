@@ -198,34 +198,39 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 
 	std::cout << "\n\033[34m++ Receiving data on socket " << fd << " ++\033[0m\n" << std::endl;
 	char buffer[BUFFER_SIZE];
-	if (_socket_states[fd].is_ready())
-		std::cout << "[DEBUG] Request is ready. Skipping recv." << std::endl;
-	else
-		std::cout << "[DEBUG] Request not ready. Waiting for more data..." << std::endl;
-
-	ssize_t bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-	std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
-	if (bytes_read < 0)
-		return;
-	if (bytes_read == 0)
-	{
-		close_msg(fd, "Disconnected", 0, -1);
-		return;
-	}
-	_socket_states[fd].append_data(std::string(buffer, bytes_read));
-	
+	memset(buffer, 0, BUFFER_SIZE); // Clear the buffer
+	ssize_t bytes_read;
+	do {
+		//std::cout << "[DEBUG] Request not ready. Waiting for more data..." << std::endl;
+		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+		//std::cout << "Buffer: " << buffer << std::endl;
+		//std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
+		if (bytes_read < 0)
+			;//std::cout << "[DEBUG] recv() returned < 0, no data available yet." << std::endl;
+		if (bytes_read == 0)
+		{
+			close_msg(fd, "Client Disconnected", 0, -1);
+			return;
+		}
+		if (bytes_read > 0)
+			_socket_states[fd].append_data(std::string(buffer, bytes_read));
+	} while (bytes_read > 0);
 	if (_socket_states[fd].has_error())
 	{
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
 		return;
 	}
-
 	if (!_socket_states[fd].is_ready())
 	{
-		std::cout << "Request not ready yet, waiting for more data..." << std::endl;
-		return ; // Pas encore prêt, attendre plus de données
+		//std::cout << "[DEBUG] Not ready after full read, will wait more" << std::endl;
+		return;
 	}
+	
+
+
+	//std::cout << "[DEBUG] Request is ready. Skipping recv." << std::endl;
+
 
 	std::string server_name;
 
@@ -261,7 +266,8 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 
 		std::string response = _socket_states[fd].get_response();
-		std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
+		//PRINT_DEBUG
+		//std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
 		send(fd, response.c_str(), response.size(), 0);
 
 		if (!_socket_states[fd].getKeepAlive())
@@ -298,13 +304,15 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			}
 		}
 
+		std::cout << "\n\033[33m++ Select() waiting for activity on sockets ++\033[0m\n" << std::endl;
 		// Appel à select()
-		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, &timeout) < 0)
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL/*&timeout*/) < 0)
 		{
 			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
+
 		// Parcours des sockets actifs
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
@@ -319,8 +327,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				{
 					std::cout << "Handling request on socket " << i << std::endl;
 					// Initialisation si première interaction
-					if (_socket_states.find(i) == _socket_states.end())
-						_socket_states[i] = HttpRequest();
+					//if (_socket_states.find(i) == _socket_states.end())
+					//	_socket_states[i] = HttpRequest();
 
 					// Traitement de la requête
 					handle_client_request(http_config, i);
