@@ -170,7 +170,29 @@ void 	CGIContent::executeCGI()
 	}
 }
 
-std::string 	CGIContent::grabCGIBody()
+int	CGIContent::sendCGIBody(std::vector<char> *body)
+{
+	size_t total_written = 0;
+
+
+	while (total_written < body->size()) 
+	{
+		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
+		ssize_t written = write(pipe_in[1], body->data() + total_written, body->size() - total_written);
+		if (written <= 0) {
+			perror("write failed !");
+			return (-1);
+			
+		}
+		total_written += written;
+		printf("[%lu]", total_written);
+	}
+	close(pipe_in[1]);	// Signal EOF to child
+	return (0);
+}
+
+
+std::string 	CGIContent::grabCGIBody(int	&bodySize)
 {
 	std::string	result;
 	char		buffer[CGI_BUFFERSIZE];
@@ -187,33 +209,32 @@ std::string 	CGIContent::grabCGIBody()
 	if (bytes_read < 0) {
 		std::cerr << "Read error ! \n";
 		close(this->pipe_out[0]);
-		close(this->pipe_in[0]);
 	}
 	
 	close(this->pipe_out[0]);
-	// close(this->pipe_in[0]);
-	// std::string	cgi_output(result, total_read);
 	memset(buffer, 0, sizeof(buffer));
-	
+	printf("total read%d\n", total_read);
+	printf("total len %lu\n", result.length());
+	bodySize = result.length();
+
 	return (result);
 }
 
 
-int	CGIContent::sendCGIBody(std::vector<char> *body)
-{
-	size_t total_written = 0;
-	while (total_written < body->size()) 
-	{
-		ssize_t written = write(pipe_in[1], body->data() + total_written, body->size() - total_written);
-		if (written <= 0) {
-			perror("write failed !");
-			return (-1);
-			
-		}
-		total_written += written;
-		printf("[%lu]", total_written);
-	}
-	close(pipe_in[1]);	// Signal EOF to child
-	return (0);
-}
+
+
+
+// PARENT                         CHILD
+// +---------------------+         +---------------------+
+// |                     |         |                     |
+// |  pipe_in[1] (write) |-------->|  STDIN_FILENO (0)   |
+// |                     |         |   (from pipe_in[0]) |
+// |                     |         |                     |
+// |  pipe_out[0] (read) |<--------|  STDOUT_FILENO (1)  |
+// |                     |         |   (to pipe_out[1])  |
+// +---------------------+         +---------------------+
+
+// Direction:
+// - Parent writes to pipe_in[1] ---> Child reads from pipe_in[0] (via dup2'd STDIN)
+// - Child writes to pipe_out[1] ---> Parent reads from pipe_out[0] (via dup2'd STDOUT)
 

@@ -388,25 +388,27 @@ std::string	displayCorrectFileSize(const char * filename)
 
 
 
-std::string	handleCGI(t_fd_data *d, int *errcode)
+std::string	handleCGI(t_fd_data *d, int *errcode)  ////////////////////////////////////////////////////////
 {
 	std::string	CGIBody;
+	int			CGI_body_size;
 
 	printf("beep beep boop ... i'm CGI ... \n\n");
 	d->cg.setEnvCGI(d->requestedFilePath, d->Content_Type, d->Content_Length, d->method_name);
 	d->cg.executeCGI();
 	d->cg.sendCGIBody(&d->binaryContent);
-	CGIBody = d->cg.grabCGIBody(); // errcode si fail read ?
+	CGIBody = d->cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
 
 	//test, avoid zombie i guess ?
 	int status = 0;
 	waitpid(d->cg.cgi_forkfd, &status, 0);
 	if(WEXITSTATUS(status) != 0)
 	{
-		//do correct error code
-		
+		printf("Ptit flop\n\n");
+		return ("emptyerror");
 	}
 
+	d->response_len = CGI_body_size;
 	*errcode = 0;
 	return CGIBody;
 }
@@ -671,14 +673,14 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 			return(headerStart);
 	
 		case CSSHANDELING:
-			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Lenght: ";
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Length: ";
 			responseCode.append(oss.str());
 			responseCode.append("\r\n\r\n\n");
 			d->is_binaryContent = false;
 			break;
 	
 		default:
-			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Length: ";
 			responseCode.append(oss.str());
 			responseCode.append("\r\n\r\n\n");
 			d->is_binaryContent = false;
@@ -706,7 +708,7 @@ int	handle_client_request(int socket, t_fd_data *d)
 		perror("Failed to read ! ");
 		return (-1);
 	}
-	else if (bytesRead == 0) //can happen with multiple request at the same time
+	else if (bytesRead == 0) //can happen with multiple fast request in a row
 	{
 		printf("Read 0 bytes ... Closing..\n");
 		close(socket);
@@ -762,7 +764,7 @@ int main(int argc, char **argv)
 	FD_SET(server_fd, &s_data.saved_readsockets);
 
 	char	*char_pwd = getcwd(NULL, 0);
-	std::string current_pwd(char_pwd); // check if null, then exit early + getcwd result should be freed
+	std::string current_pwd(char_pwd); // to check if null, then exit early + getcwd result should be freed
 	s_data.max_sckt_fd = server_fd;
 	s_data.serverFolder = current_pwd + "/server_files"; //after parsing, to replace
 	free(char_pwd);

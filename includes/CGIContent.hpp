@@ -21,7 +21,7 @@
 #include <fcntl.h>// open
 #include <map> // std::map
 
-#define CGI_BUFFERSIZE 5000
+#define CGI_BUFFERSIZE 10000
 
 class CGIContent
 {
@@ -35,8 +35,8 @@ class CGIContent
 		
 		public :
 
-		int	pipe_in[2];
-		int	pipe_out[2];
+		int	pipe_in[2]; // Pass data from parent (server) to the child (CGI script), [0] is to read , [1] is to write
+		int	pipe_out[2]; // Pass data from child (CGI script) back to the parent (server)
 		int									cgi_forkfd;
 
 
@@ -48,7 +48,7 @@ class CGIContent
 
 	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
 	void 			executeCGI();
-	std::string		grabCGIBody();
+	std::string		grabCGIBody(int	&bodySize);
 	int				sendCGIBody(std::vector<char> *body);
 	//getters et setters
 };
