@@ -83,6 +83,7 @@ std::string	find_error_page(const std::string& code, LocationConfig* loc, Server
 		}
 	}
 
+
 	// Vérifie Server
 	std::map<std::string, std::string>& map = serv.get_map_server();
 	std::map<std::string, std::string>::iterator it = map.find(code);
@@ -92,7 +93,7 @@ std::string	find_error_page(const std::string& code, LocationConfig* loc, Server
 	// Vérifie HTTP global
 	map = http.get_http_map();
 	it = map.find(code);
-	if (it != http.get_http_map().end())
+	if (it != map.end())
 		return it->second;
 
 	return ""; // Pas trouvé

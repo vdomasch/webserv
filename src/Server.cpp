@@ -11,7 +11,7 @@
 
 bool g_running = true;
 
-void handle_signal(int signum) { if (signum == SIGINT) { std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; } }
+void handle_signal(int signum) { if (signum) {std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; } }
 
 Server::Server()
 {
@@ -130,6 +130,7 @@ void	Server::run_server(HTTPConfig &http_config)
 	}
 
 	signal(SIGINT, handle_signal);
+	signal(SIGTSTP, handle_signal);
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
@@ -217,6 +218,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	} while (bytes_read > 0);
 	if (_socket_states[fd].has_error())
 	{
+		std::cerr << "Error in request: " << std::endl;
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
 		return;
@@ -227,6 +229,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		return;
 	}
 	
+	if (_socket_states[fd].get_method().empty())
+	{
+		std::cerr << "Error: No method found in request" << std::endl;
+		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+		close_msg(fd, "Bad request", 1, -1);
+		return;
+	}
 
 
 	//std::cout << "[DEBUG] Request is ready. Skipping recv." << std::endl;
@@ -255,6 +264,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		else
 		{
 			// Méthode non autorisée
+			std::cerr << "Method not allowed: " << method << std::endl;
 			HttpResponse res;
 			res.set_status(405, "Method Not Allowed");
 			res.set_body("405 Method Not Allowed");
@@ -264,7 +274,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Connection", "close");
 			_socket_states[fd].set_response(res.generate_response());
 		}
-
 		std::string response = _socket_states[fd].get_response();
 		//PRINT_DEBUG
 		//std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
@@ -281,7 +290,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 {
 	while (g_running)
 	{
-		std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n";
+		//std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n";
 
 		// Rafraîchir la copie des sockets surveillés
 		_socket_data.ready_sockets = _socket_data.saved_sockets;
@@ -304,7 +313,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			}
 		}
 
-		std::cout << "\n\033[33m++ Select() waiting for activity on sockets ++\033[0m\n" << std::endl;
+		//std::cout << "\n\033[33m++ Select() waiting for activity on sockets ++\033[0m\n" << std::endl;
 		// Appel à select()
 		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL/*&timeout*/) < 0)
 		{
@@ -313,10 +322,11 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			break;
 		}
 
+		PRINT_DEBUG2
 		// Parcours des sockets actifs
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
-			std::cout << "\n\033[32m========= i = " << i << " =========\033[0m\n" << std::endl;
+			//std::cout << "\n\033[32m========= i = " << i << " =========\033[0m\n" << std::endl;
 			if (FD_ISSET(i, &_socket_data.ready_sockets))
 			{
 				if (is_server_socket(i))

@@ -66,7 +66,6 @@ std::string	get_filename(const std::string& head)
 std::string create_filename(std::string& root, const std::string& head)
 {
 	int errcode = 0;
-	PRINT_DEBUG2
 	std::string filename = get_filename(head);
 	std::string extension = get_extension(head);
 
@@ -80,26 +79,20 @@ std::string create_filename(std::string& root, const std::string& head)
 			filename += "_" + get_timestamp();
 		else
 			filename += extension;
-		std::cout << "Filename without extension: " << filename << std::endl;
 	}
 	else
 	{
-		PRINT_DEBUG
 		std::string file = root + filename;
 		if (check_object_type(file, &errcode) == IS_EXISTINGFILE)
 			filename = filename.erase(filename.find(extension)) + "_" + get_timestamp() + extension;
-		std::cout << "Filename with extension: " << filename << std::endl;
 	}
 
-	PRINT_DEBUG
 	return root + filename;
 }
 
 void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 {
 	// Ici, on suppose que req.get_body() contient les données POST à traiter
-	std::cout << "Parsing POST request body: " << req.get_body() << std::endl << std::endl << std::endl;
-
 	body = req.get_body();
 	if (body.empty())
 	{
@@ -123,6 +116,35 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 		head = body.substr(0, pos);
 		body = body.substr(pos + 4);
 	}
+}
+
+bool	create_directories(std::string path)
+{
+	std::istringstream iss(path);
+	std::string token;
+	std::string current = "/";
+
+	while (getline(iss, token, '/'))
+	{
+		if (token.empty())
+			continue; // Skip root directory or current directory
+
+		if (!current.empty() && current.at(current.size() - 1) != '/')
+			current += '/'; // Ensure we have a trailing slash
+		current += token;
+		std::cout << "Creating directory: " << current << std::endl;
+		if (mkdir(current.c_str(), 0755) != 0)
+		{
+			if (errno == EEXIST)
+				continue; // already exists, that's OK
+			else
+			{
+				std::cerr << "Failed to create directory: " << current << std::endl;
+				return false;
+            }
+		}
+	}
+	return true;
 }
 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
@@ -186,16 +208,14 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 	std::string body;
 	parse_post_body(req, head, body);
 
-	// Générer un nom de fichier unique (timestamp ou compteur)
-	//std::string file_path = root + "upload_" + get_timestamp() + ".dat";
+	root += "uploads/";
+	std::string file_path = create_filename(root, head);	
 
-	std::string file_path = create_filename(root, head);
-	
-	//std::string file_path = root + get_filename(head) + get_extension(head);
-
-	std::cout << "File path: " << file_path << std::endl;
-
-	// Écrire le corps de la requête dans un fichier
+	if (create_directories(file_path.substr(0, file_path.rfind('/'))) == false)
+	{
+		build_response(req, 500, "Internal Server Error", "text/html", "Failed to create directories for POST data", false);
+		return;
+	}
 	std::ofstream out(file_path.c_str(), std::ios::binary);
 	if (!out.is_open())
 	{
