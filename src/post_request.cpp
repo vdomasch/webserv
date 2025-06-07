@@ -95,29 +95,6 @@ std::string create_filename(std::string& root, const std::string& head)
 	return root + filename;
 }
 
-/*void	parse_header(std::string &header)
-{
-	// Ici, on suppose que header contient les en-têtes HTTP à traiter
-	std::cout << "Parsing header: " << header << std::endl;
-
-	// Exemple de traitement basique des en-têtes
-	size_t pos = header.find("\r\n");
-	if (pos != std::string::npos)
-	{
-		std::string first_line = header.substr(0, pos);
-		std::cout << "First line: " << first_line << std::endl;
-		header.erase(0, pos + 2); // Supprimer la première ligne
-	}
-
-	// Traiter les autres en-têtes si nécessaire
-	while ((pos = header.find("\r\n")) != std::string::npos)
-	{
-		std::string line = header.substr(0, pos);
-		std::cout << "Header line: " << line << std::endl;
-		header.erase(0, pos + 2); // Supprimer la ligne traitée
-	}
-}*/
-
 void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 {
 	// Ici, on suppose que req.get_body() contient les données POST à traiter
@@ -199,10 +176,15 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		return;
 	}
 
+	if (check_allowed_methods(server, it_loc->second, "POST") == false)
+	{
+		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+		return;
+	}
+
 	std::string head;
 	std::string body;
 	parse_post_body(req, head, body);
-
 
 	// Générer un nom de fichier unique (timestamp ou compteur)
 	//std::string file_path = root + "upload_" + get_timestamp() + ".dat";

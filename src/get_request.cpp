@@ -95,6 +95,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		return;
 	}
 
+	if (check_allowed_methods(server, it_loc->second, "GET") == false)
+	{
+		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+		return;
+	}
+
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
 

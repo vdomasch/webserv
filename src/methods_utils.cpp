@@ -106,3 +106,17 @@ std::string	create_header(const std::string &status, const std::string &content_
 	header += "Connection: " + connection + "\r\n\r\n";
 	return header;
 }
+
+bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const std::string &method)
+{
+	if (location.get_map_location().count(method) == 0)
+	{
+		if (server.get_map_server().count(method) == 0)
+		{
+			std::cerr << "Error: method not allowed." << std::endl;
+			return false;
+		}
+		return true;
+	}
+	return true;
+}
