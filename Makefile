@@ -2,7 +2,7 @@ NAME_S = webserv
 NAME_C = client
 
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP 
+CFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP
 
 SRCS_DIR = src
 OBJS_DIR = build
@@ -20,7 +20,8 @@ SRV_FILES = main			\
 			HttpResponse	\
 			build_autoindex_page \
 			methods_utils	\
-
+			server CGIContent
+			
 CLIENT_FILES = client
 
 SRCS_C = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(CLIENT_FILES)))

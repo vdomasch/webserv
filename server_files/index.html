@@ -2,19 +2,21 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
+		<link rel="stylesheet" href="/assets/css_files/main_page.css">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Home</title>
 	</head>
-	<body style="background-color: #bee8fd;">
-		<section>
-			<div class="container" style="text-align: center; margin-top: 6em; font-family: Calibri; font-size: 20px; line-height: 1.5; padding: 2em; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);"> 
-				<h3>Index</h3>
-				<p>This is the main page.</p>
-				<label for="myfile">Select a file:</label>
-				<form  method = "post" enctype="multipart/form-data">
-						<input type="file" id="myfile" name="myfile">
-						<input type = "submit" value = "Submit" />
-				</form>
+	<body>
+		<h3 class="mainTitle">Index</h3>
+		<section class="malice">
+			<div class="mainContainer"> 
+					<div>
+						<p>Welcome to our Webserver !</p>
+						<label>Select a file:</label>
+						<form  method = "post" action = "/cgi-bin/upload_page.py">
+							<button name="goto_upload" value="teleport">Go to upload page</button>
+						</form>
+					</div>
 			</div>
 		</section>
 	</body>	
