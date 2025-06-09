@@ -110,7 +110,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 			return;
 		}
 		if (body.find(delimiter) != std::string::npos)
-			body = body.substr(body.find(delimiter) + delimiter.size(), body.rfind(delimiter) - delimiter.size());
+			body = body.substr(body.find(delimiter) + delimiter.size(), body.rfind(delimiter + "--") - delimiter.size() - 2);
 
 		size_t pos = body.find("\r\n\r\n");
 		head = body.substr(0, pos);
@@ -176,7 +176,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		std::map<std::string, LocationConfig> &location_list = server.get_location_list();
 		it_loc = location_list.find(location_name);
 		if (it_loc != location_list.end())
-			root = it_loc->second.get_root() + "uploads/";
+			root = it_loc->second.get_root();
 		else
 			throw std::runtime_error("Location not found");
 	} catch (std::exception &e) {
@@ -206,6 +206,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	std::string head;
 	std::string body;
+	root += "uploads/";
 	parse_post_body(req, head, body);
 
 	std::string file_path = create_filename(root, head);	
