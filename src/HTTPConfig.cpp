@@ -74,7 +74,7 @@ bool HTTPConfig::is_location(std::string key)
 		_is_location = false;
 		return true;
 	}
-	if (key == "location" && _is_location)
+	if (key == "location" && (_is_location || !_is_server))
 		return false;
 	if (key == "location" || _is_location)
 	{
