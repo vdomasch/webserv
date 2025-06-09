@@ -13,9 +13,9 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
-	//http_config.DEBUG_HTTP_show();
+	http_config.DEBUG_HTTP_show();
 
-	//std::cout << "root of '/': " << http_config.get_server_list()["9090"].get_location_list()["/"].get_root() << std::endl;
+	std::cout << "root of '/': " << http_config.get_server_list()["9090"].get_location_list()["/"].get_root() << std::endl;
 
 	Server server;
 	

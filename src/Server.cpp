@@ -16,8 +16,12 @@ void handle_signal(int signum) { if (signum) { g_running = false; } }
 Server::Server()
 {
 	// Initialize the socket data
-	FD_ZERO(&_socket_data.saved_sockets);
-	FD_ZERO(&_socket_data.ready_sockets);
+	FD_ZERO(&_socket_data.saved_readsockets);
+	FD_ZERO(&_socket_data.ready_readsockets);
+	FD_ZERO(&_socket_data.ready_readsockets);
+	FD_ZERO(&_socket_data.ready_writesockets);
+	FD_ZERO(&_socket_data.saved_readsockets);
+	FD_ZERO(&_socket_data.saved_writesockets);
 	_socket_data.max_fd = 0;
 	_port_to_socket_map.clear();
 	_method_map["GET"] = &get_request;
@@ -122,7 +126,7 @@ void	Server::launch_server(HTTPConfig &http_config)
 			_ip_port_bound.insert(key);
 			_port_to_socket_map[port] = server_socket;
 			_socket_to_port_map[server_socket] = port;
-			FD_SET(server_socket, &_socket_data.saved_sockets);
+			FD_SET(server_socket, &_socket_data.saved_readsockets);
 			if (server_socket > _socket_data.max_fd)
 				_socket_data.max_fd = server_socket;
 			std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
@@ -158,7 +162,7 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 		return;
 	}
 
-	FD_SET(client_socket, &_socket_data.saved_sockets);
+	FD_SET(client_socket, &_socket_data.saved_readsockets);
 	if (client_socket > _socket_data.max_fd)
 		_socket_data.max_fd = client_socket;
 	std::cout << "\033[1;32mNew client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << "\033[0m" << std::endl;
@@ -339,12 +343,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 		////////////////////////////////////////////
 		//// Rafraîchir la copie des sockets surveillés
-		//_socket_data.ready_sockets = _socket_data.saved_sockets;
+		//_socket_data.ready_readsockets = _socket_data.saved_readsockets;
 
 		//// Nettoyage préventif des sockets invalides
 		//for (int i = 0; i <= _socket_data.max_fd; ++i)
 		//{
-		//	if (FD_ISSET(i, &_socket_data.saved_sockets))
+		//	if (FD_ISSET(i, &_socket_data.saved_readsockets))
 		//	{
 		//		int error = 0;
 		//		socklen_t len = sizeof(error);
@@ -362,7 +366,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		timeout.tv_usec = 0;
 
 		//std::cout << "\n\033[33m++ Select() waiting for activity on sockets ++\033[0m\n" << std::endl;
-		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL/*&timeout*/) < 0)
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, NULL, NULL, NULL/*&timeout*/) < 0)
 		{
 			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
@@ -373,7 +377,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
 			//std::cout << "\n\033[32m========= i = " << i << " =========\033[0m\n" << std::endl;
-			if (FD_ISSET(i, &_socket_data.ready_sockets))
+			if (FD_ISSET(i, &_socket_data.ready_readsockets))
 			{
 				if (is_server_socket(i))
 				{
@@ -399,12 +403,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 void	Server::clean_sockets()
 {
 		// Rafraîchir la copie des sockets surveillés
-		_socket_data.ready_sockets = _socket_data.saved_sockets;
+		_socket_data.ready_readsockets = _socket_data.saved_readsockets;
 
 		// Nettoyage préventif des sockets invalides
 		for (int i = 0; i <= _socket_data.max_fd; ++i)
 		{
-			if (FD_ISSET(i, &_socket_data.saved_sockets))
+			if (FD_ISSET(i, &_socket_data.saved_readsockets))
 			{
 				int error = 0;
 				socklen_t len = sizeof(error);
@@ -418,7 +422,7 @@ void	Server::clean_sockets()
 void	Server::update_max_fd(int fd)
 {
 	if (fd == _socket_data.max_fd)
-		while (_socket_data.max_fd > 0 && !FD_ISSET(_socket_data.max_fd, &_socket_data.saved_sockets))
+		while (_socket_data.max_fd > 0 && !FD_ISSET(_socket_data.max_fd, &_socket_data.saved_readsockets))
 			_socket_data.max_fd--;
 }
 
@@ -431,7 +435,7 @@ int Server::close_msg(int fd, const std::string &message, int err, int return_co
 		std::cout << "\033[32m" << message << " (fd " << fd << ") - CLOSED\033[0m" << std::endl;
 
 	close(fd);
-	FD_CLR(fd, &_socket_data.saved_sockets);
+	FD_CLR(fd, &_socket_data.saved_readsockets);
 	update_max_fd(fd);
 	return return_code;
 }
@@ -451,24 +455,24 @@ void	Server::shutdown_all_sockets()
 	std::cout << "\n\033[3;31m++ Server shutting down ++\033[0m" << std::endl;
 	for (int fd = 0; fd <= _socket_data.max_fd; ++fd)
 	{
-		if (FD_ISSET(fd, &_socket_data.saved_sockets))
+		if (FD_ISSET(fd, &_socket_data.saved_readsockets))
 		{
 			std::cout << "[Shutdown] Closing FD " << fd << std::endl;
 			close(fd);
 		}
 	}
-	FD_ZERO(&_socket_data.saved_sockets);
-	FD_ZERO(&_socket_data.ready_sockets);
+	FD_ZERO(&_socket_data.saved_readsockets);
+	FD_ZERO(&_socket_data.ready_readsockets);
 	_socket_data.max_fd = 0;
 
 	for (std::map<int, int>::iterator it = _port_to_socket_map.begin(); it != _port_to_socket_map.end(); ++it)
 	{
 		int fd = it->second;
-		if (FD_ISSET(fd, &_socket_data.saved_sockets))
+		if (FD_ISSET(fd, &_socket_data.saved_readsockets))
 		{
 			std::cout << "[Shutdown] Closing server socket on port " << it->first << std::endl;
 			close(fd);
-			FD_CLR(fd, &_socket_data.saved_sockets);
+			FD_CLR(fd, &_socket_data.saved_readsockets);
 		}
 	}
 	_port_to_socket_map.clear();

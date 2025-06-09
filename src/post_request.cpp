@@ -147,6 +147,31 @@ bool	create_directories(std::string path)
 	return true;
 }
 
+std::string	handleCGI(t_fd_data &d, int *errcode)  ////////////////////////////////////////////////////////
+{
+	std::string	CGIBody;
+	int			CGI_body_size;
+
+	printf("beep beep boop ... i'm CGI ... \n\n");
+	d.cg.setEnvCGI(d.requestedFilePath, d.Content_Type, d.Content_Length, d.method_name);
+	d.cg.executeCGI();
+	d.cg.sendCGIBody(&d.binaryContent);
+	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
+
+	//test, avoid zombie i guess ?
+	int status = 0;
+	waitpid(d.cg.cgi_forkfd, &status, 0);
+	if(WEXITSTATUS(status) != 0)
+	{
+		printf("Ptit flop\n\n");
+		return ("emptyerror");
+	}
+
+	d.response_len = CGI_body_size;
+	*errcode = 0;
+	return CGIBody;
+}
+
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	//std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
@@ -199,9 +224,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	if (location_name == "/cgi-bin/")
 	{
-
-
-
+		handleCGI(fd_data, &errcode);
 	}
 
 	std::string head;

@@ -158,7 +158,8 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	std::string result = oss.str().c_str();
-	d->content_len = result.length();
+	//d->content_len = result.length();
+	d->response_len = result.length();
 	d->folderContent.clear();
 	return (result);
 }

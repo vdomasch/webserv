@@ -117,7 +117,8 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		{
 			fd_data.requestedFilePath = path_no_index;
 			fd_data.serverFolder = server.get_map_server()["root"];
-			fd_data.content_len = 0;
+			fd_data.response_len = 0;
+			//fd_data.content_len = 0;
 			fd_data.folderContent.clear();
 			//std::cout << "Directory found, generating index page" << std::endl;
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);

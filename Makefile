@@ -20,7 +20,7 @@ SRV_FILES = main			\
 			HttpResponse	\
 			build_autoindex_page \
 			methods_utils	\
-			server CGIContent
+			CGIContent
 			
 CLIENT_FILES = client
 
