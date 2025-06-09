@@ -15,11 +15,11 @@ int main(int argc, char **argv)
 		return (1);
 	//http_config.DEBUG_HTTP_show();
 
-	std::cout << "root: " << http_config.get_server_list()["9090"].get_location_list()["/shops/"].get_root() << std::endl;
+	//std::cout << "root of '/': " << http_config.get_server_list()["9090"].get_location_list()["/"].get_root() << std::endl;
 
 	Server server;
 	
-	server.run_server(http_config);
+	server.launch_server(http_config); // Start the server
 
 	return (0);
 }

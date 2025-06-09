@@ -11,7 +11,7 @@
 
 bool g_running = true;
 
-void handle_signal(int signum) { if (signum) {std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl, g_running = false; } }
+void handle_signal(int signum) { if (signum) { g_running = false; } }
 
 Server::Server()
 {
@@ -62,7 +62,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd < 0)
 	{
-		std::cerr << "Failed to create socket" << std::endl;
+		std::cerr << "Error: Failed to create socket" << std::endl;
 		return (-1);
 	}
 	int opt = 1;
@@ -89,7 +89,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 	return (server_fd);
 }
 
-void	Server::run_server(HTTPConfig &http_config)
+void	Server::launch_server(HTTPConfig &http_config)
 {
 	std::map<std::string, ServerConfig> servers_list = http_config.get_server_list();
 	sockaddr_in servaddr;
@@ -112,11 +112,11 @@ void	Server::run_server(HTTPConfig &http_config)
 				continue; // or return, depending on how strict the error handling should be
 			}
 
-			std::cout << "Creating server socket on port " << port << std::endl;
+			//std::cout << "\033[3;32m++ Creating server socket on port " << port  << " ++\033[0m" << std::endl;
 			int server_socket = initialize_server(server, servaddr);
 			if (server_socket < 0)
 			{
-				std::cerr << "Failed to initialize server" << std::endl;
+				std::cerr << "Error: Failed to initialize server" << std::endl;
 				return;
 			}
 			_ip_port_bound.insert(key);
@@ -125,7 +125,7 @@ void	Server::run_server(HTTPConfig &http_config)
 			FD_SET(server_socket, &_socket_data.saved_sockets);
 			if (server_socket > _socket_data.max_fd)
 				_socket_data.max_fd = server_socket;
-			std::cout << "Server port " << port << " created on socket " << server_socket << std::endl;
+			std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
 		}
 	}
 
@@ -142,7 +142,7 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	int client_socket = accept(fd, reinterpret_cast<struct sockaddr *>(&servaddr), &addr_len);
 	if (client_socket < 0)
 	{
-		std::cerr << "Failed to accept new connection" << std::endl;
+		std::cerr << "Error: Failed to accept new connection" << std::endl;
 		return;
 	}
 	if (client_socket > FD_SETSIZE)
@@ -161,7 +161,7 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	FD_SET(client_socket, &_socket_data.saved_sockets);
 	if (client_socket > _socket_data.max_fd)
 		_socket_data.max_fd = client_socket;
-	std::cout << "New client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << std::endl;
+	std::cout << "\033[1;32mNew client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << "\033[0m" << std::endl;
 	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
 }
 
@@ -193,11 +193,8 @@ std::string Server::get_server_name(int fd)
 	return ""; 
 }
 
-void	Server::handle_client_request(HTTPConfig &http_config, int fd)
+bool	Server::reading_data(int fd)
 {
-	static_cast<void>(http_config);
-
-	std::cout << "\n\033[34m++ Receiving data on socket " << fd << " ++\033[0m\n" << std::endl;
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, BUFFER_SIZE); // Clear the buffer
 	ssize_t bytes_read;
@@ -211,7 +208,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		if (bytes_read == 0)
 		{
 			close_msg(fd, "Client Disconnected", 0, -1);
-			return;
+			return 1;
 		}
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
@@ -221,12 +218,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::cerr << "Error in request: " << std::endl;
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
-		return;
+		return 1;
 	}
 	if (!_socket_states[fd].is_ready())
 	{
 		//std::cout << "[DEBUG] Not ready after full read, will wait more" << std::endl;
-		return;
+		return 1;
 	}
 	
 	if (_socket_states[fd].get_method().empty())
@@ -234,9 +231,58 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::cerr << "Error: No method found in request" << std::endl;
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
 		close_msg(fd, "Bad request", 1, -1);
-		return;
+		return 1;
 	}
+	return 0; // Request is ready
+}
 
+void	Server::handle_client_request(HTTPConfig &http_config, int fd)
+{
+	static_cast<void>(http_config);
+
+	//std::cout << "\033[34m++ Receiving data on socket " << fd << " ++\033[0m" << std::endl;
+	/////////////////////////////////////////////////////
+	//char buffer[BUFFER_SIZE];
+	//memset(buffer, 0, BUFFER_SIZE); // Clear the buffer
+	//ssize_t bytes_read;
+	//do {
+	//	//std::cout << "[DEBUG] Request not ready. Waiting for more data..." << std::endl;
+	//	bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+	//	//std::cout << "Buffer: " << buffer << std::endl;
+	//	//std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
+	//	if (bytes_read < 0)
+	//		;//std::cout << "[DEBUG] recv() returned < 0, no data available yet." << std::endl;
+	//	if (bytes_read == 0)
+	//	{
+	//		close_msg(fd, "Client Disconnected", 0, -1);
+	//		return;
+	//	}
+	//	if (bytes_read > 0)
+	//		_socket_states[fd].append_data(std::string(buffer, bytes_read));
+	//} while (bytes_read > 0);
+	//if (_socket_states[fd].has_error())
+	//{
+	//	std::cerr << "Error in request: " << std::endl;
+	//	send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
+	//	close_msg(fd, "Bad request", 1, -1);
+	//	return;
+	//}
+	//if (!_socket_states[fd].is_ready())
+	//{
+	//	//std::cout << "[DEBUG] Not ready after full read, will wait more" << std::endl;
+	//	return;
+	//}
+	
+	//if (_socket_states[fd].get_method().empty())
+	//{
+	//	std::cerr << "Error: No method found in request" << std::endl;
+	//	send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+	//	close_msg(fd, "Bad request", 1, -1);
+	//	return;
+	//}
+	///////////////////////////////////////
+	if (reading_data(fd) /*code from above, testing in progress*/)
+		return;
 
 	//std::cout << "[DEBUG] Request is ready. Skipping recv." << std::endl;
 
@@ -275,7 +321,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			_socket_states[fd].set_response(res.generate_response());
 		}
 		std::string response = _socket_states[fd].get_response();
-		//PRINT_DEBUG
 		//std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
 		send(fd, response.c_str(), response.size(), 0);
 
@@ -292,29 +337,31 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 	{
 		//std::cout << "\n\033[31m++ Waiting for new connection ++\033[0m\n";
 
-		// Rafraîchir la copie des sockets surveillés
-		_socket_data.ready_sockets = _socket_data.saved_sockets;
+		////////////////////////////////////////////
+		//// Rafraîchir la copie des sockets surveillés
+		//_socket_data.ready_sockets = _socket_data.saved_sockets;
+
+		//// Nettoyage préventif des sockets invalides
+		//for (int i = 0; i <= _socket_data.max_fd; ++i)
+		//{
+		//	if (FD_ISSET(i, &_socket_data.saved_sockets))
+		//	{
+		//		int error = 0;
+		//		socklen_t len = sizeof(error);
+		//		if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+		//			std::cerr << "getsockopt failed for fd " << i << ": " << strerror(errno) << std::endl;
+		//		}
+		//	}
+		//}
+		////////////////////////////////////////////////
+		clean_sockets();
 
 		// Timeout de 5 secondes pour éviter le blocage
 		struct timeval timeout;
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
 
-		// Nettoyage préventif des sockets invalides
-		for (int i = 0; i <= _socket_data.max_fd; ++i)
-		{
-			if (FD_ISSET(i, &_socket_data.saved_sockets))
-			{
-				int error = 0;
-				socklen_t len = sizeof(error);
-				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
-					std::cerr << "[DEBUG] BAD FD: " << i << " (closed or invalid!)" << std::endl;
-				}
-			}
-		}
-
 		//std::cout << "\n\033[33m++ Select() waiting for activity on sockets ++\033[0m\n" << std::endl;
-		// Appel à select()
 		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, NULL/*&timeout*/) < 0)
 		{
 			if (errno == EINTR) continue;
@@ -322,7 +369,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			break;
 		}
 
-		PRINT_DEBUG2
 		// Parcours des sockets actifs
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
@@ -335,19 +381,38 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 				else
 				{
-					std::cout << "Handling request on socket " << i << std::endl;
+					std::cout << "\033[1;34mHandling request on socket " << i << "\033[0m"<< std::endl;
 					// Initialisation si première interaction
 					//if (_socket_states.find(i) == _socket_states.end())
 					//	_socket_states[i] = HttpRequest();
 
 					// Traitement de la requête
 					handle_client_request(http_config, i);
+					std::cout << "\033[2;34mRequest on socket " << i << " done." << "\033[0m\n"<< std::endl;
 				}
 			}
 		}
 	}
 	static_cast<void>(http_config);
-	std::cout << "\n\033[31m++ Server shutting down ++\033[0m\n" << std::endl;
+}
+
+void	Server::clean_sockets()
+{
+		// Rafraîchir la copie des sockets surveillés
+		_socket_data.ready_sockets = _socket_data.saved_sockets;
+
+		// Nettoyage préventif des sockets invalides
+		for (int i = 0; i <= _socket_data.max_fd; ++i)
+		{
+			if (FD_ISSET(i, &_socket_data.saved_sockets))
+			{
+				int error = 0;
+				socklen_t len = sizeof(error);
+				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+					std::cerr << "getsockopt failed for fd " << i << ": " << strerror(errno) << std::endl;
+				}
+			}
+		}
 }
 
 void	Server::update_max_fd(int fd)
@@ -383,6 +448,7 @@ bool	Server::is_server_socket(int fd)
 
 void	Server::shutdown_all_sockets()
 {
+	std::cout << "\n\033[3;31m++ Server shutting down ++\033[0m" << std::endl;
 	for (int fd = 0; fd <= _socket_data.max_fd; ++fd)
 	{
 		if (FD_ISSET(fd, &_socket_data.saved_sockets))

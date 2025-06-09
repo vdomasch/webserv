@@ -46,7 +46,7 @@ std::string	get_extension(const std::string& head)
 	if (end_pos == std::string::npos)
 		return ".bin"; // Default extension if not found
 	std::string content_type = head.substr(pos, end_pos - pos);
-	std::cout << "Content-Type found: " << content_type << std::endl;
+	//std::cout << "Content-Type found: " << content_type << std::endl;
 	return get_content_extension(content_type);
 }
 
@@ -132,7 +132,6 @@ bool	create_directories(std::string path)
 		if (!current.empty() && current.at(current.size() - 1) != '/')
 			current += '/'; // Ensure we have a trailing slash
 		current += token;
-		std::cout << "Creating directory: " << current << std::endl;
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
 			if (errno == EEXIST)
@@ -143,20 +142,14 @@ bool	create_directories(std::string path)
 				return false;
             }
 		}
+		std::cout << "Directory: '" << current << "' created." << std::endl;
 	}
 	return true;
 }
 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
-	static_cast<void>(http_config);
-	static_cast<void>(req);
-	static_cast<void>(server_name);
-	static_cast<void>(server_list);
-	static_cast<void>(fd_data);
-
-	std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
-
+	//std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
 	int errcode = 0;
 	std::string target = normalize_path(req.get_target());
 
@@ -183,7 +176,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		std::map<std::string, LocationConfig> &location_list = server.get_location_list();
 		it_loc = location_list.find(location_name);
 		if (it_loc != location_list.end())
-			root = it_loc->second.get_root();
+			root = it_loc->second.get_root() + "uploads/";
 		else
 			throw std::runtime_error("Location not found");
 	} catch (std::exception &e) {
@@ -204,11 +197,17 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 		return;
 	}
 
+	if (location_name == "/cgi-bin/")
+	{
+
+
+
+	}
+
 	std::string head;
 	std::string body;
 	parse_post_body(req, head, body);
 
-	root += "uploads/";
 	std::string file_path = create_filename(root, head);	
 
 	if (create_directories(file_path.substr(0, file_path.rfind('/'))) == false)
@@ -227,7 +226,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	std::ostringstream response_body;
 	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
-	response_body << "<html><body><h1>POST Success</h1><p>File saved as: " << req.get_target() + filename << "</p></body></html>";
+	response_body << "<html><body><h1>POST Success</h1><p>File saved as: " << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename << "</p></body></html>";
 
 	build_response(req, 201, "Created", "text/html", response_body.str(), req.getKeepAlive());
 }

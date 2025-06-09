@@ -15,7 +15,7 @@ class Server
 		Server();
 		~Server();
 		
-		void		run_server(HTTPConfig &http_config);
+		void		launch_server(HTTPConfig &http_config);
 
 		//int					get_client_max_body_size();
 		std::map<int, int>	get_port_to_socket_map() const;
@@ -43,6 +43,8 @@ class Server
 		void		update_max_fd(int fd);
 		void		shutdown_all_sockets();
 		std::string	get_server_name(int fd);
+		void		clean_sockets();
+		bool		reading_data(int fd);
 
 };
 
