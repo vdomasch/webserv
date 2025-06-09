@@ -69,12 +69,10 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	std::cout << req.get_target() << std::endl;
 
 	std::string path = root + remove_prefix(target, location_name);
-	std::string filename_to_choose("filename_to_choose.txt");
+	std::string authorized_paths("authorized_paths.txt");
 
-	std::cout << "WHat is wanting to be deleted: " << path << std::endl;
-	std::cout << "Where is located our list of valid path to delete: " << server.get_root() + filename_to_choose << std::endl;
 
-	std::ifstream valid_paths((server.get_root() + filename_to_choose).c_str(), std::ios::binary); // Open our list of paths
+	std::ifstream valid_paths((server.get_root() + authorized_paths).c_str(), std::ios::binary); // Open our list of paths
 	if (!valid_paths.is_open())
 		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
 	
@@ -84,6 +82,8 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	std::string line;
 	while (std::getline(valid_paths, line)) // check if file requested in authorized paths
 	{
+		if (line.empty())
+			continue;
 		std::cout << "LIne that we are currently checking: " << line << std::endl;
 		if (path.find(line) != std::string::npos)
 			break;
@@ -121,7 +121,6 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	std::ifstream test2(path.c_str()); // check if file correctly deleted
 	if (test2.is_open())
     {
-		PRINT_DEBUG2
 		test.close();
 		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
 		return;
