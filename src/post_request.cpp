@@ -143,6 +143,7 @@ bool	create_directories(std::string path)
             }
 		}
 		std::cout << "Directory: '" << current << "' created." << std::endl;
+		//add_path_to_deleted_permission_file
 	}
 	return true;
 }

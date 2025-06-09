@@ -17,5 +17,33 @@
 				</form>
 			</div>
 		</section>
+		<section>
+			<h2>Supprimer un fichier</h2>
+
+    		<label for="deletePath">Chemin du fichier à supprimer :</label><br>
+    		<input type="text" id="deletePath" placeholder="/mon/fichier.txt" size="40"><br><br>
+
+    		<button onclick="sendDelete()">Supprimer</button>
+
+    		<p id="result"></p>
+
+    		<script>
+    		function sendDelete() {
+    		    const path = document.getElementById("deletePath").value;
+			
+    		    fetch(path, { method: 'DELETE' })
+    		    .then(response => {
+    		        if (response.status === 204) {
+    		            document.getElementById("result").innerText = "✅ Fichier supprimé avec succès.";
+    		        } else {
+    		            document.getElementById("result").innerText = `❌ Erreur ${response.status} : ${response.statusText}`;
+    		        }
+    		    })
+    		    .catch(err => {
+    		        document.getElementById("result").innerText = "❌ Erreur réseau : " + err;
+    		    });
+    		}
+    		</script>
+		</section>
 	</body>	
 </html>

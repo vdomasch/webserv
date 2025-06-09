@@ -144,12 +144,3 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	//std::cout << "Keep-Alive: " << req.getKeepAlive() << std::endl;
 	build_response(req, 200, "OK", type, body, req.getKeepAlive());
 }
-
-void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
-{
-	static_cast<void>(http_config);
-	static_cast<void>(req);
-	static_cast<void>(server_list);
-	static_cast<void>(d);
-	static_cast<void>(response);
-}

@@ -8,6 +8,7 @@ HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
+	std::cout << data << std::endl;
 	_raw_data += data;
 	bool was_in_header = false;
 	if (_state == RECEIVING_HEADER)
