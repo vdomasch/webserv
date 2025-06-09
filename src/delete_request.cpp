@@ -58,16 +58,82 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 		return;
 	}
 
-	if (check_allowed_methods(server, it_loc->second, "GET") == false)
+	if (check_allowed_methods(server, it_loc->second, "DELETE") == false)
 	{
 		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
 		return;
 	}
 
-	std::cout << "WHAT we have:" << req.get_target() + req.get_body() << std::endl; 
+
+
+	std::cout << req.get_target() << std::endl;
+
+	std::string path = root + remove_prefix(target, location_name);
+	std::string filename_to_choose("filename_to_choose.txt");
+
+	std::cout << "WHat is wanting to be deleted: " << path << std::endl;
+	std::cout << "Where is located our list of valid path to delete: " << server.get_root() + filename_to_choose << std::endl;
+
+	std::ifstream valid_paths((server.get_root() + filename_to_choose).c_str(), std::ios::binary); // Open our list of paths
+	if (!valid_paths.is_open())
+		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+	
+
+
+
+	std::string line;
+	while (std::getline(valid_paths, line)) // check if file requested in authorized paths
+	{
+		std::cout << "LIne that we are currently checking: " << line << std::endl;
+		if (path.find(line) != std::string::npos)
+			break;
+	}
+	if (valid_paths.eof())
+	{
+		std::cerr << "Forbidden Request" << std::endl;
+		valid_paths.close();
+		build_response(req, 403, "Forbidden", "text/html", displayErrorPage("403", "Forbidden Request", find_error_page("403", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		return ;
+	}
+	valid_paths.close();
+
+
+
+
+
+
+	std::ifstream test(path.c_str()); // check if file exist
+	if (!test.is_open())
+    {
+		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		return;
+    }
+	test.close();
+
+
+
+
+	std::remove(path.c_str());
+
+
+
+
+	std::ifstream test2(path.c_str()); // check if file correctly deleted
+	if (test2.is_open())
+    {
+		PRINT_DEBUG2
+		test.close();
+		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		return;
+    }
+	
+
+
+
 
 	std::ostringstream response_body;
 	response_body << "<html><body><h1>DELETE State ?</h1><p>File deleted is: " << req.get_target() << "</p></body></html>";
 
-	build_response(req, 201, "Created", "text/html", response_body.str(), req.getKeepAlive());
+	build_response(req, 204, "File Successfuly Delete", "text/html", response_body.str(), req.getKeepAlive());
+
 }

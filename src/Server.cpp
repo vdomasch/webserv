@@ -84,7 +84,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 
 	if (bind(server_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 		return close_msg(server_fd, "Failed to bind port" + server.get_port_number(), true, -1);
-	if (listen(server_fd, 10) < 0)
+	if (listen(server_fd, 1024) < 0)
 		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_port_number() , true, -1);
 	return (server_fd);
 }
@@ -324,11 +324,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		//std::cout << "RESPONSE:\n-------------------------------------------\n" << response << "\n---------------------------------" << std::endl;
 		send(fd, response.c_str(), response.size(), 0);
 
-		if (!_socket_states[fd].getKeepAlive())
+		if (!_socket_states[fd].getKeepAlive() || _socket_states[fd].get_method() == "DELETE") // To review ?? add POST in it ?
 			close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
 		else 
 			_socket_states[fd] = HttpRequest(); // Optionnel : reset request state for next request
 	}
+	if (_socket_states[fd].is_finished())
+		_socket_states[fd] = HttpRequest();
 }
 
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
@@ -388,6 +390,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 					// Traitement de la requête
 					handle_client_request(http_config, i);
+					if (_socket_states[i].is_ready())
+						_socket_states[i] = HttpRequest();
 					std::cout << "\033[2;34mRequest on socket " << i << " done." << "\033[0m\n"<< std::endl;
 				}
 			}

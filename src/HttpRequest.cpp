@@ -138,8 +138,9 @@ void	HttpRequest::parse_headers()
 	}
 }
 
-bool	HttpRequest::is_ready() const { return _state == COMPLETE; }
-bool	HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0); } 
+bool	HttpRequest::is_ready() const		{ return _state == COMPLETE; }
+bool	HttpRequest::is_finished() const	{ return _state == RESPONDED; }
+bool	HttpRequest::has_error() const		{ return (_state == ERROR || _errcode != 0); } 
 
 /////////// GETTERS ///////////
 
@@ -165,9 +166,10 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 ////////// SETTERS ///////////
 
-void HttpRequest::set_response(const std::string& response)	{ _response = response; }
-void HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
-void HttpRequest::set_target(const std::string& target)		{ _target = target; }
+void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
+void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
+void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
+void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 
 //////// OPERATOR OVERLOAD ///////////
 

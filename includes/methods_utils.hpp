@@ -6,6 +6,8 @@
 
 int	check_object_type(std::string& path, int *errcode);
 
+std::string	remove_prefix(std::string target, const std::string prefix);
+
 std::string	normalize_path(const std::string &path);
 
 void	build_response(HttpRequest &req, int status_code, const std::string &status_msg, const std::string &content_type, const std::string &body, bool close_connection);

@@ -228,7 +228,9 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	std::ostringstream response_body;
 	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
-	response_body << "<html><body><h1>POST Success</h1><p>File saved as: " << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename << "</p></body></html>";
+	response_body << /*"<html><body><h1>POST Success</h1><p>"File saved as: " <<*/ req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename /*<< "</p></body></html>"*/;
 
 	build_response(req, 201, "Created", "text/html", response_body.str(), req.getKeepAlive());
+
+	
 }

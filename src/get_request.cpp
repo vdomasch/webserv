@@ -19,13 +19,6 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-std::string	remove_prefix(std::string target, const std::string prefix)
-{
-	if (target.find(prefix) == 0)
-		target.erase(0, prefix.length());
-	return target;
-}
-
 std::string	try_index_file(const std::string &path, const std::string &index)
 {
 	if (path.empty())
