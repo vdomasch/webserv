@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-void	init_base_datastruct(t_fd_data *socket_data)
+void	init_base_datastruct(t_socket_data *socket_data)
 {
 	socket_data->serverFolder = "";
 	socket_data->requestedFilePath = "";
@@ -15,7 +15,7 @@ void	init_base_datastruct(t_fd_data *socket_data)
 	FD_ZERO(&socket_data->saved_writesockets);
 }
 
-int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
+int	initialize_socket(sockaddr_in *servaddr, t_socket_data *socket_data)
 {
 	int	server_fd;
 	int intopt = 1;
@@ -99,7 +99,7 @@ std::string	displayErrorPage(std::string serverFolder, int *errcode)
 }
 
 
-std::string	handleBinaryFiles(t_fd_data *d)
+std::string	handleBinaryFiles(t_socket_data *d)
 {
 	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
 	std::ostringstream oss;
@@ -129,7 +129,7 @@ std::string	handleBinaryFiles(t_fd_data *d)
 	
 }
 
-bool	indexFileExists(t_fd_data *d, int debug)
+bool	indexFileExists(t_socket_data *d, int debug)
 {
 	struct stat fileinfo;
 
@@ -184,7 +184,7 @@ void		identifyFileExtension(std::string filename, int *errcode)
 	}
 }
 
-std::string	openAndReadFile(t_fd_data *d, int *errcode)
+std::string	openAndReadFile(t_socket_data *d, int *errcode)
 {
 	char			buffer[BUFFER_SIZE];
 	int				bytes_read;
@@ -220,7 +220,7 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	return (response);
 }
 
-int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
+int	checkObjectType(std::string filename, t_socket_data *d, int *errcode)
 {
 	struct stat fileinfo;  
 	std::string pathToCheck;
@@ -268,7 +268,7 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	}
 }
 
-void	storeFolderContent(t_fd_data *d, int *errcode)
+void	storeFolderContent(t_socket_data *d, int *errcode)
 {
 	struct dirent *pDirent;
     DIR *pDir;
@@ -384,7 +384,7 @@ std::string	displayCorrectFileSize(const char * filename)
 
 
 
-std::string	handleCGI(t_fd_data *d, int *errcode)  ////////////////////////////////////////////////////////
+std::string	handleCGI(t_socket_data *d, int *errcode)  ////////////////////////////////////////////////////////
 {
 	std::string	CGIBody;
 	int			CGI_body_size;
@@ -409,7 +409,7 @@ std::string	handleCGI(t_fd_data *d, int *errcode)  /////////////////////////////
 	return CGIBody;
 }
 
-void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
+void	sendSizeAndLastChange(t_socket_data *d, std::ostringstream &oss)
 {
 	struct stat					fileinfo;
 	time_t						timestamp;
@@ -515,7 +515,7 @@ void	setupHTMLpageStyle(std::ostringstream &oss)
 	oss << "<link rel=\"stylesheet\" href=\"/assets/css_files/autoindex.css\">\n";
 }
 
-std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
+std::string	buildCurrentIndexPage(t_socket_data *d, int *errcode)
 {
 	std::ostringstream	oss;
 	std::string			pageContent;
@@ -553,7 +553,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	return (pageContent);
 }
 
-std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporary just to make cleaner, will be deleted and replaced
+std::string	isolateFileAttributes(std::string request, t_socket_data *d) // temporary just to make cleaner, will be deleted and replaced
 {
 	size_t		filename_start;
 	size_t		filename_end;
@@ -602,7 +602,7 @@ std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporar
 	return (requested_file);
 }
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode, int bytes_read)
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_socket_data *d, int *errcode, int bytes_read)
 {
 	std::string request(buffer, bytes_read);
 	
@@ -630,7 +630,7 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	return (response);
 }
 
-std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_fd_data *d)
+std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_socket_data *d)
 {
 	std::string	responseCode;
 	std::string	headerStart;
@@ -686,7 +686,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 	return (responseCode);
 }
 
-int	handle_client_request(int socket, t_fd_data *d)
+int	handle_client_request(int socket, t_socket_data *d)
 {
 	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?? --> i might be stupid
 	std::string	requestBody;
@@ -749,7 +749,7 @@ int main(int argc, char **argv)
 	int my_socket;
 	int	server_fd;
 	struct sockaddr_in servaddr;
-	t_fd_data s_data; // to set select	
+	t_socket_data s_data; // to set select	
 
 	server_fd = initialize_socket(&servaddr, &s_data);
 	if (server_fd < 0)
@@ -775,7 +775,7 @@ int main(int argc, char **argv)
 			return (0);
 		}
 
-		for (int i = 0; i <= s_data.max_fd ; i++)
+		for (int i = 0; i <= s_data.max_sckt_fd ; i++)
 		{
 			if (FD_ISSET(i, &s_data.ready_readsockets))
 			{
@@ -786,8 +786,8 @@ int main(int argc, char **argv)
 					FD_SET(my_socket, &s_data.saved_readsockets); //add new connection to current set
 					printf( "i is %d, server_fd is %d, my_socket is %d\n", i, server_fd, my_socket);
 					printf( "request from server_fd : %d\n", my_socket);
-					if (my_socket > s_data.max_fd) // to set the new max
-						s_data.max_fd = my_socket;
+					if (my_socket > s_data.max_sckt_fd) // to set the new max
+						s_data.max_sckt_fd = my_socket;
 				}
 				else
 				{

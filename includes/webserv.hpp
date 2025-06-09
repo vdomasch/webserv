@@ -65,26 +65,26 @@ Y	convert(const T& from) {
 	return result;
 }
 
-//struct s_fd_data
-//{
-//	fd_set		ready_readsockets;
-//	fd_set		ready_writesockets;
-//	fd_set		saved_readsockets; // current sockets
-//	fd_set		saved_writesockets; // current sockets
-//	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
-//	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
-//	std::string	method_name; // the name of the method used and truncated from the original request
-//	int			max_sckt_fd;
+struct s_socket_data
+{
+	fd_set		ready_readsockets;
+	fd_set		ready_writesockets;
+	fd_set		saved_readsockets; // current sockets
+	fd_set		saved_writesockets; // current sockets
+	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
+	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
+	std::string	method_name; // the name of the method used and truncated from the original request
+	int			max_sckt_fd;
 
-//	std::string			Content_Type; // right now, is used for POST requests
-//	std::string			Content_Length; // right now, is used for POST requests
-//	unsigned int		response_len; // Was previously content_len, is used only for the response header right now.
-//	bool				is_binaryContent; //used for the final send, to know is we need to send binaryContent;
-//	std::vector<char> 	binaryContent;
-//	std::vector<dirent>	folderContent;
-//	CGIContent			cg;
-//};
-//typedef struct s_fd_data	t_fd_data;
+	std::string			Content_Type; // right now, is used for POST requests
+	std::string			Content_Length; // right now, is used for POST requests
+	unsigned int		response_len; // Was previously content_len, is used only for the response header right now.
+	bool				is_binaryContent; //used for the final send, to know is we need to send binaryContent;
+	std::vector<char> 	binaryContent;
+	std::vector<dirent>	folderContent;
+	CGIContent			cg;
+};
+typedef struct s_socket_data	t_socket_data;
 
 class orderedFiles
 {
