@@ -614,7 +614,6 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	std::string response;
 	char		objType;
 	
-	std::cout << "BUFF SIZE ISSSSSSSSSSSSSSSSSSS" << request.size() << "\n";
 	requested_file = isolateFileAttributes(request, d);
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
