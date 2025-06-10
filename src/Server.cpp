@@ -22,11 +22,18 @@ Server::Server()
 	FD_ZERO(&_socket_data.ready_writesockets);
 	FD_ZERO(&_socket_data.saved_readsockets);
 	FD_ZERO(&_socket_data.saved_writesockets);
-	_socket_data.max_fd = 0;
+	//_socket_data.max_fd = 0;
 	_port_to_socket_map.clear();
 	_method_map["GET"] = &get_request;
 	_method_map["POST"] = &post_request;
 	_method_map["DELETE"] = &delete_request;
+	_socket_data.serverFolder = "";
+	_socket_data.requestedFilePath = "";
+	_socket_data.max_fd = -1;
+	_socket_data.response_len = 0;
+	_socket_data.Content_Length = "default";
+	_socket_data.Content_Type = "default";
+	_socket_data.is_binaryContent = false;
 }
 
 Server::~Server() {}
@@ -205,7 +212,7 @@ bool	Server::reading_data(int fd)
 	do {
 		//std::cout << "[DEBUG] Request not ready. Waiting for more data..." << std::endl;
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-		//std::cout << "Buffer: " << buffer << std::endl;
+		std::cout << "Buffer: " << buffer << std::endl;
 		//std::cout << "Bytes read: " << bytes_read << std::endl << std::endl << std::endl;
 		if (bytes_read < 0)
 			;//std::cout << "[DEBUG] recv() returned < 0, no data available yet." << std::endl;

@@ -147,31 +147,6 @@ bool	create_directories(std::string path)
 	return true;
 }
 
-std::string	handleCGI(t_fd_data &d, int *errcode)  ////////////////////////////////////////////////////////
-{
-	std::string	CGIBody;
-	int			CGI_body_size;
-
-	printf("beep beep boop ... i'm CGI ... \n\n");
-	d.cg.setEnvCGI(d.requestedFilePath, d.Content_Type, d.Content_Length, d.method_name);
-	d.cg.executeCGI();
-	d.cg.sendCGIBody(&d.binaryContent);
-	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
-
-	//test, avoid zombie i guess ?
-	int status = 0;
-	waitpid(d.cg.cgi_forkfd, &status, 0);
-	if(WEXITSTATUS(status) != 0)
-	{
-		printf("Ptit flop\n\n");
-		return ("emptyerror");
-	}
-
-	d.response_len = CGI_body_size;
-	*errcode = 0;
-	return CGIBody;
-}
-
 void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
 {
 	//std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
@@ -224,6 +199,13 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	if (location_name == "/cgi-bin/")
 	{
+		PRINT_DEBUG2
+		//std::string	c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
+		//d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
+		//std::string	c_len = request.substr(request.find("Content-Length:") + 16); // same thing
+		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
+		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
+		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
 		handleCGI(fd_data, &errcode);
 	}
 

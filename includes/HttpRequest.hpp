@@ -49,6 +49,7 @@ class HttpRequest
 		std::string	_header;
 		std::string	_method;
 		std::string	_target;
+		std::string	_query_string;
 		std::string _http_version;
 		std::map<std::string, std::string> _headers_map;
 

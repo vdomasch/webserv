@@ -1,5 +1,30 @@
 #include "webserv.hpp"
 
+std::string	handleCGI(t_fd_data &d, int *errcode)
+{
+	std::string	CGIBody;
+	int			CGI_body_size;
+
+	printf("beep beep boop ... i'm CGI ... \n\n");
+	d.cg.setEnvCGI(d.requestedFilePath, d.Content_Type, d.Content_Length, d.method_name);
+	d.cg.executeCGI();
+	d.cg.sendCGIBody(&d.binaryContent);
+	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
+
+	//test, avoid zombie i guess ?
+	int status = 0;
+	waitpid(d.cg.cgi_forkfd, &status, 0);
+	if(WEXITSTATUS(status) != 0)
+	{
+		printf("Ptit flop\n\n");
+		return ("emptyerror");
+	}
+
+	d.response_len = CGI_body_size;
+	*errcode = 0;
+	return CGIBody;
+}
+
 int	check_object_type(std::string& path, int *errcode)
 {
 	struct stat fileinfo;  

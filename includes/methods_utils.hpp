@@ -4,6 +4,8 @@
 
 # include "webserv.hpp"
 
+std::string	handleCGI(t_fd_data &d, int *errcode);
+
 int	check_object_type(std::string& path, int *errcode);
 
 std::string	normalize_path(const std::string &path);

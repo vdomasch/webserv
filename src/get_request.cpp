@@ -42,7 +42,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	int errcode = 0;
 
 	std::string target = normalize_path(req.get_target());
-	//std::cout << "Target: " << target << std::endl;
+	std::cout << "Target: " << target << std::endl;
 	//std::cout << "Server name: " << server_name << std::endl;
 
 	//std::cout << "is_error_request: " << req._is_error_request << std::endl;
@@ -99,6 +99,18 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	{
 		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
 		return;
+	}
+
+	if (location_name == "/cgi-bin/")
+	{
+		PRINT_DEBUG2
+		//std::string	c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
+		//d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
+		//std::string	c_len = request.substr(request.find("Content-Length:") + 16); // same thing
+		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
+		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
+		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
+		handleCGI(fd_data, &errcode);
 	}
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target

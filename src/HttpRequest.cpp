@@ -79,6 +79,13 @@ void	HttpRequest::parse_headers()
 		return;
 	}
 
+	size_t query_pos = _target.find('?');
+	if (query_pos != std::string::npos)
+	{
+		_query_string = _target.substr(query_pos + 1);
+		_target = _target.substr(0, query_pos);
+	}
+
 	if (_http_version != "HTTP/1.1")
 	{
 		std::cerr << "Unsupported HTTP version: " << _http_version << std::endl;
