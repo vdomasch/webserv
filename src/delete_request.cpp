@@ -1,19 +1,20 @@
 #include "webserv.hpp"
 
-void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
+void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
 
 	std::string target = normalize_path(req.get_target());
 
-	std::map<std::string, ServerConfig>::iterator it_serv;
-	if ((it_serv = server_list.find(server_name)) == server_list.end())
+	std::map<std::string, ServerConfig> &server_list = http_config.get_server_list();
+	std::map<std::string, ServerConfig>::iterator it_serv = server_list.find(server_name);
+	if (it_serv == server_list.end())
 	{
 		server_name = server_name.substr(server_name.find(':') + 1, server_name.size());
 		if ((it_serv = server_list.find(server_name)) == server_list.end())
 		{
 			std::cerr << "Server not found: " << server_name << std::endl;
-			build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", "", http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+			build_response(req, "404", displayErrorPage("404", "", http_config, req, fd_data, server_name), false);
 			return;
 		}
 	}
@@ -36,28 +37,27 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	catch (std::exception &e)
 	{
 		std::cerr << "Error getting matching location: " << e.what() << std::endl;
-		std::string err;
-
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 	if (root == "")
 	{
 		std::cerr << "Error: Root directory not set for location: " << location_name << std::endl;
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
 	if (check_object_type(root, &errcode) != IS_DIRECTORY)
 	{
 		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
 	if (check_allowed_methods(server, it_loc->second, "DELETE") == false)
 	{
-		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+		std::cerr << "Error: Method DELETE not allowed for location: " << location_name << std::endl;
+		build_response(req, "405", displayErrorPage("405", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
@@ -65,23 +65,25 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 
 	std::cout << req.get_target() << std::endl;
 
-	std::string path = root + remove_prefix(target, location_name);
+	std::string path = root.substr(0, root.size() - 1) + req.get_target().substr(req.get_target().find("uploads") + 7, req.get_target().size() - 1); // remove the root and the /uploads/ part from the target
 	std::string authorized_paths("authorized_paths.txt");
 
 
 	std::ifstream valid_paths((server.get_root() + authorized_paths).c_str(), std::ios::binary); // Open our list of paths
 	if (!valid_paths.is_open())
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
-	
+	{
+		std::cerr << "Error: Could not open authorized paths file: " << authorized_paths << std::endl;
+		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
+	}
 
 
-
+	std::cout << "Checking if path is authorized: " << path << std::endl;
 	std::string line;
 	while (std::getline(valid_paths, line)) // check if file requested in authorized paths
 	{
 		if (line.empty())
 			continue;
-		std::cout << "LIne that we are currently checking: " << line << std::endl;
+		std::cout << "Checking line: " << line << std::endl;
 		if (path.find(line) != std::string::npos)
 			break;
 	}
@@ -89,7 +91,8 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	{
 		std::cerr << "Forbidden Request" << std::endl;
 		valid_paths.close();
-		build_response(req, 403, "Forbidden", "text/html", displayErrorPage("403", "Forbidden Request", find_error_page("403", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		std::cerr << "Error: Path not authorized: " << path << std::endl;
+		build_response(req, "403", displayErrorPage("403", location_name, http_config, req, fd_data, server_name), false);
 		return ;
 	}
 	valid_paths.close();
@@ -102,7 +105,8 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	std::ifstream test(path.c_str()); // check if file exist
 	if (!test.is_open())
     {
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		std::cerr << "Error: File not found: " << path << std::endl;
+		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
 		return;
     }
 	test.close();
@@ -119,7 +123,8 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	if (test2.is_open())
     {
 		test.close();
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Internal Server Error", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
+		std::cerr << "Error: File not deleted: " << path << std::endl;
+		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
 		return;
     }
 	
@@ -130,6 +135,6 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	std::ostringstream response_body;
 	response_body << "<html><body><h1>DELETE State ?</h1><p>File deleted is: " << req.get_target() << "</p></body></html>";
 
-	build_response(req, 204, "File Successfuly Delete", "text/html", response_body.str(), req.getKeepAlive());
+	build_response(req, "204", response_body.str(), req.getKeepAlive());
 
 }

@@ -9,8 +9,8 @@
 class HttpResponse
 {
 private:
-    int				_status_code;
 	bool			_keep_alive;
+    std::string		_status_code;
     std::string		_status_message;
     std::string		_body;
 	
@@ -25,7 +25,7 @@ public:
 
 
 	void set_keep_alive(bool keep_alive);
-    void set_status(int code, const std::string& message);
+    void set_status(const std::string& code, const std::string& message);
     void set_body(const std::string& body);
     void add_header(const std::string& key, const std::string& value);
 

@@ -253,14 +253,14 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
-			_method_map[method](http_config, _socket_states[fd], server_list, _socket_data, server_name);
+			_method_map[method](http_config, _socket_states[fd], _socket_data, server_name);
 		}
 		else
 		{
 			// Méthode non autorisée
 			std::cerr << "Method not allowed: " << method << std::endl;
 			HttpResponse res;
-			res.set_status(405, "Method Not Allowed");
+			res.set_status("405", "Method Not Allowed");
 			res.set_body("405 Method Not Allowed");
 			res.add_header("Allow", "GET, POST, DELETE");
 			res.add_header("Content-Type", "text/plain");

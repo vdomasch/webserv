@@ -26,8 +26,8 @@ size_t	HTTPConfig::get_client_max_body_size()
 	return client_max_body_size;
 }
 
-std::map<std::string, ServerConfig> HTTPConfig::get_server_list() const	{ return _server_list; }
-std::map<std::string, std::string>	HTTPConfig::get_http_map() const	{ return _map_http; }
+std::map<std::string, ServerConfig>& HTTPConfig::get_server_list()	{ return _server_list; }
+std::map<std::string, std::string>&	HTTPConfig::get_http_map() 		{ return _map_http; }
 
 bool HTTPConfig::is_http(std::string key)
 {
