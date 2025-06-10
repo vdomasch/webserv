@@ -1,5 +1,5 @@
-#include "../includes/CGIContent.hpp"
-
+#include "CGIContent.hpp"
+#include "HTTPConfig.hpp"
 
 CGIContent::CGIContent()
 {

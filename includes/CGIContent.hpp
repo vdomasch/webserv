@@ -1,7 +1,7 @@
 
 #ifndef CGICONTENT_HPP
 # define CGICONTENT_HPP
-
+ 
 #include <stdio.h>
 #include <iostream>//std::cout
 #include <sys/socket.h> //socket

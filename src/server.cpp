@@ -126,7 +126,6 @@ std::string	handleBinaryFiles(t_socket_data *d)
 		return(response.str().c_str());
 	}
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
-	
 }
 
 bool	indexFileExists(t_socket_data *d, int debug)
