@@ -1,0 +1,46 @@
+
+html
+{
+	
+	height: 100%
+}
+
+body
+{
+	/* background-color: #ffaf5fcf; */
+	background : url("/assets/goofyvik.gif") left top;
+	background-size: 20% 20%;
+	height: 100%
+
+}
+
+
+.mainContainer {
+	margin-bottom: 10px;
+	padding-bottom: 10px;
+	text-align: center;
+	margin-top: 6em;
+	font-family: Calibri;
+	font-size: 20px;
+	line-height: 1.5;
+	padding: 2em;
+	border: 1px solid #1a1212;
+	border-radius: 5px;
+	box-shadow: 0 0 15px rgb(0, 0, 0);
+	background-color: #e6d589;
+	
+}
+
+.mainTitle
+{
+	text-align: center;
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+	/* white-space: nowrap; */
+}
+
+/* .malice
+{
+	background : url("/assets/malice.jpg") left top no-repeat;
+	background-size: 100% 100%;
+} */

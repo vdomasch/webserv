@@ -7,6 +7,10 @@
 # include "methods_utils.hpp"
 # include "struct.hpp"
 
+
+#ifndef WEBSERVER_HPP
+# define WEBSERVER_HPP
+
 #include <stdio.h>
 #include <iostream>//std::cout
 #include <sys/socket.h> //socket
@@ -27,7 +31,7 @@
 
 
 #define SERV_PORT 8080
-#define BUFFER_SIZE 50000 /// to change, must be 1024
+#define BUFFER_SIZE 100000 /// to change, must be 1024
 #define IS_INDEXDIR 60
 #define IS_EXISTINGFILE 61
 #define IS_DIRECTORY 62
@@ -35,6 +39,10 @@
 #define FAILEDSYSTEMCALL -1
 #define MISSINGFILE -2
 #define ICOHANDELING 2
+#define GIFHANDELING 3
+#define CSSHANDELING 4
+#define PNGHANDELING 5
+#define JPGHANDELING 6
 #define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
 #define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __FUNCTION__ << "\033[0m " << std::endl;

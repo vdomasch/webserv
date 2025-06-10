@@ -2,7 +2,7 @@ NAME_S = webserv
 NAME_C = client
 
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP 
+CFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP
 
 SRCS_DIR = src
 OBJS_DIR = build

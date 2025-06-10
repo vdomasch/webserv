@@ -1,5 +1,20 @@
 #include "../includes/webserv.hpp"
 
+void	init_base_datastruct(t_fd_data *socket_data)
+{
+	socket_data->serverFolder = "";
+	socket_data->requestedFilePath = "";
+	socket_data->max_sckt_fd = -1;
+	socket_data->response_len = 0;
+	socket_data->Content_Length = "default";
+	socket_data->Content_Type = "default";
+	socket_data->is_binaryContent = false;
+	FD_ZERO(&socket_data->ready_readsockets);
+	FD_ZERO(&socket_data->ready_writesockets);
+	FD_ZERO(&socket_data->saved_readsockets);
+	FD_ZERO(&socket_data->saved_writesockets);
+}
+
 int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 {
 	int	server_fd;
@@ -11,8 +26,8 @@ int	initialize_socket(sockaddr_in *servaddr, t_fd_data *socket_data)
 		return (-1); 
 	}
 	
-	bzero(servaddr, sizeof(*servaddr));
-	bzero(socket_data, sizeof(*socket_data));
+	bzero(servaddr, sizeof(*servaddr)); // might be false idk
+	init_base_datastruct(socket_data);
 
 	servaddr->sin_family = AF_INET;
 	servaddr->sin_port = htons(SERV_PORT);
@@ -57,14 +72,12 @@ std::ifstream::pos_type filesize(const char *filename)
 std::string	displayErrorPage(std::string serverFolder, int *errcode)
 {
 	char		buffer[BUFFER_SIZE] = {0};
-	std::string current_pwd(getcwd(NULL, 0));
 	std::string pathToErrPage;
 	int			bytes_read;
 	int			fd;
 
-
+	memset(buffer, '\0', sizeof(buffer));
 	pathToErrPage = serverFolder + "/error_404.html"; // subject to change ? 
-
 	fd = open(pathToErrPage.c_str(), O_RDONLY);	// the error page can still crash ???? 
 	if (fd < 0)
 	{
@@ -85,15 +98,15 @@ std::string	displayErrorPage(std::string serverFolder, int *errcode)
 	return (response);
 }
 
-std::string	handleIcoFile(t_fd_data *d)
+
+std::string	handleBinaryFiles(t_fd_data *d)
 {
-	// printf("\033[31m DETECTED A ISO REQUEST 🗣 🗣 🗣 🗣 🗣\n %s \n\n \033[0m",d->requestedFilePath.c_str());
 	std::ifstream binfile(d->requestedFilePath.c_str(), std::ios::binary);
 	std::ostringstream oss;
 	std::ifstream::pos_type dataFile;
 
 	if (!binfile.is_open()) 
-		std::cerr << "Could not open .ico file" << std::endl; // handle more errors
+		std::cerr << "Could not open binary file.." << std::endl; // handle more errors
 	else 
 	{
 		binfile.seekg(0, std::ios::end);
@@ -104,20 +117,14 @@ std::string	handleIcoFile(t_fd_data *d)
 		binfile.close();
 		
 		std::ostringstream response;
-		response << "HTTP/1.1 200 OK\r\n"
-		<< "Content-Type: image/x-icon\r\n"
-		<< "Content-Length: " << file_size << "\r\n"
-		<< "\r\n";
-
+		response << "Content-Length: " << file_size << "\r\n\r\n";
 		d->binaryContent = buffer2;
 		
 		dataFile = filesize(d->requestedFilePath.c_str());
 		oss << dataFile;
-		d->content_len = atof(oss.str().c_str());
-
+		//d->response_len = atof(oss.str().c_str()); // pretty much useless now ?
 		return(response.str().c_str());
 	}
-
 	return ("errorstring"); // to handle, doesn´t happens unless the file can't be opened
 	
 }
@@ -139,6 +146,44 @@ bool	indexFileExists(t_fd_data *d, int debug)
 		return (false);
 }
 
+void		identifyFileExtension(std::string filename, int *errcode)
+{
+	int len = filename.length();
+	if (len < 4)
+	{
+		errcode = 0;
+		return ;
+	}
+	std::string	extension = filename.substr(len - 4, len - 1);
+	std::string	(extension_dictionary[4]) = {".ico", ".gif", ".png", ".jpg"};
+	int type = -1;
+	while(++type < 4)
+	{
+		if (extension == extension_dictionary[type])
+			break ;
+	}
+
+	switch (type)
+	{
+	case 0:
+		*errcode = ICOHANDELING;
+		break;
+	case 1:
+		*errcode = GIFHANDELING;
+		break;
+	case 2:
+		*errcode = PNGHANDELING;
+		break;
+	case 3:
+		*errcode = JPGHANDELING;
+		break;
+	
+	default:
+		*errcode = 0;
+		break;
+	}
+}
+
 std::string	openAndReadFile(t_fd_data *d, int *errcode)
 {
 	char			buffer[BUFFER_SIZE];
@@ -146,13 +191,11 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 	int				fd;
 	unsigned int	len;
 
+	memset(buffer, '\0', sizeof(buffer));
 	len = d->requestedFilePath.length();
-	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".ico")) //ugly hardcoding just to test the ico case
-	{
-		*errcode = ICOHANDELING;
-		return (handleIcoFile(d));
-	}
-
+	identifyFileExtension(d->requestedFilePath, errcode);
+	if (*errcode && *errcode != CSSHANDELING) // if image, recover the binary data
+		return (handleBinaryFiles(d));
 	fd = open(d->requestedFilePath.c_str(), O_RDONLY);	
 	if (fd < 0)
 	{
@@ -166,10 +209,13 @@ std::string	openAndReadFile(t_fd_data *d, int *errcode)
 		close(fd);
 		return ("void"); //handle better
 	}
-	*errcode = 0;
+	if (len >= 4 && (d->requestedFilePath.substr(len - 4, len - 1) == ".css"))
+		*errcode = CSSHANDELING;
+	else
+		*errcode = 0;
 	close(fd);
 	std::string response(buffer);
-	d->content_len = response.length();
+	d->response_len = response.length();
 	memset(buffer, '\0', sizeof(buffer)); // useless ? -> it's not ???
 	return (response);
 }
@@ -179,6 +225,7 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 	struct stat fileinfo;  
 	std::string pathToCheck;
 	std::string	fileContent;
+	int			statErr = 0;
 	
 
 	if (filename == "/") // special case, must act like the index page was asked
@@ -186,18 +233,29 @@ int	checkObjectType(std::string filename, t_fd_data *d, int *errcode)
 		d->requestedFilePath = d->serverFolder;
 		return (IS_INDEXDIR);
 	}
+	if (filename.find("cgi-bin") != std::string::npos) // is meant for CGI
+	{
+		char	*char_pwd = getcwd(NULL, 0);
+		std::string current_pwd(char_pwd); // ugly, to change asap, will do for now though
+		d->requestedFilePath = current_pwd + filename;
+		free(char_pwd);
+		return(IS_CGI);
+	}
 	pathToCheck = d->serverFolder + filename; // we need to check if len > 0 before ? 
 	printf("Path to check is : (%s)\n\n", pathToCheck.c_str());
 
-    if (stat (pathToCheck.c_str(), &fileinfo) == 0) // then file exists --> to secure better, check requestedFilePath too
+	statErr = stat (pathToCheck.c_str(), &fileinfo);
+    if (statErr == 0) // then file exists --> to secure better, check requestedFilePath too
 		printf("\033[34mFound it --> \033[0m");
 	else
 	{
-		printf("\033[31mFile wasn't found ! Setting error code appropriately !\n\033[0m\n");
+		printf("\033[31mFile wasn't found ! (%d) Setting error code appropriately !\n\033[0m\n", errno);
+		perror("ERRNO SAYS : ");
 		*errcode = MISSINGFILE;
 		return (MISSINGFILE);
 	}
 	d->requestedFilePath = pathToCheck;
+	
 	switch (fileinfo.st_mode & S_IFMT) 
 	{
 		case S_IFDIR: 
@@ -243,17 +301,39 @@ void	storeFolderContent(t_fd_data *d, int *errcode)
 
 void	findParentFolder(std::string &parent, std::string filepath, std::string server_folder)
 {
+
+
+	// IMPORTANT ! server_files is to be replaced with the folder provided in config file !!!!!!!
+	//
 	if (filepath == server_folder || (filepath + "/server_files" == server_folder))
 	{
 		// printf("\033[31m\nSPECIAL CASE!\nSAME SERVERFOLDER DETECTED ! 🗣 🗣 🗣\033[0m\n");
 		parent = "/";
 		return ;
 	}
-	std::size_t pos = filepath.find_last_of('/');   //check if fails i guess ?
-	parent = filepath.substr(0, pos);
-	pos = parent.find_last_of('/');
-	parent = parent.substr(pos);
+
+	std::string	extendedServerFolder = server_folder + "/";
+	parent = filepath.substr(extendedServerFolder.find_last_of("/"));
+	printf("\033[31m\nSpecial parent is (%s) !\033[0m\n\n", parent.c_str());
+	std::size_t pos = parent.find_last_of('/');
+	if (pos == 0)
+	{
+		parent = "/";
+		return ;
+	}
+
+	if (pos != std::string::npos)
+		parent = parent.substr(0, pos);
 	printf("\033[31mfinal is (%s) !\033[0m\n", parent.c_str());
+
+	// OLD METHOD
+	// std::size_t pos = filepath.find_last_of('/');   //check if it fails i guess ?
+	// parent = filepath.substr(0, pos);
+	// printf("\033[31mParent is (%s) !\033[0m\n", parent.c_str());
+	// pos = parent.find_last_of('/');
+	// parent = parent.substr(pos);
+
+
 	if (parent == "/server_files")
 		parent = "/";
 }
@@ -302,6 +382,33 @@ std::string	displayCorrectFileSize(const char * filename)
 	return (oss.str() + dico[i]);
 }
 
+
+
+std::string	handleCGI(t_fd_data *d, int *errcode)  ////////////////////////////////////////////////////////
+{
+	std::string	CGIBody;
+	int			CGI_body_size;
+
+	printf("beep beep boop ... i'm CGI ... \n\n");
+	d->cg.setEnvCGI(d->requestedFilePath, d->Content_Type, d->Content_Length, d->method_name);
+	d->cg.executeCGI();
+	d->cg.sendCGIBody(&d->binaryContent);
+	CGIBody = d->cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
+
+	//test, avoid zombie i guess ?
+	int status = 0;
+	waitpid(d->cg.cgi_forkfd, &status, 0);
+	if(WEXITSTATUS(status) != 0)
+	{
+		printf("Ptit flop\n\n");
+		return ("emptyerror");
+	}
+
+	d->response_len = CGI_body_size;
+	*errcode = 0;
+	return CGIBody;
+}
+
 void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 {
 	struct stat					fileinfo;
@@ -314,31 +421,37 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		
 		std::string	m_fpath(i->baseName);
 		std::string	fileHref;
+		std::string	extendedServerFolder;
 
-		if (i->type != DT_DIR)
+		if (i->type != DT_DIR) // if not a dir, leave
 			continue ;
-		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/"; // a changerrrrrrr
-		if (fileHref == "/server_files/")
-			fileHref = ""; 
-		oss << "<tr><td>\n";
+
+		extendedServerFolder = d->serverFolder + "/";
+		fileHref = d->requestedFilePath.substr(extendedServerFolder.find_last_of("/")) + "/";
+
+		if (fileHref == "/server_files/") // i don´t think it happens anymore
+			fileHref = "";
+		// In any case, server_files is to be replaced with actual folder name from config file
+
+		oss << "<tr><td>";
 		oss << "<a class";
 		oss << "=\"icon dir\" href=\"";
 		oss << fileHref + i->baseName;
 		oss << "\">";
 		oss << m_fpath + "/";
 		oss << " ";
-		oss << "</a>\n";
+		oss << "</a>";
 		oss << "</td>\n";
 
 		//Handle size
-		oss << "<td> - </td>\n"; // no size needed for folders
+		oss << "<td>-</td>\n"; // no size needed for folders
 
 		//handle last file modification
 		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
 		timestamp = fileinfo.st_mtime;
-		oss << "<td> ";
-		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
-		oss << " </td>\n";
+		oss << "<td>";
+		oss << ctime(&timestamp); //might be C ? is it allowed ?
+		oss << "</td>\n";
 		oss << "</tr>\n";
 	}
 	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
@@ -346,50 +459,60 @@ void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 		
 		std::string	m_fpath(i->baseName);
 		std::string	fileHref;
+		std::string	extendedServerFolder;
+		
+		if (i->type == DT_DIR) //if not a file, leave
+		continue ;
+		
+		// printf("request if(%s)\n", d->requestedFilePath.c_str());
+		extendedServerFolder = d->serverFolder + "/";
+		fileHref = d->requestedFilePath.substr(extendedServerFolder.find_last_of("/")) + "/";
+		// printf("\n\nHref is : (%s)\n\n", fileHref.c_str());
+		
+		//  EDIT : FIXED I THINK
+		//  (OLD) 
+		//	fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/" is wrong.
+		//  This is not a correct method, since /home/lchapard/Documents/Webserv/server_files/assets/css_files/myfile.css
+		//  will give a href of /css_files/myfile.css, which when searched by the server in the next loop, will give
+		//  /home/lchapard/Documents/Webserv/server_files  +  /css_files/myfile.css, with the asset folder missing,
+		//  preventing us from finding the file
 
-		if (i->type == DT_DIR)
-			continue ;
 
-		fileHref = d->requestedFilePath.substr(d->requestedFilePath.find_last_of('/')) + "/";
 		if (fileHref == "/server_files/") //temporary fix for when we reach last folder
-			fileHref = ""; 
-		oss << "<tr><td>\n";
+			fileHref = "";
+		// server_files is to be replaced with actual folder name
+
+
+		oss << "<tr><td>";
 		oss << "<a class";
-		oss << "=\"icon file\" href=\"\n";
+		oss << "=\"icon file\" href=\"";
 		oss << fileHref + i->baseName;
 		oss << "\">";
 		oss << m_fpath + "/";
-		oss << "</a>\n";
+		oss << "</a>";
 		oss << "</td>\n";
 	
 		//handle size
-		oss << "<td> ";
+		oss << "<td>";
 		oss << displayCorrectFileSize((d->requestedFilePath + "/" + m_fpath).c_str());
-		oss << " </td>\n";
+		oss << "</td>\n";
 
 		//handle last file modification
 		stat((d->requestedFilePath + "/" + m_fpath).c_str(), &fileinfo); // check if fails ?
 		timestamp = fileinfo.st_mtime;
-		oss << "<td> ";
+		oss << "<td>";
 		oss << ctime(&timestamp) ; //might be C ? is it allowed ?
-		oss << " </td>\n";
+		oss << "</td>\n";
 		oss << "</tr>\n";
 	}
 }
 
 void	setupHTMLpageStyle(std::ostringstream &oss)
 {
-	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
-	oss << "<style>\n";
-	oss << "#parentDirLinkBox {\nmargin-bottom: 10px;\npadding-bottom: 10px;\n}\n";
-	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
-	oss << "table {\nborder-collapse: collapse;\n}\n";
-	oss << "td.detailsColumn {padding-inline-start: 2em;\ntext-align: end;\nwhite-space: nowrap;\n}\n";
-	oss << "a.up {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACM0lEQVR42myTA+w1RxRHz+zftmrbdlTbtq04qRGrCmvbDWp9tq3a7tPcub8mj9XZ3eHOGQdJAHw77/LbZuvnWy+c/CIAd+91CMf3bo+bgcBiBAGIZKXb19/zodsAkFT+3px+ssYfyHTQW5tr05dCOf3xN49KaVX9+2zy1dX4XMk+5JflN5MBPL30oVsvnvEyp+18Nt3ZAErQMSFOfelCFvw0HcUloDayljZkX+MmamTAMTe+d+ltZ+1wEaRAX/MAnkJdcujzZyErIiVSzCEvIiq4O83AG7LAkwsfIgAnbncag82jfPPdd9RQyhPkpNJvKJWQBKlYFmQA315n4YPNjwMAZYy0TgAweedLmLzTJSTLIxkWDaVCVfAbbiKjytgmm+EGpMBYW0WwwbZ7lL8anox/UxekaOW544HO0ANAshxuORT/RG5YSrjlwZ3lM955tlQqbtVMlWIhjwzkAVFB8Q9EAAA3AFJ+DR3DO/Pnd3NPi7H117rAzWjpEs8vfIqsGZpaweOfEAAFJKuM0v6kf2iC5pZ9+fmLSZfWBVaKfLLNOXj6lYY0V2lfyVCIsVzmcRV9Y0fx02eTaEwhl2PDrXcjFdYRAohQmS8QEFLCLKGYA0AeEakhCCFDXqxsE0AQACgAQp5w96o0lAXuNASeDKWIvADiHwigfBINpWKtAXJvCEKWgSJNbRvxf4SmrnKDpvZavePu1K/zu/due1X/6Nj90MBd/J2Cic7WjBp/jUdIuA8AUtd65M+PzXIAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
-	oss << "a.file {\n    background : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAABnRSTlMAAAAAAABupgeRAAABEElEQVR42nRRx3HDMBC846AHZ7sP54BmWAyrsP588qnwlhqw/k4v5ZwWxM1hzmGRgV1cYqrRarXoH2w2m6qqiqKIR6cPtzc3xMSML2Te7XZZlnW7Pe/91/dX47WRBHuA9oyGmRknzGDjab1ePzw8bLfb6WRalmW4ip9FDVpYSWZgOp12Oh3nXJ7nxoJSGEciteP9y+fH52q1euv38WosqA6T2gGOT44vry7BEQtJkMAMMpa6JagAMcUfWYa4hkkzAc7fFlSjwqCoOUYAF5RjHZPVCFBOtSBGfgUDji3c3jpibeEMQhIMh8NwshqyRsBJgvF4jMs/YlVR5KhgNpuBLzk0OcUiR3CMhcPaOzsZiAAA/AjmaB3WZIkAAAAASUVORK5CYII=\") left top no-repeat;\n}\n";
-	oss << "a.dir {\nbackground : url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==\") left top no-repeat;\n}\n";
-	oss << "a.icon {\npadding-inline-start: 1.5em;\ntext-decoration: none;\nuser-select: auto;\n}\n";
-	oss << "</style>\n";
+	oss << "<!DOCTYPE html>\n";
+	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\" charset=\"UTF-8\">\n";
+	oss << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "<link rel=\"stylesheet\" href=\"/assets/css_files/autoindex.css\">\n";
 }
 
 std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
@@ -404,16 +527,16 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 		return (""); // to handle better ??
 
 	setupHTMLpageStyle(oss); // contains the <style> of the html 
-	oss << "<title> Index of";
+	oss << "<title> Index of ";
 	oss << d->requestedFilePath + "/";
 	oss << "</title>\n</head>\n<body >\n";
 	oss << "<h1> Index of " + d->requestedFilePath + "/" "</h1>\n";
 
-	oss << "<div id=\"parentDirLinkBox\" style=\"display: block;\">";
+	oss << "<div id=\"parentDirLinkBox\" style=\"display: block;\">\n";
 	oss << "<a id=\"parentDirLink\" class=\"icon up\" href=\"";
 	oss << parentFolder;
-	oss << "\">";
-	oss << "<span id=\"parentDirText\">[parent directory]</span>";
+	oss << "\">\n";
+	oss << "<span id=\"parentDirText\">[parent directory]</span>\n";
     oss << "</a>\n</div>\n";
 
 	oss << "<table style=\"width:80%; font-size: 15px\">\n<thead>\n";
@@ -424,35 +547,73 @@ std::string	buildCurrentIndexPage(t_fd_data *d, int *errcode)
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	pageContent = oss.str().c_str();
-	d->content_len = pageContent.length();
+	oss.clear();
+	d->response_len = pageContent.length();
 	d->folderContent.clear();
 	return (pageContent);
 }
 
-std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode)
+std::string	isolateFileAttributes(std::string request, t_fd_data *d) // temporary just to make cleaner, will be deleted and replaced
 {
-	std::string request(buffer);
-	std::string first_line;
-	std::string requested_file;
-	std::string response;
-	char		objType;
 	size_t		filename_start;
 	size_t		filename_end;
-
+	size_t		header_end;
+	std::string requested_file;
+	std::string c_type;
+	std::string c_len;
+	std::string first_line;
+	std::string curated_body; // temporary, should idealy be able to hold binary
+	
 	first_line = request.substr(0, request.find('\n'));
 	filename_start = first_line.find_first_of(' ');
 	filename_end = first_line.find_last_of(' ');
 	requested_file = first_line.substr(filename_start + 1, filename_end - filename_start - 1);
+	
 
+	// std::cout << "REQUEST AT THE START IS " << request.length() << "\n";
+	printf("Full request :\n");
 	printf("\033[34m------------------------------------\n");
 	printf("(%s)\n",request.c_str() );
+	printf("------------------------------------\n");
 	printf("\033[32m------------------------------------\n");
 	printf("Requested : (%s)\n",requested_file.c_str() );
 	printf("------------------------------------\033[0m\n");
 
+
+	d->method_name = first_line.substr(0, filename_start);
+	header_end = request.find("\r\n\r\n");
+	if (header_end == std::string::npos)
+		return ("[isolateFileName] Header is invalid, \\r\\n\\r\\n was not found in request."); // handle better ?
+	else if (d->method_name == "POST")
+	{
+		c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
+		d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
+		c_len = request.substr(request.find("Content-Length:") + 16); // same thing
+		d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
+
+		curated_body = request.substr(header_end + 4);
+		// std::cout << "CURATED LEN IS " << curated_body.length() << "\n";
+		printf("\033[33m------------------------------------\n");
+		printf("POST body : (%s)\n",curated_body.c_str() );
+		printf("------------------------------------\033[0m\n");
+		std::vector<char> binary_body(curated_body.begin(), curated_body.end());
+		d->binaryContent = binary_body;
+	}
+	return (requested_file);
+}
+
+std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode, int bytes_read)
+{
+	std::string request(buffer, bytes_read);
+	
+	std::string requested_file;
+	std::string response;
+	char		objType;
+	
+	requested_file = isolateFileAttributes(request, d);
 	objType = checkObjectType(requested_file, d, errcode); // to check if we're looking at a folder or a file
 
-	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : use actual index.html if exists, else list the content of the folder
+	if (objType == IS_DIRECTORY || objType == IS_INDEXDIR) // NEW : uses actual index.html if exists, else list the content of the folder
 	{
 		if (indexFileExists(d ,DEBUG_INDEX_EXISTS)) // and index file was found, redirecting	
 			response = openAndReadFile(d, errcode);
@@ -461,6 +622,8 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 	}
 	else if (objType == IS_EXISTINGFILE)
 		response = openAndReadFile(d, errcode);
+	else if (objType == IS_CGI)
+		response = handleCGI(d, errcode);
 	else
 		response = displayErrorPage(d->serverFolder, errcode); // check if error is file not found
 	return (response);
@@ -469,39 +632,54 @@ std::string	analyse_request(char buffer[BUFFER_SIZE], t_fd_data *d, int *errcode
 std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody, t_fd_data *d)
 {
 	std::string	responseCode;
+	std::string	headerStart;
 	std::ostringstream oss;
 
-	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ?
+	if (requestBody.length() == 0) // specific case that i think doesn´t happens anymore ? --> it did when testing the CGI since we return empty string for now
 	{
 		std::cout << "I'm out ! 1.3 sec\n" << std::endl;
 		return (""); 
 	}
-	//--------------------------------------------------------//
-
-	oss << d->content_len;
-
+	oss << d->response_len;
 	switch (errcode)
 	{
-	case 0:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		d->content_len = d->content_len;
-		d->content_type = "text/html";
-		break;
+		case ICOHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\n";
+			headerStart.append(requestBody);
+			d->is_binaryContent = true;
+			return(headerStart);
 	
-	case 2:
-		d->content_len = d->content_len;
-		d->content_type = "image/x-icon";
-		return(requestBody);
-
-	default:
-		responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Lenght: ";
-		responseCode.append(oss.str());
-		responseCode.append("\r\n\r\n\n");
-		d->content_len = d->content_len;
-		d->content_type = "text/html";
-		break;
+		case GIFHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\n";
+			headerStart.append(requestBody);
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case PNGHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/png\r\n";
+			headerStart.append(requestBody);
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case JPGHANDELING:
+			headerStart = "HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n";
+			headerStart.append(requestBody);
+			d->is_binaryContent = true;
+			return(headerStart);
+	
+		case CSSHANDELING:
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/css\r\nContent-Length: ";
+			responseCode.append(oss.str());
+			responseCode.append("\r\n\r\n\n");
+			d->is_binaryContent = false;
+			break;
+	
+		default:
+			responseCode = "HTTP/1.1 200 OK\nContent-Type: text/html\r\nContent-Length: ";
+			responseCode.append(oss.str());
+			responseCode.append("\r\n\r\n\n");
+			d->is_binaryContent = false;
+			break;
 	}
 	responseCode = responseCode + requestBody;
 	return (responseCode);
@@ -509,7 +687,7 @@ std::string	defineRequestHeaderResponseCode(int errcode, std::string requestBody
 
 int	handle_client_request(int socket, t_fd_data *d)
 {
-	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?????
+	char buffer[BUFFER_SIZE] = {0}; /// in this case, header size is included in buffer_size = bad ?? --> i might be stupid
 	std::string	requestBody;
 	std::string	finalMessage;
 	int			errcode;
@@ -517,13 +695,22 @@ int	handle_client_request(int socket, t_fd_data *d)
 	
 	//Receive the new message :
 
+	memset(buffer, '\0', sizeof(buffer));
 	bytesRead = read(socket , buffer, BUFFER_SIZE);
+
 	if (bytesRead < 0)
 	{
 		perror("Failed to read ! ");
 		return (-1);
 	}
-	requestBody = analyse_request(buffer, d, &errcode); // decide how to interpret the request
+	else if (bytesRead == 0) //can happen with multiple fast request in a row
+	{
+		printf("Read 0 bytes ... Closing..\n");
+		close(socket);
+		return (0);
+	}
+	printf("(%lu)\n",bytesRead );
+	requestBody = analyse_request(buffer, d, &errcode, bytesRead); // decide how to interpret the request
 	memset(buffer, '\0', sizeof(buffer));
 	if (errcode == FAILEDSYSTEMCALL)
 	{
@@ -535,13 +722,13 @@ int	handle_client_request(int socket, t_fd_data *d)
 	finalMessage = defineRequestHeaderResponseCode(errcode, requestBody, d); // when .ico, finalMessage = requestBody
 
 	printf("\033[35m\n#######################\n");
-	// printf("(%s)\n",finalMessage.c_str() );
+	printf("(%s)\n",finalMessage.c_str() );
 	printf(" \nERROR CODE(%d)\n",errcode);
 	printf("#######################\033[0m\n");
 
 	if (!finalMessage.empty())
 	{
-		if (d->content_type == "image/x-icon")
+		if (d->is_binaryContent == true)
 		{
 			send(socket , finalMessage.c_str() , finalMessage.length(), 0);
 			send(socket , &d->binaryContent[0] , d->binaryContent.size(), 0);
@@ -569,17 +756,19 @@ int main(int argc, char **argv)
 		perror("cannot bind to socket");
 		return (0);
 	}
-	FD_ZERO(&s_data.saved_sockets);
-	FD_SET(server_fd, &s_data.saved_sockets);
+	FD_SET(server_fd, &s_data.saved_readsockets);
 
-	std::string current_pwd(getcwd(NULL, 0)); // check if null, then exit early
-	s_data.max_fd = server_fd;
+	char	*char_pwd = getcwd(NULL, 0);
+	std::string current_pwd(char_pwd); // to check if null, then exit early + getcwd result should be freed
+	s_data.max_sckt_fd = server_fd;
 	s_data.serverFolder = current_pwd + "/server_files"; //after parsing, to replace
+	free(char_pwd);
+
 	while(42)
 	{
 		printf("\n\033[31m++ Waiting for new connection ++\033[0m\n\n");
-		s_data.ready_sockets = s_data.saved_sockets;
-		if (select(s_data.max_fd + 1, &s_data.ready_sockets, NULL, NULL, NULL) < 0)
+		s_data.ready_readsockets = s_data.saved_readsockets;
+		if (select(s_data.max_sckt_fd + 1, &s_data.ready_readsockets, NULL, NULL, NULL) < 0) // must also check write
 		{
 			perror("Select failed ! ");
 			return (0);
@@ -587,13 +776,13 @@ int main(int argc, char **argv)
 
 		for (int i = 0; i <= s_data.max_fd ; i++)
 		{
-			if (FD_ISSET(i, &s_data.ready_sockets))
+			if (FD_ISSET(i, &s_data.ready_readsockets))
 			{
 				printf("\n\033[32m========= i = %d =========\033[0m\n\n", i);
 				if (i == server_fd) // there is a new connection available on the server socket
 				{
 					my_socket = accept_connexion(server_fd, &servaddr); // accept the new connection
-					FD_SET(my_socket, &s_data.saved_sockets); //add new connection to current set
+					FD_SET(my_socket, &s_data.saved_readsockets); //add new connection to current set
 					printf( "i is %d, server_fd is %d, my_socket is %d\n", i, server_fd, my_socket);
 					printf( "request from server_fd : %d\n", my_socket);
 					if (my_socket > s_data.max_fd) // to set the new max
@@ -602,7 +791,7 @@ int main(int argc, char **argv)
 				else
 				{
 					handle_client_request(i, &s_data);
-					FD_CLR(i, &s_data.saved_sockets);
+					FD_CLR(i, &s_data.saved_readsockets);
 				}
 			}
 		}
