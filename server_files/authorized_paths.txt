@@ -1,1 +1,1 @@
-/home/vdomasch/Documents/42git/5th_circle/webserv/server_files/uploads/
+/home/lchapard/Documents/Webserv/server_files/uploads/

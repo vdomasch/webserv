@@ -33,7 +33,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 std::string find_location_name(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
 	std::map<std::string, LocationConfig>::iterator it_loc;
-	std::string location_name = server.get_matching_location(target, autoindex);
+	std::string location_name = server.get_matching_location(target, autoindex);  ///////////////////////////// if no try catch, fails
 	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
 	it_loc = location_list.find(location_name);
 	if (it_loc != location_list.end())
