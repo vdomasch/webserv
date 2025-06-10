@@ -26,13 +26,7 @@ static void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dir
 		std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
 		sorted.push_back(orderedFiles(i->d_name, filename, i->d_type));
 	}
-
 	std::sort(sorted.begin(), sorted.end(), compareByDirThenName); //change to sort folder + file in one loop for
-	//std::sort(sorted.begin(), sorted.end(), compareBySize);
-
-
-	// for (std::vector<orderedFiles>::iterator j = sorted.begin(); j != sorted.end(); ++j)   //---> we can store it !
-	// 	std::cout << j->baseName << std::endl;
 }
 
 static std::ifstream::pos_type	filesize(const char *filename)
@@ -49,7 +43,6 @@ static std::string	displayCorrectFileSize(const char * filename)
 	float size = static_cast<float>(posSize);
 	int i = 0;
 	const char* units[] = {" B", " kB", " MB", " GB"};
-	// 1024 or 1000 ?
 	while (size >= 1024.0 && i < 3) // 3 is the last index of units
 	{
 		size /= 1024;

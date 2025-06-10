@@ -30,8 +30,6 @@ LocationConfig::LocationConfig(std::string path)
 	_map_location["path"] = path;
 }
 
-//LocationConfig::LocationConfig(const LocationConfig& param) {}
-
 LocationConfig::~LocationConfig() {}
 
 

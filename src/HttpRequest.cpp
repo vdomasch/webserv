@@ -3,11 +3,12 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0) {}
+HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0), _content_type("text/html") {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
+	std::cout << data << std::endl;
 	_raw_data += data;
 	bool was_in_header = false;
 	if (_state == RECEIVING_HEADER)
@@ -144,8 +145,9 @@ void	HttpRequest::parse_headers()
 	}
 }
 
-bool	HttpRequest::is_ready() const { return _state == COMPLETE; }
-bool	HttpRequest::has_error() const { return (_state == ERROR || _errcode != 0); } 
+bool	HttpRequest::is_ready() const		{ return _state == COMPLETE; }
+bool	HttpRequest::is_finished() const	{ return _state == RESPONDED; }
+bool	HttpRequest::has_error() const		{ return (_state == ERROR || _errcode != 0); } 
 
 /////////// GETTERS ///////////
 
@@ -155,6 +157,7 @@ bool 		HttpRequest::get_is_multipart() const	{ return _is_multipart; }
 std::string HttpRequest::get_method() const			{ return _method; }
 std::string HttpRequest::get_target() const			{ return _target; }
 std::string HttpRequest::get_boundary() const		{ return _boundary; }
+std::string HttpRequest::get_content_type() const	{ return _content_type; }
 std::string HttpRequest::get_body() const
 {
 	if (_state == RECEIVING_BODY || _state == COMPLETE)
@@ -171,9 +174,11 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 ////////// SETTERS ///////////
 
-void HttpRequest::set_response(const std::string& response)	{ _response = response; }
-void HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
-void HttpRequest::set_target(const std::string& target)		{ _target = target; }
+void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
+void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
+void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
+void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
+void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
 
 //////// OPERATOR OVERLOAD ///////////
 

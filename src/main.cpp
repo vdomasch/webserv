@@ -1,6 +1,33 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 
+void	create_authorized_delete_paths_files(std::map<std::string, ServerConfig> server_list)
+{
+	for (std::map<std::string, ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
+	{
+		ServerConfig &server = it->second;
+		std::string root = server.get_root();
+		if (root.empty())
+			continue; // Skip if root is not set
+
+		std::string authorized_paths = root + "authorized_paths.txt";
+		std::ofstream authorized_delete_paths(authorized_paths.c_str(), std::ios::trunc);
+		if (!authorized_delete_paths.is_open())
+		{
+			std::cerr << "Error: Could not open authorized delete paths file: " << authorized_paths << std::endl;
+			continue;
+		}
+		std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find("/uploads/");
+		if (it_loc != server.get_location_list().end())
+		{
+			LocationConfig upload_location = it_loc->second;
+			std::string upload_root = upload_location.get_root();
+			authorized_delete_paths << upload_root << std::endl;
+		}
+		authorized_delete_paths.close();
+	}
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 2)
@@ -13,9 +40,8 @@ int main(int argc, char **argv)
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
-	http_config.DEBUG_HTTP_show();
 
-	std::cout << "root of '/': " << http_config.get_server_list()["9090"].get_location_list()["/"].get_root() << std::endl;
+	create_authorized_delete_paths_files(http_config.get_server_list());
 
 	Server server;
 	

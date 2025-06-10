@@ -205,6 +205,12 @@ std::map<std::string, LocationConfig>& ServerConfig::get_location_list()
 	return _location_list;
 }
 
+std::string ServerConfig::get_root()
+{
+	std::map<std::string, std::string>::iterator it = _map_server.find("root");
+	return (it != _map_server.end()) ? it->second : ""; 
+}
+
 bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_list)
 {
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)

@@ -20,8 +20,9 @@ SRV_FILES = main			\
 			HttpResponse	\
 			build_autoindex_page \
 			methods_utils	\
+			delete_request	\
 			CGIContent
-			
+
 CLIENT_FILES = client
 
 SRCS_C = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(CLIENT_FILES)))

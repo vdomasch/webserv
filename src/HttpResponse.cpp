@@ -1,8 +1,8 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse(): _status_code(200), _status_message("OK") {}
+HttpResponse::HttpResponse(): _status_code("200"), _status_message("OK") {}
 
-void	HttpResponse::set_status(int code, const std::string& message)
+void	HttpResponse::set_status(const std::string& code, const std::string& message)
 {
     _status_code = code;
     _status_message = message;
