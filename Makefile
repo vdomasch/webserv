@@ -20,6 +20,7 @@ SRV_FILES = main			\
 			HttpResponse	\
 			build_autoindex_page \
 			methods_utils	\
+			delete_request
 
 CLIENT_FILES = client
 

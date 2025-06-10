@@ -10,7 +10,8 @@ enum RequestState
     RECEIVING_HEADER,
     RECEIVING_BODY,
     COMPLETE,
-    ERROR
+    ERROR,
+	RESPONDED
 };
 
 class HTTPConfig;
@@ -27,6 +28,8 @@ class HttpRequest
 		void		append_data(const std::string &data);
 		bool		is_ready() const;
 		bool		has_error() const;
+		bool		is_finished() const;
+
 
 
 		bool		getKeepAlive() const;
@@ -42,6 +45,7 @@ class HttpRequest
 		void	set_response(const std::string& response);
 		void	set_errorcode(int code);
 		void	set_target(const std::string& target);
+		void	set_state(enum RequestState);
 
 	private:
 		std::string	_raw_data;

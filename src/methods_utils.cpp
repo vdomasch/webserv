@@ -17,6 +17,13 @@ int	check_object_type(std::string& path, int *errcode)
 		return FILE_NOT_FOUND;
 }
 
+std::string	remove_prefix(std::string target, const std::string prefix)
+{
+	if (target.find(prefix) == 0)
+		target.erase(0, prefix.length());
+	return target;
+}
+
 std::string	normalize_path(const std::string &path)
 {
 	std::string normalized = path;
@@ -42,6 +49,7 @@ void	build_response(HttpRequest &req, int status_code, const std::string &status
 	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
 	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
 	req.set_response(res.generate_response());
+	req.is_finished();
 }
 
 std::string	displayErrorPage(const std::string code, const std::string message, const std::string& error_uri, HTTPConfig& http_config, HttpRequest& req, std::map<std::string, ServerConfig>& server_list, t_fd_data& fd_data, const std::string& server_name, bool is_error_request)

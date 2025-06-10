@@ -19,13 +19,6 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-std::string	remove_prefix(std::string target, const std::string prefix)
-{
-	if (target.find(prefix) == 0)
-		target.erase(0, prefix.length());
-	return target;
-}
-
 std::string	try_index_file(const std::string &path, const std::string &index)
 {
 	if (path.empty())
@@ -143,13 +136,4 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	std::string type = get_content_type(file_path);
 	//std::cout << "Keep-Alive: " << req.getKeepAlive() << std::endl;
 	build_response(req, 200, "OK", type, body, req.getKeepAlive());
-}
-
-void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &d, std::string response)
-{
-	static_cast<void>(http_config);
-	static_cast<void>(req);
-	static_cast<void>(server_list);
-	static_cast<void>(d);
-	static_cast<void>(response);
 }
