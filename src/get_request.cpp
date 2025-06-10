@@ -35,10 +35,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	int errcode = 0;
 
 	std::string target = normalize_path(req.get_target());
-	//std::cout << "Target: " << target << std::endl;
-	//std::cout << "Server name: " << server_name << std::endl;
 
-	//std::cout << "is_error_request: " << req._is_error_request << std::endl;
 	std::map<std::string, ServerConfig>::iterator it_serv;
 	if ((it_serv = server_list.find(server_name)) == server_list.end())
 	{
@@ -97,7 +94,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, it_loc->second.get_index()); // Si le target finit par '/', on essaie un fichier index
 
-	//std::cout << "File path: " << file_path << std::endl;
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
 		if (!autoindex)
@@ -112,7 +108,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 			fd_data.serverFolder = server.get_map_server()["root"];
 			fd_data.content_len = 0;
 			fd_data.folderContent.clear();
-			//std::cout << "Directory found, generating index page" << std::endl;
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
 			build_response(req, 200, "OK", "text/html", body, false);
 			return;
@@ -129,11 +124,9 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string
 		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, req._is_error_request), false);
 		return;
 	}
-	//std::cout << "File found: " << file_path << std::endl;
 	std::ostringstream content;
 	content << file.rdbuf();
 	std::string body = content.str();
 	std::string type = get_content_type(file_path);
-	//std::cout << "Keep-Alive: " << req.getKeepAlive() << std::endl;
 	build_response(req, 200, "OK", type, body, req.getKeepAlive());
 }

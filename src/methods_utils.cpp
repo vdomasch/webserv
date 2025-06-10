@@ -75,8 +75,6 @@ std::string	displayErrorPage(const std::string code, const std::string message, 
 	return req.get_response();
 }
 
-//std::string generate_autoindex_html(const std::string& uri, const std::string& real_path);
-
 std::string	find_error_page(const std::string& code, LocationConfig* loc, ServerConfig& serv, HTTPConfig& http)
 {
 	// Vérifie Location (si fourni)

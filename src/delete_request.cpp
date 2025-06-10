@@ -5,10 +5,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::str
 	int errcode = 0;
 
 	std::string target = normalize_path(req.get_target());
-	//std::cout << "Target: " << target << std::endl;
-	//std::cout << "Server name: " << server_name << std::endl;
 
-	//std::cout << "is_error_request: " << req._is_error_request << std::endl;
 	std::map<std::string, ServerConfig>::iterator it_serv;
 	if ((it_serv = server_list.find(server_name)) == server_list.end())
 	{
