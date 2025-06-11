@@ -392,13 +392,16 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	//
 	int	nb = 0; //debug, nb time in loop
 
+	std::string target_copy = target;
+	if (target.at(target.size() - 1) != '/')
+		target_copy += '/';
 	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
 	{
 		printf("(%d)\n\n", ++nb);
 		const std::string& loc_path = it->first;
 		printf("-> (%s)\n\n", loc_path.c_str());
-		printf("<-(%s)\n\n", target.c_str());
-		if (target.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
+		printf("<-(%s)\n\n", target_copy.c_str());
+		if (target_copy.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
 		{
 			
 			best_match = loc_path;

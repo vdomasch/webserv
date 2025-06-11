@@ -44,6 +44,14 @@ int	check_object_type(std::string& path, int *errcode)
 
 std::string	remove_prefix(std::string target, const std::string prefix)
 {
+	if (prefix.empty())
+		return target;
+	if (target.at(target.size() - 1) != '/')
+	{
+		if (target.find(prefix.substr(0, prefix.size() - 1)) == 0)
+			target.erase(0, prefix.length());
+		return target;
+	}
 	if (target.find(prefix) == 0)
 		target.erase(0, prefix.length());
 	return target;
