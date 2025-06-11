@@ -45,6 +45,7 @@ class Server
 		std::string	get_server_name(int fd);
 		void		clean_sockets();
 		bool		reading_data(int fd);
+		bool		is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound);
 
 };
 

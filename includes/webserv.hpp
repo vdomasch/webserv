@@ -7,23 +7,25 @@
 # include "methods_utils.hpp"
 # include "struct.hpp"
 
-#include <stdio.h>
-#include <iostream>//std::cout
-#include <sys/socket.h> //socket
-#include <strings.h> //bzero
-#include <netinet/in.h> // struct addr
-#include <arpa/inet.h> // inet_addr
-#include <unistd.h> //read & write
-#include <string.h> // strlen
-#include <fstream> // std::ofstream
-#include <sys/stat.h> // stat for file status
-#include <sstream> // Content Size
-#include <vector> // .ico handling
-#include <stdlib.h> // atof
-#include <dirent.h> // dirent for opendir
-#include <fcntl.h>// open
-#include <algorithm> // std::sort
-#include <cmath> // floor for size
+# include <stdio.h>
+# include <iostream>//std::cout
+# include <sys/socket.h> //socket
+# include <strings.h> //bzero
+# include <netinet/in.h> // struct addr
+# include <arpa/inet.h> // inet_addr
+# include <unistd.h> //read & write
+# include <string.h> // strlen
+# include <fstream> // std::ofstream
+# include <sys/stat.h> // stat for file status
+# include <sstream> // Content Size
+# include <vector> // .ico handling
+# include <stdlib.h> // atof
+# include <dirent.h> // dirent for opendir
+# include <fcntl.h>// open
+# include <algorithm> // std::sort
+# include <cmath> // floor for size
+# include <set> // std::set for ip:port binding
+# include <ctime>
 
 
 #define SERV_PORT 8080
