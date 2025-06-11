@@ -162,6 +162,46 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_n
 	return it->second;
 }
 
+std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
+{
+	std::map<std::string, LocationConfig>::iterator it_loc;
+	std::string location_name = server.get_matching_location(target, autoindex);
+	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
+	it_loc = location_list.find(location_name);
+	if (it_loc != location_list.end())
+		root = it_loc->second.get_root();
+	else
+		return "";
+	return location_name;
+}
+
+std::string	validate_request_context(std::string &location_name, std::string &root, int &errcode, ServerConfig &server, const std::string &method)
+{
+	if (location_name.empty())
+	{
+		std::cerr << "Error: No matching location found for target." << std::endl;
+		return "500";
+	}
+	if (root.empty())
+	{
+		std::cerr << "Error: Root directory not set for location: " << location_name << std::endl;
+		return "500";
+	}
+
+	if (check_object_type(root, &errcode) != IS_DIRECTORY)
+	{
+		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
+		return "500";
+	}
+
+	if (check_allowed_methods(server, server.get_location_list().find(location_name)->second, method) == false)
+	{
+		std::cerr << "Error: Method GET not allowed for location: " << location_name << std::endl;
+		return "405";
+	}
+	return "";
+}
+
 std::string	message_status(const std::string &status)
 {
 	if (status == "200")

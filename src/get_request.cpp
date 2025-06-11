@@ -30,19 +30,6 @@ std::string	try_index_file(const std::string &path, const std::string &index)
 
 std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 
-std::string find_location_name(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
-{
-	std::map<std::string, LocationConfig>::iterator it_loc;
-	std::string location_name = server.get_matching_location(target, autoindex);
-	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
-	it_loc = location_list.find(location_name);
-	if (it_loc != location_list.end())
-		root = it_loc->second.get_root();
-	else
-		return "";
-	return location_name;
-}
-
 void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
@@ -53,34 +40,17 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 	bool autoindex = server.get_autoindex();
 
 
-	std::string root("");
-	std::string location_name = find_location_name(target, server, root, autoindex);
-	if (location_name.empty())
+	std::string location_name, root;
+	try {	location_name = find_location_name_and_set_root(target, server, root, autoindex); }
+	catch (std::exception &e)
 	{
-		std::cerr << "Error: No matching location found for target: " << target << std::endl;
-		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
-		return;
-	}
-	if (root.empty())
-	{
-		std::cerr << "Error: Root directory not set for location: " << location_name << std::endl;
-		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
-		return;
+		std::cerr << "Error finding matching location: " << e.what() << std::endl;
+		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
 
-	if (check_object_type(root, &errcode) != IS_DIRECTORY)
-	{
-		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
-		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
-		return;
-	}
-
-	if (check_allowed_methods(server, server.get_location_list().find(location_name)->second, "GET") == false)
-	{
-		std::cerr << "Error: Method GET not allowed for location: " << location_name << std::endl;
-		build_response(req, "405", displayErrorPage("405", location_name, http_config, req, fd_data, server_name), false);
-		return;
-	}
+	std::string error_code = validate_request_context(location_name, root, errcode, server, "GET");
+	if (!error_code.empty())
+		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
@@ -90,8 +60,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 		if (!autoindex)
 		{
 			std::cerr << "Forbidden request: " << file_path << std::endl;
-			build_response(req, "403", displayErrorPage("403", location_name, http_config, req, fd_data, server_name), false);
-			return;
+			return (build_response(req, "403", displayErrorPage("403", location_name, http_config, req, fd_data, server_name), false));
 		}
 		if (autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
 		{
@@ -100,20 +69,17 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 			fd_data.content_len = 0;
 			fd_data.folderContent.clear();
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
-			build_response(req, "200", body, false);
-			return;
+			return (build_response(req, "200", body, false));
 		}
 		std::cerr << "File not found: " << file_path << std::endl;
-		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
-		return;
+		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
 
 	std::ifstream file(file_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
 		std::cerr << "Error opening file: " << file_path << std::endl;
-		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
-		return;
+		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
 	std::ostringstream content;
 	content << file.rdbuf();
