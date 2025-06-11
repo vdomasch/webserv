@@ -8,7 +8,7 @@ HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
-	std::cout << data << std::endl;
+	
 	_raw_data += data;
 	bool was_in_header = false;
 	if (_state == RECEIVING_HEADER)
@@ -18,6 +18,9 @@ void HttpRequest::append_data(const std::string &data)
 		{
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
+			
+			std::cout << "-----------------\n" << _header << "\n-----------------\n" << std::endl;
+			
 			parse_headers();
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)

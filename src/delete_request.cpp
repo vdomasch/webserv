@@ -22,12 +22,9 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 
 
 
-	std::cout << req.get_target() << std::endl;
-	std::cout << target << std::endl;
+	std::cout << "Requested target is : " << target << std::endl;
 
-	std::string path = root.substr(0, root.size() - 1) + req.get_target().substr(req.get_target().find("uploads") + 7, req.get_target().size() - 1); // remove the root and the /uploads/ part from the target
-
-
+	std::string path = root.substr(0, root.size() - 1) + req.get_target()/*.substr(req.get_target().find("uploads") + 7, req.get_target().size() - 1)*/; // remove the root and the /uploads/ part from the target
 	std::string authorized_paths("authorized_paths.txt");
 
 
@@ -39,7 +36,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 	}
 
 
-	std::cout << "Checking if path is authorized: " << path << std::endl;
+	std::cout << "Checking if path is authorized: \"" << path << "\"\n" << std::endl;
 	std::string line;
 	while (std::getline(valid_paths, line)) // check if file requested in authorized paths
 	{

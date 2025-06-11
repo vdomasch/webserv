@@ -117,7 +117,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	}
 }
 
-bool	create_directories(std::string path, std::string root)
+bool	create_directories(std::string path, std::string root)    ////might be the issue
 {
 	std::istringstream iss(path);
 	std::string token;
@@ -131,6 +131,9 @@ bool	create_directories(std::string path, std::string root)
 		if (!current.empty() && current.at(current.size() - 1) != '/')
 			current += '/'; // Ensure we have a trailing slash
 		current += token;
+
+		std::cout << "Analysing create directories ... : (" << current.c_str() << ")\n";
+
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
 			if (errno == EEXIST)
@@ -141,12 +144,15 @@ bool	create_directories(std::string path, std::string root)
 				return false;
             }
 		}
-		std::ofstream authorized_delete_paths((root + "authorized_delete_paths.txt").c_str(), std::ios::app);
+		std::ofstream authorized_delete_paths((root + "authorized_paths.txt").c_str(), std::ios::app);
 		if (!authorized_delete_paths.is_open())
 		{
 			std::cerr << "Error: Could not open authorized delete paths file." << std::endl;
 			return false;
 		}
+
+		std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
+
 		authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
 		authorized_delete_paths.close();
 	}
@@ -182,7 +188,12 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		handleCGI(fd_data, &errcode);
+
+
+		std::string body;
+
+		body = handleCGI(fd_data, &errcode);
+		std::cout << "Fresh out of CGI : \n" << body << "\n";
 	}
 
 	std::string head;
