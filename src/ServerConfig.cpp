@@ -412,7 +412,7 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 		std::cout << "Falling back to default location '/'" << std::endl;
 		return "/";
 	}
-
+	
 	throw std::runtime_error("No suitable location found for target: " + target);
 }
 

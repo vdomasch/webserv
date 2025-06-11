@@ -159,52 +159,19 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	std::string target = normalize_path(req.get_target());
 
 	// Trouver la configuration serveur
-	std::map<std::string, ServerConfig> &server_list = http_config.get_server_list();
-	std::map<std::string, ServerConfig>::iterator it_serv = server_list.find(server_name);
-	if (it_serv == server_list.end())
-	{
-		server_name = server_name.substr(server_name.find(':') + 1);
-		it_serv = server_list.find(server_name);
-		if (it_serv == server_list.end())
-		{
-			req.set_response("HTTP/1.1 404 Not Found\r\n\r\n");
-			return;
-		}
-	}
-
-	ServerConfig &server = it_serv->second;
-	std::string location_name, root;
-	std::map<std::string, LocationConfig>::iterator it_loc;
+	ServerConfig &server = find_current_server(http_config, server_name);
 	bool autoindex = server.get_autoindex();
 
-	try {
-		location_name = server.get_matching_location(target, autoindex);
-		std::map<std::string, LocationConfig> &location_list = server.get_location_list();
-		it_loc = location_list.find(location_name);
-		if (it_loc != location_list.end())
-			root = it_loc->second.get_root();
-		else
-			throw std::runtime_error("Location not found");
-	} catch (std::exception &e)
+	std::string location_name, root;
+	try { location_name = find_location_name_and_set_root(target, server, root, autoindex); }
+	catch (std::exception &e)
 	{
-		std::cerr << "Error getting matching location: " << e.what() << std::endl;
-		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
-		return;
+		std::cerr << "Error finding matching location: " << e.what() << std::endl;
+		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
-
-	// Vérifier que le dossier existe
-	if (check_object_type(root, &errcode) != IS_DIRECTORY)
-	{
-		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
-		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
-		return;
-	}
-
-	if (check_allowed_methods(server, it_loc->second, "POST") == false)
-	{
-		build_response(req, "405", displayErrorPage("405", location_name, http_config, req, fd_data, server_name), false);
-		return;
-	}
+	std::string error_code = validate_request_context(location_name, root, errcode, server, "POST");
+	if (!error_code.empty())
+		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
 
 	if (location_name == "/cgi-bin/")
 	{
@@ -223,15 +190,13 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
 	{
 		std::cerr << "Error: Failed to create directories for POST data." << std::endl;
-		build_response(req, "500", "Failed to create directories for POST data", false);
-		return;
+		return (build_response(req, "500", "Failed to create directories for POST data", false));
 	}
 	std::ofstream out(file_path.c_str(), std::ios::binary);
 	if (!out.is_open())
 	{
 		std::cerr << "Error: Failed to open file for writing: " << file_path << std::endl;
-		build_response(req, "500", "Failed to store POST data", false);
-		return;
+		return (build_response(req, "500", "Failed to store POST data", false));
 	}
 	out << body; // Stockage brut, sans analyse de type MIME
 	out.close();
@@ -241,6 +206,4 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
 	build_response(req, "201", response_body.str(), req.getKeepAlive());
-
-	
 }
