@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0) {}
+HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0), _content_type("text/html") {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -150,6 +150,7 @@ bool 		HttpRequest::get_is_multipart() const	{ return _is_multipart; }
 std::string HttpRequest::get_method() const			{ return _method; }
 std::string HttpRequest::get_target() const			{ return _target; }
 std::string HttpRequest::get_boundary() const		{ return _boundary; }
+std::string HttpRequest::get_content_type() const	{ return _content_type; }
 std::string HttpRequest::get_body() const
 {
 	if (_state == RECEIVING_BODY || _state == COMPLETE)
@@ -170,6 +171,7 @@ void	HttpRequest::set_response(const std::string& response)	{ _response = respon
 void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
+void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
 
 //////// OPERATOR OVERLOAD ///////////
 

@@ -46,7 +46,6 @@ std::string	get_extension(const std::string& head)
 	if (end_pos == std::string::npos)
 		return ".bin"; // Default extension if not found
 	std::string content_type = head.substr(pos, end_pos - pos);
-	//std::cout << "Content-Type found: " << content_type << std::endl;
 	return get_content_extension(content_type);
 }
 
@@ -118,7 +117,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	}
 }
 
-bool	create_directories(std::string path)
+bool	create_directories(std::string path, std::string root)
 {
 	std::istringstream iss(path);
 	std::string token;
@@ -142,19 +141,25 @@ bool	create_directories(std::string path)
 				return false;
             }
 		}
-		std::cout << "Directory: '" << current << "' created." << std::endl;
-		//add_path_to_deleted_permission_file
+		std::ofstream authorized_delete_paths((root + "authorized_delete_paths.txt").c_str(), std::ios::app);
+		if (!authorized_delete_paths.is_open())
+		{
+			std::cerr << "Error: Could not open authorized delete paths file." << std::endl;
+			return false;
+		}
+		authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
+		authorized_delete_paths.close();
 	}
 	return true;
 }
 
-void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::string, ServerConfig> &server_list, t_fd_data &fd_data, std::string server_name)
+void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
-	//std::cout << "Handling POST request for target: " << req.get_target() << std::endl;
 	int errcode = 0;
 	std::string target = normalize_path(req.get_target());
 
 	// Trouver la configuration serveur
+	std::map<std::string, ServerConfig> &server_list = http_config.get_server_list();
 	std::map<std::string, ServerConfig>::iterator it_serv = server_list.find(server_name);
 	if (it_serv == server_list.end())
 	{
@@ -180,21 +185,24 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 			root = it_loc->second.get_root();
 		else
 			throw std::runtime_error("Location not found");
-	} catch (std::exception &e) {
-		build_response(req, 404, "Not Found", "text/html", displayErrorPage("404", "Page Not Found", find_error_page("404", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+	} catch (std::exception &e)
+	{
+		std::cerr << "Error getting matching location: " << e.what() << std::endl;
+		build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
 	// Vérifier que le dossier existe
 	if (check_object_type(root, &errcode) != IS_DIRECTORY)
 	{
-		build_response(req, 500, "Internal Server Error", "text/html", displayErrorPage("500", "Root Invalid", find_error_page("500", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
+		build_response(req, "500", displayErrorPage("500", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
 	if (check_allowed_methods(server, it_loc->second, "POST") == false)
 	{
-		build_response(req, 405, "Method Not Allowed", "text/html", displayErrorPage("405", "Method Not Allowed", find_error_page("405", NULL, server, http_config), http_config, req, server_list, fd_data, server_name, true), false);
+		build_response(req, "405", displayErrorPage("405", location_name, http_config, req, fd_data, server_name), false);
 		return;
 	}
 
@@ -212,15 +220,17 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	std::string file_path = create_filename(root, head);	
 
-	if (create_directories(file_path.substr(0, file_path.rfind('/'))) == false)
+	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
 	{
-		build_response(req, 500, "Internal Server Error", "text/html", "Failed to create directories for POST data", false);
+		std::cerr << "Error: Failed to create directories for POST data." << std::endl;
+		build_response(req, "500", "Failed to create directories for POST data", false);
 		return;
 	}
 	std::ofstream out(file_path.c_str(), std::ios::binary);
 	if (!out.is_open())
 	{
-		build_response(req, 500, "Internal Server Error", "text/html", "Failed to store POST data", false);
+		std::cerr << "Error: Failed to open file for writing: " << file_path << std::endl;
+		build_response(req, "500", "Failed to store POST data", false);
 		return;
 	}
 	out << body; // Stockage brut, sans analyse de type MIME
@@ -228,9 +238,9 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, std::map<std::strin
 
 	std::ostringstream response_body;
 	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
-	response_body << /*"<html><body><h1>POST Success</h1><p>"File saved as: " <<*/ req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename /*<< "</p></body></html>"*/;
+	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
-	build_response(req, 201, "Created", "text/html", response_body.str(), req.getKeepAlive());
+	build_response(req, "201", response_body.str(), req.getKeepAlive());
 
 	
 }

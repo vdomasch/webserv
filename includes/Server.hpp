@@ -30,7 +30,7 @@ class Server
 		std::map<int, int>																	_socket_to_port_map;
 		std::map<int , HttpRequest>															_socket_states;
 
-		std::map<std::string, void(*)(HTTPConfig& , HttpRequest& , std::map<std::string, ServerConfig>&, t_fd_data &, std::string )>	_method_map;
+		std::map<std::string, void(*)(HTTPConfig& , HttpRequest& , t_fd_data &, std::string )>	_method_map;
 
 		int			initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void		running_loop(HTTPConfig &http_config, sockaddr_in &servaddr);
