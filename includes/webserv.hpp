@@ -7,10 +7,6 @@
 # include "methods_utils.hpp"
 # include "struct.hpp"
 
-
-#ifndef WEBSERVER_HPP
-# define WEBSERVER_HPP
-
 #include <stdio.h>
 #include <iostream>//std::cout
 #include <sys/socket.h> //socket

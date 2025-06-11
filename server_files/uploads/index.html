@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Home</title>
+	</head>
+	<body style="background-color: #bee8fd;">
+		<section>
+			<section>
+				<div class="container" style="text-align: center; margin-top: 6em; font-family: Calibri; font-size: 20px; line-height: 1.5; padding: 2em; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);"> 
+					<h3>Envoyer un fichier</h3>
+					<p>Choisissez un fichier à envoyer. Le serveur décidera de son emplacement.</p>
+			
+					<label for="myfile">Sélectionner un fichier :</label><br>
+					<input type="file" id="myfile" name="myfile"><br><br>
+			
+					<button onclick="sendPost()">Envoyer</button>
+			
+					<p id="uploadResult" style="margin-top: 1em;"></p>
+				</div>
+			
+				<script>
+				function sendPost() {
+					const fileInput = document.getElementById("myfile");
+					const file = fileInput.files[0];
+			
+					if (!file) {
+						document.getElementById("uploadResult").innerText = "❌ Please select a file.";
+						return;
+					}
+			
+					const formData = new FormData();
+					formData.append("myfile", file);
+			
+					fetch(window.location.pathname, {
+						method: "POST",
+						body: formData
+					})
+					.then(response => {
+						return response.text().then(text => {
+							if (response.ok) {
+								document.getElementById("uploadResult").innerText = "✅ File send. Path : " + text;
+							} else {
+								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
+							}
+						});
+					})
+					.catch(error => {
+						document.getElementById("uploadResult").innerText = "❌ Error network : " + error;
+					});
+				}
+				</script>
+		</section>
+		<section>
+			<h2>Supprimer un fichier</h2>
+
+    		<label for="deletePath">Chemin du fichier à supprimer :</label><br>
+    		<input type="text" id="deletePath" placeholder="/my/path.txt" size="40"><br><br>
+
+    		<button onclick="sendDelete()">Supprimer</button>
+
+    		<p id="result"></p>
+
+    		<script>
+    		function sendDelete() {
+    		    const path = document.getElementById("deletePath").value;
+			
+    		    fetch(path, { method: 'DELETE' })
+    		    .then(response => {
+    		        if (response.status === 204) {
+    		            document.getElementById("result").innerText = "✅ File successfuly deleted.";
+    		        } else {
+    		            document.getElementById("result").innerText = `❌ Error ${response.status} : ${response.statusText}`;
+    		        }
+    		    })
+    		    .catch(err => {
+    		        document.getElementById("result").innerText = "❌ Error network : " + err;
+    		    });
+    		}
+    		</script>
+		</section>
+	</body>	
+</html>

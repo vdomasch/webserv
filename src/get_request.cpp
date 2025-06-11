@@ -19,12 +19,21 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-std::string	try_index_file(const std::string &path, const std::string &index)
+std::string	try_index_file(std::string &path, const std::string &index)
 {
+	int errcode = 0;
 	if (path.empty())
 		return "";
-	if (!index.empty() && path.at(path.size() - 1) == '/')
-		return path + index;
+	if (index.empty())
+		return path;
+	if (check_object_type(path, &errcode) == IS_DIRECTORY)
+	{
+		if (index.empty())
+			return path;
+		else if (path.at(path.size() - 1) != '/')
+			path += '/'; // Ensure path ends with a slash for directory
+		path += index; // Append index file to directory path
+	}
 	return path;
 }
 
@@ -54,12 +63,11 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
-
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
 		if (!autoindex)
 		{
-			std::cerr << "Forbidden request: " << file_path << std::endl;
+			std::cerr << "Error: Forbidden request: " << file_path << std::endl;
 			return (build_response(req, "403", displayErrorPage("403", location_name, http_config, req, fd_data, server_name), false));
 		}
 		if (autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
@@ -71,14 +79,14 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
 			return (build_response(req, "200", body, false));
 		}
-		std::cerr << "File not found: " << file_path << std::endl;
+		std::cerr << "Error: File not found: " << file_path << std::endl;
 		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
 
 	std::ifstream file(file_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
-		std::cerr << "Error opening file: " << file_path << std::endl;
+		std::cerr << "Error: opening file: " << file_path << std::endl;
 		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
 	}
 	std::ostringstream content;
