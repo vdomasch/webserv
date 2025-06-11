@@ -385,19 +385,19 @@ bool	ServerConfig::handle_host(std::string value)
 	return 0;
 }
 
-std::string ServerConfig::get_matching_location(const std::string& target, bool &autoindex)  ///issue is here
+std::string ServerConfig::get_matching_location(const std::string& target, bool &autoindex)  ///issue WAS here, fixed
 {
 	std::string best_match;
 	size_t max_len = 0;
 	//
-	int	nb = 0; //debug, nb time in loop
+	// int	nb = 0; //debug, nb time in loop
 
 	for (std::map<std::string, LocationConfig>::iterator it = _location_list.begin(); it != _location_list.end(); ++it)
 	{
-		printf("(%d)\n\n", ++nb);
+		// printf("(%d)\n\n", ++nb);
 		const std::string& loc_path = it->first;
-		printf("-> (%s)\n\n", loc_path.c_str());
-		printf("<-(%s)\n\n", target.c_str());
+		// printf("-> (%s)\n\n", loc_path.c_str());
+		// printf("<-(%s)\n\n", target.c_str());
 		if (target.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
 		{
 			

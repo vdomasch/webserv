@@ -42,7 +42,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 std::string find_location_name(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
 	std::map<std::string, LocationConfig>::iterator it_loc;
-	std::string location_name = server.get_matching_location(target, autoindex);  ///////////////////////////// if no try catch, fails
+	std::string location_name = server.get_matching_location(target, autoindex);
 	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
 	it_loc = location_list.find(location_name);
 	if (it_loc != location_list.end())
@@ -86,8 +86,11 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 		handleCGI(fd_data, &errcode);
 	}
 
+	std::cout << "ḦERE: " << remove_prefix(target, location_name) << std::endl;
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
+	std::cout << "ḦERE: " << path_no_index << std::endl;
 	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::cout << "ḦERE: " << file_path << std::endl;
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
 		if (!autoindex)
