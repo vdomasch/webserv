@@ -169,16 +169,16 @@ std::string	create_header(const std::string &status, const std::string &content_
 
 bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const std::string &method)
 {
-	if (location.get_map_location().count(method) == 0)
-	{
-		if (server.get_map_server().count(method) == 0)
-		{
-			std::cerr << "Error: method not allowed." << std::endl;
-			return false;
-		}
+	std::map<std::string, std::string>& location_map = location.get_map_location();
+	if (location_map.count(method))
 		return true;
+	else if (!location_map.count("allow_methods"))
+	{
+		std::map<std::string, std::string>& server_map = server.get_map_server();
+		if (server_map.count(method))
+			return true;
 	}
-	return true;
+	return false;	
 }
 
 ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_name)

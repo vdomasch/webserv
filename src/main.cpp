@@ -21,17 +21,11 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 						if (!location_root.empty())
 							server.add_authorized_paths(location_root);
 				}
-				else if (server.get_map_server().count("allow_methods") && server.get_map_server().count("DELETE"))
+				else if (server.get_map_server().count("DELETE"))
 				{
 					std::string server_root = server.get_root();
 					if (!server_root.empty())
 						server.add_authorized_paths(server_root);
-				}
-				else if (http_config.get_http_map().count("DELETE"))
-				{
-					std::string http_root = server.get_root();
-					if (!http_root.empty())
-						server.add_authorized_paths(http_root);
 				}
 			}
 		}
