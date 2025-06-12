@@ -442,6 +442,15 @@ bool	ServerConfig::is_allow_methods_declared(std::map<std::string, std::string> 
 
 void	ServerConfig::set_get(std::map<std::string, std::string> &_current_map)
 {
-	//_current_map["allow_methods"] = "true";
 	_current_map["GET"] = "true";
+}
+
+void	ServerConfig::add_authorized_paths(const std::string& path)
+{
+	_authorized_paths.insert(path);
+}
+
+std::set<std::string>	ServerConfig::get_authorized_paths() const
+{ 
+	return _authorized_paths;
 }

@@ -1,30 +1,40 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 
-void	create_authorized_delete_paths_files(std::map<std::string, ServerConfig> server_list)
+static void	authorized_delete_paths(HTTPConfig& http_config)
 {
-	for (std::map<std::string, ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
+	std::map<std::string, ServerConfig>& server_list = http_config.get_server_list();
+	if (!server_list.empty())
 	{
-		ServerConfig &server = it->second;
-		std::string root = server.get_root();
-		if (root.empty())
-			continue; // Skip if root is not set
+		for (std::map<std::string, ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
+		{
+			ServerConfig &server = it->second;
 
-		std::string authorized_paths = root + "authorized_paths.txt";
-		std::ofstream authorized_delete_paths(authorized_paths.c_str(), std::ios::trunc);
-		if (!authorized_delete_paths.is_open())
-		{
-			std::cerr << "Error: Could not open authorized delete paths file: " << authorized_paths << std::endl;
-			continue;
+			std::map<std::string, LocationConfig> location_list = server.get_location_list();
+			for (std::map<std::string, LocationConfig>::iterator it_loc = location_list.begin(); it_loc != location_list.end(); ++it_loc)
+			{ 
+				LocationConfig &location = it_loc->second;
+				std::map<std::string, std::string> location_map = location.get_map_location();
+				if (location_map.count("allow_methods") && location_map.count("DELETE"))
+				{
+						std::string location_root = location.get_root();
+						if (!location_root.empty())
+							server.add_authorized_paths(location_root);
+				}
+				else if (server.get_map_server().count("allow_methods") && server.get_map_server().count("DELETE"))
+				{
+					std::string server_root = server.get_root();
+					if (!server_root.empty())
+						server.add_authorized_paths(server_root);
+				}
+				else if (http_config.get_http_map().count("DELETE"))
+				{
+					std::string http_root = server.get_root();
+					if (!http_root.empty())
+						server.add_authorized_paths(http_root);
+				}
+			}
 		}
-		std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find("/uploads/");
-		if (it_loc != server.get_location_list().end())
-		{
-			LocationConfig upload_location = it_loc->second;
-			std::string upload_root = upload_location.get_root();
-			authorized_delete_paths << upload_root << std::endl;
-		}
-		authorized_delete_paths.close();
 	}
 }
 
@@ -41,7 +51,7 @@ int main(int argc, char **argv)
 	if (http_config.parse_http())
 		return (1);
 
-	create_authorized_delete_paths_files(http_config.get_server_list());
+	authorized_delete_paths(http_config);
 
 	Server server;
 	

@@ -2,6 +2,7 @@
 # define SERVERCONFIG_HPP
 
 # include "LocationConfig.hpp"
+# include <set>
 
 template <typename Y, typename T> Y convert(const T& from);
 
@@ -30,7 +31,9 @@ class ServerConfig
 		std::string								get_root();
 		std::map<std::string, LocationConfig>&	get_location_list();
 		std::map<std::string, std::string>&		get_map_server();
+		std::set<std::string>					get_authorized_paths() const;
 
+		void			add_authorized_paths(const std::string& path);
 
 		std::string		get_matching_location(const std::string& target, bool &autoindex);
 
@@ -39,11 +42,14 @@ class ServerConfig
 
 	private:
 
-		std::map<std::string, std::string> _map_server;
-		std::vector<std::string> _listen_ports;
-		std::map<std::string, std::string> _ip_and_ports_association;
-		std::map<std::string, LocationConfig> _location_list;
-		std::string _server_directives[13];
+		std::map<std::string, std::string>		_map_server;
+		std::vector<std::string>				_listen_ports;
+		std::map<std::string, std::string>		_ip_and_ports_association;
+		std::map<std::string, LocationConfig>	_location_list;
+		std::string								_server_directives[13];
+
+		std::set<std::string>	_authorized_paths;
+
 	
 		bool	is_server_variable(std::string key);
 		bool	handle_listen(std::istringstream &iss, std::map<std::string, std::string> &_map_server);

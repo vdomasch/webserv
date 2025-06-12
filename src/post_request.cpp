@@ -91,7 +91,6 @@ std::string create_filename(std::string& root, const std::string& head)
 
 void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 {
-	// Ici, on suppose que req.get_body() contient les données POST à traiter
 	body = req.get_body();
 	if (body.empty())
 	{

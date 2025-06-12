@@ -204,6 +204,7 @@ bool	handle_allow_methods(std::istringstream &iss, std::map<std::string, std::st
 				std::cerr << "Error: Keyword allow_methods already set for method " << key << "!" << std::endl;
 				return 1;
 			}
+			_current_map["allow_methods"] = "true";
 			_current_map[key] = "true";
 		}
 		else

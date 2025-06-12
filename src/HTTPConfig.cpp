@@ -311,6 +311,18 @@ void	HTTPConfig::DEBUG_HTTP_show()
 		std::cout << "Server port: " << it->first << std::endl;
 		std::cout << it->second.DEBUG_test() << std::endl;
 	}
+	
+	for (std::map<std::string, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+	{
+		ServerConfig &server = it->second;
+		std::set<std::string> paths = server.get_authorized_paths();
+		std::cout << "Authorized paths for DELETE in server: " << server.get_server_name() << std::endl;
+		std::cout << paths.size() << " authorized paths found." << std::endl;
+		for (std::set<std::string>::iterator it_path = paths.begin(); it_path != paths.end(); ++it_path)
+		{
+			std::cout << "Authorized path for DELETE: " << *it_path << std::endl;
+		}
+	}
 }
 
 bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
