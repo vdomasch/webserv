@@ -272,7 +272,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string response = _socket_states[fd].get_response();
 		send(fd, response.c_str(), response.size(), 0);
 
-		if (!_socket_states[fd].getKeepAlive() || _socket_states[fd].get_method() == "DELETE") // To review ?? add POST in it ?
+		if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
 			close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
 		else 
 			_socket_states[fd] = HttpRequest(); // Optionnel : reset request state for next request
@@ -319,7 +319,11 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 			}
 			if (now - _socket_states[i].get_time() > 5)
+			{
 				close_msg(i, "Idle connection closed", 0, 0);
+				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
+				_socket_states.erase(i); // Supprimer l'état de la socket
+			}
 		}
 	}
 }
