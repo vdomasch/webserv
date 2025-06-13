@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0), _content_type("text/html") {}
+HttpRequest::HttpRequest(): _is_error_request(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _errcode(0), _content_type("text/html") {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
