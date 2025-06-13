@@ -303,7 +303,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 500000;
 
-		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, &timeout) < 0)
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, NULL, NULL, &timeout) < 0)
 		{
 			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
