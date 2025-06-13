@@ -53,6 +53,7 @@ class HttpRequest
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
 		void	set_time(unsigned long t);
+		void	set_rootpath(const std::string& rootpath); //for CGI full path, is to be modified
 
 	private:
 		bool		_is_server_socket;
@@ -63,6 +64,7 @@ class HttpRequest
 		std::string	_target;
 		std::string	_query_string;
 		std::string _http_version;
+		std::string _rootpath;   //for CGI full path, is to be modified
 		std::map<std::string, std::string> _headers_map;
 
 		RequestState	_state;

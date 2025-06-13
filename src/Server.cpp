@@ -227,6 +227,9 @@ bool	Server::reading_data(int fd)
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
+
+	// std::cout << "[reading_data]Finished recv.......\n";
+
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error in request: " << std::endl;
@@ -235,7 +238,10 @@ bool	Server::reading_data(int fd)
 		return 1;
 	}
 	if (!_socket_states[fd].is_ready())
+	{
+		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
+	}
 	
 	if (_socket_states[fd].get_method().empty())
 	{
@@ -270,6 +276,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
+			// std::cout << "[handle_client_request] Launching method....\n";
 			_method_map[method](http_config, _socket_states[fd], _socket_data, server_name);
 		}
 		else

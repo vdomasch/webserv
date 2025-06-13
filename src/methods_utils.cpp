@@ -1,14 +1,17 @@
 #include "webserv.hpp"
 
-std::string	handleCGI(t_fd_data &d, int *errcode)
+std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
 	std::string	CGIBody;
 	int			CGI_body_size;
 
-	printf("beep beep boop ... i'm CGI ... \n\n");
-	d.cg.setEnvCGI(d.requestedFilePath, d.Content_Type, d.Content_Length, d.method_name);
+	printf("\033[35mHandeling CGI ....\n\n\033[0m|");
+
+	req.set_rootpath("/home/lchapard/Documents/Webserv"); // ugly but temporary
+	std::cout << " | " << (req.get_rootpath() +  req.get_target())<< " | " << d.Content_Type<< " | " << d.Content_Length<< " | " << req.get_method() << "\n";
+	d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, req.get_method());
 	d.cg.executeCGI();
-	d.cg.sendCGIBody(&d.binaryContent);
+	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
 
 	//test, avoid zombie i guess ?
@@ -88,6 +91,7 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 
 std::string	displayErrorPage(const std::string& code, const std::string& location_name, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data, const std::string& server_name)
 {
+	PRINT_DEBUG2
 	std::string error_uri = find_error_page(code, location_name, server_name, http_config);
     if (error_uri.empty() || req._is_error_request)
 	{
