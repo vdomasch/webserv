@@ -162,7 +162,9 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
+	std::cout << "[post_request] Entering ....\n";
 	std::string target = normalize_path(req.get_target());
+	std::cout << "[post_request] path normed ....\n";
 
 	// Trouver la configuration serveur
 	ServerConfig &server = find_current_server(http_config, server_name);
@@ -179,21 +181,22 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
 
+
+	// std::cout << "[post_request]location name is \"" << location_name << "\" !\n";  /// fine for now as long as we have a cgi-bin location
 	if (location_name == "/cgi-bin/")
 	{
-		PRINT_DEBUG2
-		//std::string	c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
-		//d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
-		//std::string	c_len = request.substr(request.find("Content-Length:") + 16); // same thing
-		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
+		// PRINT_DEBUG2
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-
+		// std::cout << "Content Type is : \n" << fd_data.Content_Type << "\n";
+		// std::cout << "Content Length is : \n" << fd_data.Content_Length << "\n";
 
 		std::string body;
 
-		body = handleCGI(fd_data, &errcode);
+		body = handleCGI(req, fd_data, &errcode);
 		std::cout << "Fresh out of CGI : \n" << body << "\n";
+		build_response(req, "200", body, req.getKeepAlive());
+		return ;
 	}
 
 	std::string head;

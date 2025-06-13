@@ -41,6 +41,8 @@ class HttpRequest
 		std::string get_body() const;
 		std::string get_boundary() const;
 		std::string get_content_type() const;
+		std::string get_rootpath() const; //for CGI full path, is to be modified
+		RequestState get_state() const;
 
 
 		void	set_response(const std::string& response);
@@ -48,6 +50,7 @@ class HttpRequest
 		void	set_target(const std::string& target);
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
+		void	set_rootpath(const std::string& rootpath); //for CGI full path, is to be modified
 
 	private:
 		std::string	_raw_data;
@@ -57,6 +60,7 @@ class HttpRequest
 		std::string	_target;
 		std::string	_query_string;
 		std::string _http_version;
+		std::string _rootpath;   //for CGI full path, is to be modified
 		std::map<std::string, std::string> _headers_map;
 
 		RequestState	_state;

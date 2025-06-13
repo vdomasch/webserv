@@ -76,10 +76,10 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
 	script_name_var = cgi_path.substr(pos);
-	printf("type (%s)\n", type.c_str());
-	printf("len (%s)\n", len.c_str());
-	printf("script_name_var (%s)\n", script_name_var.c_str());
-	printf("method (%s)\n", method.c_str());
+	// printf("type (%s)\n", type.c_str());
+	// printf("len (%s)\n", len.c_str());
+	// printf("script_name_var (%s)\n", script_name_var.c_str());
+	// printf("method (%s)\n", method.c_str());
 
 	// this->_cgi_env_map["HTTP_COOKIE"] = "default";
 	// this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
@@ -170,15 +170,15 @@ void 	CGIContent::executeCGI()
 	}
 }
 
-int	CGIContent::sendCGIBody(std::vector<char> *body)
+int	CGIContent::sendCGIBody(std::string body)
 {
 	size_t total_written = 0;
 
 
-	while (total_written < body->size()) 
+	while (total_written < body.size()) 
 	{
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
-		ssize_t written = write(pipe_in[1], body->data() + total_written, body->size() - total_written);
+		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {
 			perror("write failed !");
 			return (-1);
@@ -213,7 +213,7 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 	
 	close(this->pipe_out[0]);
 	memset(buffer, 0, sizeof(buffer));
-	printf("total read%d\n", total_read);
+	printf("\ntotal read %d\n", total_read);
 	printf("total len %lu\n", result.length());
 	bodySize = result.length();
 

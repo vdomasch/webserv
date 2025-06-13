@@ -56,7 +56,9 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 {
 	int errcode = 0;
 
+	// std::cout << "[get_request] Entering ....\n";
 	std::string target = normalize_path(req.get_target());
+	// std::cout << "[get_request] path normed ....\n";
 
 	ServerConfig &server = find_current_server(http_config, server_name);
 	bool autoindex = server.get_autoindex();
@@ -83,7 +85,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		handleCGI(fd_data, &errcode);
+		std::string body = handleCGI(req, fd_data, &errcode);
 	}
 
 	// std::cout << "ḦERE: " << remove_prefix(target, location_name) << std::endl;
