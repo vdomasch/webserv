@@ -300,8 +300,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 		// Timeout de 0.5 secondes pour éviter le blocage
 		struct timeval timeout;
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 500000;
+		timeout.tv_sec = SELECT_TIMEOUT_SEC;
+		timeout.tv_usec = SELECT_TIMEOUT_USEC;
 
 		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, NULL, NULL, &timeout) < 0)
 		{
@@ -329,7 +329,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						_socket_states[i] = HttpRequest();
 				}
 			}
-			if (now - _socket_states[i].get_time() > 5)
+			if (now - _socket_states[i].get_time() > TIMEOUT)
 			{
 				close_msg(i, "Idle connection closed", 0, 0);
 				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);

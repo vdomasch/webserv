@@ -49,6 +49,10 @@
 # define JPGHANDELING 6
 # define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
+# define TIMEOUT 5 //seconds
+# define SELECT_TIMEOUT_USEC 500000 // microseconds
+# define SELECT_TIMEOUT_SEC 0 // seconds
+
 #define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __FUNCTION__ << "\033[0m " << std::endl;
 #define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __PRETTY_FUNCTION__ << "\033[0m " << std::endl;
 
