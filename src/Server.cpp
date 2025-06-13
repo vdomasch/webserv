@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cctype>
 
+
 bool g_running = true;
 
 void handle_signal(int signum) { if (signum) { g_running = false; } }
@@ -50,7 +51,7 @@ std::string ServerConfig::get_host_ip() const
 	return "0.0.0.0"; // Default if not provided
 }
 
-bool is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound)
+bool	Server::is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound)
 {
 	std::string this_key = ip + ":" + port;
 	std::string any_key = "0.0.0.0:" + port;
@@ -282,7 +283,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string response = _socket_states[fd].get_response();
 		send(fd, response.c_str(), response.size(), 0);
 
-		if (!_socket_states[fd].getKeepAlive() || _socket_states[fd].get_method() == "DELETE") // To review ?? add POST in it ?
+		if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
 			close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
 		else 
 			_socket_states[fd] = HttpRequest(); // Optionnel : reset request state for next request
@@ -297,12 +298,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 	{
 		clean_sockets();
 
-		// Timeout de 5 secondes pour éviter le blocage
+		// Timeout de 0.5 secondes pour éviter le blocage
 		struct timeval timeout;
-		timeout.tv_sec = 5;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 500000;
 
-		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, NULL, NULL, NULL/*&timeout*/) < 0)
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_sockets, NULL, NULL, &timeout) < 0)
 		{
 			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
@@ -310,6 +311,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		}
 
 		// Parcours des sockets actifs
+		time_t now = time(NULL);
 		for (int i = 0; i <= _socket_data.max_fd; ++i) 
 		{
 			if (FD_ISSET(i, &_socket_data.ready_readsockets))
@@ -320,13 +322,18 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 				else
 				{
-					std::cout << "\033[1;34mHandling request on socket " << i << "\033[0m"<< std::endl;
+					_socket_states[i].set_time(time(NULL));
 
 					handle_client_request(http_config, i);
 					if (_socket_states[i].is_ready())
 						_socket_states[i] = HttpRequest();
-					std::cout << "\033[2;34mRequest on socket " << i << " done." << "\033[0m\n"<< std::endl;
 				}
+			}
+			if (now - _socket_states[i].get_time() > 5)
+			{
+				close_msg(i, "Idle connection closed", 0, 0);
+				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
+				_socket_states.erase(i); // Supprimer l'état de la socket
 			}
 		}
 	}

@@ -41,6 +41,8 @@ class HttpRequest
 		std::string get_body() const;
 		std::string get_boundary() const;
 		std::string get_content_type() const;
+		time_t		get_time() const;
+
 
 
 		void	set_response(const std::string& response);
@@ -48,6 +50,7 @@ class HttpRequest
 		void	set_target(const std::string& target);
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
+		void	set_time(time_t t);
 
 	private:
 		std::string	_raw_data;
@@ -65,6 +68,7 @@ class HttpRequest
 		bool			_keep_alive;
 		bool			_is_multipart;
 		int				_errcode;
+		time_t			_last_time;
 		std::string		_response;
 		std::string		_boundary;
 		std::string		_content_type;

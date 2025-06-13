@@ -24,9 +24,15 @@ void HttpRequest::append_data(const std::string &data)
 			parse_headers();
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
+			{
 				_state = COMPLETE;
+				_last_time = time(NULL);
+			}
 			else
+			{
 				_state = RECEIVING_BODY;
+				_last_time = time(NULL);
+			}
 		}
 		was_in_header = true;
 	}
@@ -38,12 +44,18 @@ void HttpRequest::append_data(const std::string &data)
 		{
 			// multipart → fin du body par le boundary final
 			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
+			{
 				_state = COMPLETE;
+				_last_time = time(NULL);
+			}
 		}
 		else
 		{
 			if (_body.length() >= _content_length)
+			{
 				_state = COMPLETE;
+				_last_time = time(NULL);
+			}
 		}
 	}
 }
@@ -161,6 +173,7 @@ std::string HttpRequest::get_method() const			{ return _method; }
 std::string HttpRequest::get_target() const			{ return _target; }
 std::string HttpRequest::get_boundary() const		{ return _boundary; }
 std::string HttpRequest::get_content_type() const	{ return _content_type; }
+time_t		HttpRequest::get_time() const			{ return _last_time; };
 std::string HttpRequest::get_body() const
 {
 	if (_state == RECEIVING_BODY || _state == COMPLETE)
@@ -174,6 +187,7 @@ std::string HttpRequest::get_header(const std::string& key) const
 		return it->second;
 	return "";
 }
+	
 
 ////////// SETTERS ///////////
 
@@ -182,8 +196,7 @@ void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code;
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
-
-//////// OPERATOR OVERLOAD ///////////
+void	HttpRequest::set_time(time_t t) 						{ _last_time = t; };
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {

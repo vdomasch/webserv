@@ -8,7 +8,6 @@
 # include "struct.hpp"
 # include "CGIContent.hpp"
 
-
 # include <stdio.h>
 # include <iostream>//std::cout
 # include <sys/socket.h> //socket
@@ -30,6 +29,8 @@
 # include <string> //string::npos
 # include <sys/types.h> //waitpid
 # include <sys/wait.h> //waitpid
+# include <set>
+# include <ctime>
 
 
 # define SERV_PORT 8080
