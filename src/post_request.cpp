@@ -86,7 +86,7 @@ std::string create_filename(std::string& root, const std::string& head)
 			filename = filename.erase(filename.find(extension)) + "_" + get_timestamp() + extension;
 	}
 
-	return root + filename;
+	return filename;
 }
 
 void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
@@ -161,6 +161,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
+	std::cout << req.get_target() << std::endl;
 	std::string target = normalize_path(req.get_target());
 
 	// Trouver la configuration serveur
@@ -176,7 +177,10 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	}
 	std::string error_code = validate_request_context(location_name, root, errcode, server, "POST");
 	if (!error_code.empty())
+	{
+		std::cerr << "Error validating request context: " << error_code << std::endl;
 		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
+	}
 
 	if (location_name == "/cgi-bin/")
 	{
@@ -197,10 +201,15 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 
 	std::string head;
 	std::string body;
-	root += "uploads/";
 	parse_post_body(req, head, body);
 
-	std::string file_path = create_filename(root, head);	
+	std::string file_name = remove_prefix(create_filename(root, head), location_name);
+	std::cout << "file_name: " << file_name << std::endl;
+
+	if (!location_name.find("upload"))
+		root += "/uploads/";
+	std::string file_path = root + file_name; // Chemin complet du fichier
+	std::cout << "File path: " << file_path << std::endl;
 
 	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
 	{

@@ -3,7 +3,11 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _errcode(0), _content_type("text/html") {}
+HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _errcode(0), _content_type("text/html")
+{
+	_last_time = time(NULL);
+}
+
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -18,8 +22,6 @@ void HttpRequest::append_data(const std::string &data)
 		{
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
-			
-			std::cout << "-----------------\n" << _header << "\n-----------------\n" << std::endl;
 			
 			parse_headers();
 			_header_parsed = true;
@@ -167,15 +169,15 @@ bool	HttpRequest::has_error() const			{ return (_state == ERROR || _errcode != 0
 
 /////////// GETTERS ///////////
 
-std::string HttpRequest::get_response() const		{ return _response; }
-bool		HttpRequest::getKeepAlive() const		{ return _keep_alive; }
-bool 		HttpRequest::get_is_multipart() const	{ return _is_multipart; }
-std::string HttpRequest::get_method() const			{ return _method; }
-std::string HttpRequest::get_target() const			{ return _target; }
-std::string HttpRequest::get_boundary() const		{ return _boundary; }
-std::string HttpRequest::get_content_type() const	{ return _content_type; }
-time_t		HttpRequest::get_time() const			{ return _last_time; };
-std::string HttpRequest::get_body() const
+std::string 	HttpRequest::get_response() const		{ return _response; }
+bool			HttpRequest::getKeepAlive() const		{ return _keep_alive; }
+bool 			HttpRequest::get_is_multipart() const	{ return _is_multipart; }
+std::string 	HttpRequest::get_method() const			{ return _method; }
+std::string 	HttpRequest::get_target() const			{ return _target; }
+std::string 	HttpRequest::get_boundary() const		{ return _boundary; }
+std::string 	HttpRequest::get_content_type() const	{ return _content_type; }
+unsigned long	HttpRequest::get_time() const		{ return _last_time; };
+std::string 	HttpRequest::get_body() const
 {
 	if (_state == RECEIVING_BODY || _state == COMPLETE)
 		return _body;
@@ -198,7 +200,7 @@ void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code;
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
-void	HttpRequest::set_time(unsigned long t) 						{ _last_time = t; };
+void	HttpRequest::set_time(unsigned long t) 					{ _last_time = t; };
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {

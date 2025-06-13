@@ -60,6 +60,7 @@ std::string	remove_prefix(std::string target, const std::string prefix)
 std::string	normalize_path(const std::string &path)
 {
 	std::string normalized = path;
+	std::cout << "Normalizing path: " << normalized << std::endl;
 	if (normalized.empty() || normalized == "/")
 		return "/";
 	if (normalized[0] != '/')

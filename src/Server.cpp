@@ -319,7 +319,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		unsigned long now = time(NULL);
 		for (int i = 3; i <= _socket_data.max_fd; ++i) 
 		{
-			std::cout << "\033[3;34m[DEBUG] Checking socket " << i << " (max_fd: " << _socket_data.max_fd << ")\033[0m" << std::endl;
 			if (FD_ISSET(i, &_socket_data.ready_readsockets))
 			{
 				if (is_server_socket(i))
@@ -333,8 +332,10 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					handle_client_request(http_config, i);
 					if (_socket_states[i].is_ready())
 						_socket_states[i] = HttpRequest();
+
 				}
 			}
+
 			if (!_socket_states[i].is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
 			{
 				close_msg(i, "Idle connection closed", 0, 0);
