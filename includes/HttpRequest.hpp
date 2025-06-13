@@ -42,6 +42,7 @@ class HttpRequest
 		std::string 	get_body() const;
 		std::string 	get_boundary() const;
 		std::string 	get_content_type() const;
+		std::string 	get_rootpath() const;
 		unsigned long	get_time() const;
 		RequestState	get_state() const;
 
