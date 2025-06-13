@@ -134,6 +134,8 @@ void	Server::launch_server(HTTPConfig &http_config)
 			_ip_port_bound.insert(key);
 			_port_to_socket_map[port] = server_socket;
 			_socket_to_port_map[server_socket] = port;
+			_socket_states[server_socket] = HttpRequest(); // Initialize the request state for the server socket
+			_socket_states[server_socket].set_is_server_socket(true);
 			FD_SET(server_socket, &_socket_data.saved_readsockets);
 			if (server_socket > _socket_data.max_fd)
 				_socket_data.max_fd = server_socket;
@@ -175,6 +177,9 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 		_socket_data.max_fd = client_socket;
 	std::cout << "\033[1;32mNew client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << "\033[0m" << std::endl;
 	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
+
+	_socket_states[client_socket] = HttpRequest(); // Initialize the request state for the new client socket
+	_socket_states[client_socket].set_time(time(NULL));
 }
 
 std::string Server::get_server_name(int fd)
@@ -311,7 +316,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		}
 
 		// Parcours des sockets actifs
-		time_t now = time(NULL);
+		unsigned long now = time(NULL);
 		for (int i = 3; i <= _socket_data.max_fd; ++i) 
 		{
 			std::cout << "\033[3;34m[DEBUG] Checking socket " << i << " (max_fd: " << _socket_data.max_fd << ")\033[0m" << std::endl;
@@ -330,7 +335,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						_socket_states[i] = HttpRequest();
 				}
 			}
-			if (_port_to_socket_map.count(i) && now - _socket_states[i].get_time() > TIMEOUT)
+			if (!_socket_states[i].is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
 			{
 				close_msg(i, "Idle connection closed", 0, 0);
 				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
@@ -352,8 +357,11 @@ void	Server::clean_sockets()
 			{
 				int error = 0;
 				socklen_t len = sizeof(error);
-				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
+				{
 					std::cerr << "getsockopt failed for fd " << i << ": " << strerror(errno) << std::endl;
+					close_msg(i, "Cleaning invalid socket", 1, 0);
+					_socket_states.erase(i);
 				}
 			}
 		}

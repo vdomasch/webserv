@@ -52,7 +52,7 @@ class HttpRequest
 		void	set_target(const std::string& target);
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
-		void	set_time(time_t t);
+		void	set_time(unsigned long t);
 
 	private:
 		bool		_is_server_socket;

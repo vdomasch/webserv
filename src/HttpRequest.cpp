@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _errcode(0), _content_type("text/html") {}
+HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _errcode(0), _content_type("text/html") {}
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -192,13 +192,13 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 ////////// SETTERS ///////////
 
-void	HttpRequest::set_is_server_socket(bool is_server_sock)	{ _is_server_socket = is_server_sock; }
+void	HttpRequest::set_is_server_socket(bool is_server_sock)		{ _is_server_socket = is_server_sock; }
 void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
 void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
-void	HttpRequest::set_time(time_t t) 						{ _last_time = t; };
+void	HttpRequest::set_time(unsigned long t) 						{ _last_time = t; };
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {
