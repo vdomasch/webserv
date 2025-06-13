@@ -32,7 +32,7 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "application/pdf") return ".pdf";
 	if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
 	if (content_type == "application/octet-stream") return ".bin"; // Default for binary files
-	return ".bin";
+	return "";
 }
 
 std::string	get_extension(const std::string& head)
@@ -86,7 +86,7 @@ std::string create_filename(std::string& root, const std::string& head)
 			filename = filename.erase(filename.find(extension)) + "_" + get_timestamp() + extension;
 	}
 
-	return root + filename;
+	return filename;
 }
 
 void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
@@ -131,8 +131,6 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 			current += '/'; // Ensure we have a trailing slash
 		current += token;
 
-		std::cout << "Analysing create directories ... : (" << current.c_str() << ")\n";
-
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
 			if (errno == EEXIST)
@@ -161,9 +159,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
-	std::cout << "[post_request] Entering ....\n";
 	std::string target = normalize_path(req.get_target());
-	std::cout << "[post_request] path normed ....\n";
 
 	// Trouver la configuration serveur
 	ServerConfig &server = find_current_server(http_config, server_name);
@@ -178,22 +174,20 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	}
 	std::string error_code = validate_request_context(location_name, root, errcode, server, "POST");
 	if (!error_code.empty())
+	{
+		std::cerr << "Error validating request context: " << error_code << std::endl;
 		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
+	}
 
 
-	// std::cout << "[post_request]location name is \"" << location_name << "\" !\n";  /// fine for now as long as we have a cgi-bin location
 	if (location_name == "/cgi-bin/")
 	{
-		// PRINT_DEBUG2
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		// std::cout << "Content Type is : \n" << fd_data.Content_Type << "\n";
-		// std::cout << "Content Length is : \n" << fd_data.Content_Length << "\n";
 
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		std::cout << "Fresh out of CGI : \n" << body << "\n";
 		build_response(req, "200", body, req.getKeepAlive());
 		return ;
 	}
@@ -203,7 +197,13 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	root += "uploads/";
 	parse_post_body(req, head, body);
 
-	std::string file_path = create_filename(root, head);	
+	std::string filename = remove_prefix(create_filename(root, head), location_name);
+	std::cout << "[post_request] filename is \"" << filename << "\" !\n";
+
+	if (!location_name.find("upload"))
+		root += "/uploads/";
+    std::string file_path = root + filename;
+	std::cout << "[post_request] file_path is \"" << file_path << "\" !\n";
 
 	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
 	{
@@ -220,7 +220,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	out.close();
 
 	std::ostringstream response_body;
-	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
+	//std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
 	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
 	build_response(req, "201", response_body.str(), req.getKeepAlive());

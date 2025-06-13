@@ -5,7 +5,6 @@ bool	is_authorized_path(const std::string &path, const std::set<std::string> &au
 {
 	for (std::set<std::string>::const_iterator it = authorized_paths.begin(); it != authorized_paths.end(); ++it)
 	{
-		std::cout << "Checking against authorized path: " << *it << std::endl;
 		if (path.find(*it) != std::string::npos)
 			return true;
 	}
@@ -32,9 +31,6 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
 
-
-
-	std::cout << "Requested target is : " << target << std::endl;
 
 	std::string path = root.substr(0, root.size() - 1) + req.get_target()/*.substr(req.get_target().find("uploads") + 7, req.get_target().size() - 1)*/; // remove the root and the /uploads/ part from the target
 

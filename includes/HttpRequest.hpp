@@ -32,19 +32,19 @@ class HttpRequest
 
 
 
-		bool		getKeepAlive() const;
-		bool 		get_is_multipart() const;
-		bool		is_server_socket() const;
-		std::string	get_response() const;
-		std::string get_method() const;
-		std::string get_target() const;
-		std::string get_header(const std::string& key) const;
-		std::string get_body() const;
-		std::string get_boundary() const;
-		std::string get_content_type() const;
-		time_t		get_time() const;
-		std::string get_rootpath() const; //for CGI full path, is to be modified
-		RequestState get_state() const;
+		bool			getKeepAlive() const;
+		bool			get_is_multipart() const;
+		bool			is_server_socket() const;
+		std::string		get_response() const;
+		std::string		get_method() const;
+		std::string		get_target() const;
+		std::string		get_header(const std::string& key) const;
+		std::string		get_body() const;
+		std::string		get_boundary() const;
+		std::string		get_content_type() const;
+		std::string		get_rootpath() const; //for CGI full path, is to be modified
+		unsigned long	get_time() const;
+		RequestState	get_state() const;
 
 
 

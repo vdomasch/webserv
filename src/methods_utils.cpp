@@ -45,20 +45,21 @@ int	check_object_type(std::string& path, int *errcode)
 		return FILE_NOT_FOUND;
 }
 
-std::string	remove_prefix(std::string target, const std::string prefix)
+std::string remove_prefix(std::string target, std::string prefix)
 {
+	std::cout << "Removing prefix: " << prefix << " from target: " << target << std::endl;
 	if (prefix.empty())
 		return target;
-	if (target.at(target.size() - 1) != '/')
-	{
-		if (target.find(prefix.substr(0, prefix.size() - 1)) == 0)
-			target.erase(0, prefix.length());
-		return target;
-	}
+
+	if (!prefix.empty() && prefix.at(prefix.size() - 1) == '/')
+		prefix.erase(prefix.size() - 1, 1);
+
 	if (target.find(prefix) == 0)
-		target.erase(0, prefix.length());
+		target.erase(0, prefix.size());
+
 	return target;
 }
+
 
 std::string	normalize_path(const std::string &path)
 {

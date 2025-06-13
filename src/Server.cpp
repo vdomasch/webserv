@@ -124,7 +124,6 @@ void	Server::launch_server(HTTPConfig &http_config)
 				continue; // or return, depending on how strict the error handling should be
 			}
 
-			//std::cout << "\033[3;32m++ Creating server socket on port " << port  << " ++\033[0m" << std::endl;
 			int server_socket = initialize_server(server, servaddr);
 			if (server_socket < 0)
 			{
@@ -228,8 +227,6 @@ bool	Server::reading_data(int fd)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
 
-	// std::cout << "[reading_data]Finished recv.......\n";
-
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error in request: " << std::endl;
@@ -276,7 +273,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
-			// std::cout << "[handle_client_request] Launching method....\n";
 			_method_map[method](http_config, _socket_states[fd], _socket_data, server_name);
 		}
 		else
