@@ -176,10 +176,10 @@ std::string 	HttpRequest::get_method() const			{ return _method; }
 std::string 	HttpRequest::get_target() const			{ return _target; }
 std::string 	HttpRequest::get_boundary() const		{ return _boundary; }
 std::string 	HttpRequest::get_content_type() const	{ return _content_type; }
-unsigned long	HttpRequest::get_time() const			{ return _last_time; };
 std::string 	HttpRequest::get_body() const			{ return _body; } // added only for request debug
 std::string 	HttpRequest::get_rootpath() const		{ return _rootpath; } /// temporary for CGI
 RequestState	HttpRequest::get_state() const			{ return _state; } // added only for request debug
+unsigned long	HttpRequest::get_time() const			{ return _last_time; };
 std::string HttpRequest::get_header(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers_map.find(key);

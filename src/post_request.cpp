@@ -32,7 +32,7 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "application/pdf") return ".pdf";
 	if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
 	if (content_type == "application/octet-stream") return ".bin"; // Default for binary files
-	return ".bin";
+	return "";
 }
 
 std::string	get_extension(const std::string& head)
@@ -131,8 +131,6 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 			current += '/'; // Ensure we have a trailing slash
 		current += token;
 
-		std::cout << "Analysing create directories ... : (" << current.c_str() << ")\n";
-
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
 			if (errno == EEXIST)
@@ -143,17 +141,18 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 				return false;
             }
 		}
-		std::ofstream authorized_delete_paths((root + "authorized_paths.txt").c_str(), std::ios::app);
-		if (!authorized_delete_paths.is_open())
-		{
-			std::cerr << "Error: Could not open authorized delete paths file." << std::endl;
-			return false;
-		}
+		_
+		//std::ofstream authorized_delete_paths((root + "authorized_paths.txt").c_str(), std::ios::app);
+		//if (!authorized_delete_paths.is_open())
+		//{
+		//	std::cerr << "Error: Could not open authorized delete paths file." << std::endl;
+		//	return false;
+		//}
 
-		std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
+		//std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
 
-		authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
-		authorized_delete_paths.close();
+		//authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
+		//authorized_delete_paths.close();
 	}
 	return true;
 }
@@ -161,9 +160,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
-	std::cout << "[post_request] Entering ....\n";
 	std::string target = normalize_path(req.get_target());
-	std::cout << "[post_request] path normed ....\n";
 
 	// Trouver la configuration serveur
 	ServerConfig &server = find_current_server(http_config, server_name);
@@ -205,12 +202,12 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	std::string body;
 	parse_post_body(req, head, body);
 
-	std::string file_name = remove_prefix(create_filename(root, head), location_name);
-	std::cout << "file_name: " << file_name << std::endl;
+	std::string filename = remove_prefix(create_filename(root, head), location_name);
+	std::cout << "filename: " << filename << std::endl;
 
-	if (!location_name.find("upload"))
+	if (location_name.find("upload") == std::string::npos)
 		root += "/uploads/";
-	std::string file_path = root + file_name; // Chemin complet du fichier
+	std::string file_path = root + filename; // Chemin complet du fichier
 	std::cout << "File path: " << file_path << std::endl;
 
 	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
@@ -228,7 +225,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	out.close();
 
 	std::ostringstream response_body;
-	std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
+	//std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
 	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
 	build_response(req, "201", response_body.str(), req.getKeepAlive());
