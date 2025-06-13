@@ -47,15 +47,17 @@ int	check_object_type(std::string& path, int *errcode)
 
 std::string remove_prefix(std::string target, std::string prefix)
 {
-	std::cout << "Removing prefix: " << prefix << " from target: " << target << std::endl;
 	if (prefix.empty())
 		return target;
 
 	if (!prefix.empty() && prefix.at(prefix.size() - 1) == '/')
 		prefix.erase(prefix.size() - 1, 1);
 
-	if (target.find(prefix) == 0)
+	if (target.find(prefix) == 0 && (target.size() == prefix.size() || target.at(prefix.size()) == '/'))
 		target.erase(0, prefix.size());
+
+	if (target.at(0) == '/')
+		target.erase(0, 1);
 
 	return target;
 }
@@ -91,7 +93,6 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 
 std::string	displayErrorPage(const std::string& code, const std::string& location_name, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data, const std::string& server_name)
 {
-	PRINT_DEBUG2
 	std::string error_uri = find_error_page(code, location_name, server_name, http_config);
     if (error_uri.empty() || req._is_error_request)
 	{

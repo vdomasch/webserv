@@ -1,6 +1,12 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 
+bool ends_with(const std::string& str, const std::string& suffix)
+{
+	return str.size() >= suffix.size() &&
+	       str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 static void	authorized_delete_paths(HTTPConfig& http_config)
 {
 	std::map<std::string, ServerConfig>& server_list = http_config.get_server_list();
@@ -19,13 +25,21 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 				{
 						std::string location_root = location.get_root();
 						if (!location_root.empty())
+						{
+							if (!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
+								location_root += "uploads/";
 							server.add_authorized_paths(location_root);
+						}
 				}
 				else if (server.get_map_server().count("DELETE"))
 				{
 					std::string server_root = server.get_root();
 					if (!server_root.empty())
+					{
+						if (!ends_with(server_root, "/uploads/") && !ends_with(server_root, "/upload/"))
+							server_root += "uploads/";
 						server.add_authorized_paths(server_root);
+					}
 				}
 			}
 		}
@@ -46,6 +60,8 @@ int main(int argc, char **argv)
 		return (1);
 
 	authorized_delete_paths(http_config);
+
+	http_config.DEBUG_HTTP_show();
 
 	Server server;
 	

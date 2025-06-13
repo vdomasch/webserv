@@ -57,10 +57,8 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 	int errcode = 0;
 
 	std::string target = normalize_path(req.get_target());
-	
 	ServerConfig &server = find_current_server(http_config, server_name);
 	bool autoindex = server.get_autoindex();
-
 
 	std::string location_name, root;
 	try {	location_name = find_location_name_and_set_root(target, server, root, autoindex); }
@@ -76,18 +74,17 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 
 	if (location_name == "/cgi-bin/")
 	{
-		PRINT_DEBUG2
-		//std::string	c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
-		//d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
-		//std::string	c_len = request.substr(request.find("Content-Length:") + 16); // same thing
-		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
 		std::string body = handleCGI(req, fd_data, &errcode);
 	}
 
 	std::string path_no_index = root + remove_prefix(target, location_name); // Supprimer le préfixe location du target
+	std::cout << "Path without index: " << path_no_index << std::endl;
 	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::cout << "Path index: " << file_path << std::endl;
+	
+
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
 	{
 		if (!autoindex)

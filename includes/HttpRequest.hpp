@@ -33,20 +33,18 @@ class HttpRequest
 
 
 		bool			getKeepAlive() const;
-		bool			get_is_multipart() const;
+		bool 			get_is_multipart() const;
 		bool			is_server_socket() const;
 		std::string		get_response() const;
-		std::string		get_method() const;
-		std::string		get_target() const;
-		std::string		get_header(const std::string& key) const;
-		std::string		get_body() const;
-		std::string		get_boundary() const;
-		std::string		get_content_type() const;
-		std::string		get_rootpath() const; //for CGI full path, is to be modified
+		std::string 	get_method() const;
+		std::string 	get_target() const;
+		std::string 	get_header(const std::string& key) const;
+		std::string 	get_body() const;
+		std::string 	get_boundary() const;
+		std::string 	get_content_type() const;
+		std::string 	get_rootpath() const;
 		unsigned long	get_time() const;
 		RequestState	get_state() const;
-
-
 
 		void	set_is_server_socket(bool is_server_socket);
 		void	set_response(const std::string& response);
@@ -75,7 +73,7 @@ class HttpRequest
 		bool			_keep_alive;
 		bool			_is_multipart;
 		int				_errcode;
-		time_t			_last_time;
+		unsigned long	_last_time;
 		std::string		_response;
 		std::string		_boundary;
 		std::string		_content_type;

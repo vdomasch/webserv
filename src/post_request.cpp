@@ -116,7 +116,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	}
 }
 
-bool	create_directories(std::string path, std::string root)    ////might be the issue
+bool	create_directories(ServerConfig& server, std::string path)    ////might be the issue
 {
 	std::istringstream iss(path);
 	std::string token;
@@ -141,17 +141,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 				return false;
             }
 		}
-		std::ofstream authorized_delete_paths((root + "authorized_paths.txt").c_str(), std::ios::app);
-		if (!authorized_delete_paths.is_open())
-		{
-			std::cerr << "Error: Could not open authorized delete paths file." << std::endl;
-			return false;
-		}
-
-		std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
-
-		authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
-		authorized_delete_paths.close();
+		server.add_authorized_paths(current); // Add to authorized paths
 	}
 	return true;
 }
@@ -192,20 +182,15 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 		return ;
 	}
 
-	std::string head;
-	std::string body;
-	root += "uploads/";
+	std::string head, body;
 	parse_post_body(req, head, body);
 
 	std::string filename = remove_prefix(create_filename(root, head), location_name);
-	std::cout << "[post_request] filename is \"" << filename << "\" !\n";
-
-	if (!location_name.find("upload"))
+	if (location_name.find("upload") == std::string::npos)
 		root += "/uploads/";
-    std::string file_path = root + filename;
-	std::cout << "[post_request] file_path is \"" << file_path << "\" !\n";
+	std::string file_path = root + filename; // Chemin complet du fichier
 
-	if (create_directories(file_path.substr(0, file_path.rfind('/')), server.get_root()) == false)
+	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
 	{
 		std::cerr << "Error: Failed to create directories for POST data." << std::endl;
 		return (build_response(req, "500", "Failed to create directories for POST data", false));

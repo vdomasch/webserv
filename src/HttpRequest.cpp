@@ -8,7 +8,6 @@ HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), 
 	_last_time = time(NULL);
 }
 
-
 HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
@@ -23,7 +22,7 @@ void HttpRequest::append_data(const std::string &data)
 		{
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
-						
+			
 			parse_headers();
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
