@@ -43,8 +43,7 @@ class HttpRequest
 		std::string 	get_boundary() const;
 		std::string 	get_content_type() const;
 		unsigned long	get_time() const;
-
-
+		RequestState	get_state() const;
 
 		void	set_is_server_socket(bool is_server_socket);
 		void	set_response(const std::string& response);
