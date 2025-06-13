@@ -312,8 +312,9 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 		// Parcours des sockets actifs
 		time_t now = time(NULL);
-		for (int i = 0; i <= _socket_data.max_fd; ++i) 
+		for (int i = 3; i <= _socket_data.max_fd; ++i) 
 		{
+			std::cout << "\033[3;34m[DEBUG] Checking socket " << i << " (max_fd: " << _socket_data.max_fd << ")\033[0m" << std::endl;
 			if (FD_ISSET(i, &_socket_data.ready_readsockets))
 			{
 				if (is_server_socket(i))
@@ -329,7 +330,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						_socket_states[i] = HttpRequest();
 				}
 			}
-			if (now - _socket_states[i].get_time() > TIMEOUT)
+			if (_port_to_socket_map.count(i) && now - _socket_states[i].get_time() > TIMEOUT)
 			{
 				close_msg(i, "Idle connection closed", 0, 0);
 				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);

@@ -34,6 +34,7 @@ class HttpRequest
 
 		bool		getKeepAlive() const;
 		bool 		get_is_multipart() const;
+		bool		is_server_socket() const;
 		std::string	get_response() const;
 		std::string get_method() const;
 		std::string get_target() const;
@@ -45,6 +46,7 @@ class HttpRequest
 
 
 
+		void	set_is_server_socket(bool is_server_socket);
 		void	set_response(const std::string& response);
 		void	set_errorcode(int code);
 		void	set_target(const std::string& target);
@@ -53,6 +55,7 @@ class HttpRequest
 		void	set_time(time_t t);
 
 	private:
+		bool		_is_server_socket;
 		std::string	_raw_data;
 		std::string	_body;
 		std::string	_header;
