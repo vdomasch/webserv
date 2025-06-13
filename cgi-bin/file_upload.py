@@ -18,38 +18,36 @@ def log(msg):
 	with open(log_path, 'a') as l:
 		l.write(msg + '\n')
 
-def printValueToPage():
+def uploadNewFile():
 
 	fileitem = form['filePicker']
-	log("fileitem: %s" % repr(fileitem))
 	if fileitem.filename:
-		log("filename: %s" % fileitem.filename)
 		script_dir = os.path.dirname(os.path.abspath(__file__))
-		upload_dir = os.path.join(script_dir, '..', 'server_files', 'upload')
+		upload_dir = os.path.join(script_dir, '..', 'server_files', 'uploads') #use actual names
 		filename = os.path.basename(fileitem.filename)
 		path = os.path.join(upload_dir, filename)
 		data = fileitem.file.read()
-		log("data length: %d" % len(data))
 		with open(path, 'wb') as f:
 			f.write(data)
-		log("saved to: %s" % path)
 	else:
 		log("No filename found in fileitem.")
 
-print ('<html>')
-print ('<head>')
-print ('<title>File analysis O-O</title>')
-print ('</head>')
-print ('<body>')
-print ('<h2>Time for some request analysis !\nHere i come !</h2>')
+# print ('<!DOCTYPE html>')
+# print ('<html>')
+# print ('<head>')
+# print ('<title>Upload sumarry</title>')
+# print ('<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">')
+# print ('</head>')
+# print ('<body>')
+# print ('<h2>File was successfully uploaded ! !</h2>')
 
-printValueToPage()
+uploadNewFile()
 
-print ('<form  method = "post" action = "/index.html">')
-print ('<button name="goto_index" value="teleport">Go back to main page</button>')
-print ('</form>')
-print ('</body>')
-print ('</html>')
+# print ('<form  method = "get" action = "/index.html" accept-charset=utf-8>')
+# print ('<button name="goto_index" value="teleport">Go back to main page</button>')
+# print ('</form>')
+# print ('</body>')
+# print ('</html>')
 
 
 # -----------------------------------------------------------------------------------------------

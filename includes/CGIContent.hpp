@@ -49,7 +49,7 @@ class CGIContent
 	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
 	void 			executeCGI();
 	std::string		grabCGIBody(int	&bodySize);
-	int				sendCGIBody(std::vector<char> *body);
+	int				sendCGIBody(std::string body);
 	//getters et setters
 };
 

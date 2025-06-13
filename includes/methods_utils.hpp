@@ -4,7 +4,7 @@
 
 # include "webserv.hpp"
 
-std::string	handleCGI(t_fd_data &d, int *errcode);
+std::string	handleCGI(HttpRequest &req, t_fd_data &d, int *errcode);
 
 int	check_object_type(std::string& path, int *errcode);
 

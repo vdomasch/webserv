@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
+
+print ('<!DOCTYPE html>')
 print ('<html>')
 print ('<head>')
+print ('<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">')
 print ('<meta charset="UTF-8">')
 print ('<meta name="viewport" content="width=device-width, initial-scale=1.0">')	
 print ('<title>File upload</title>')
@@ -13,11 +16,14 @@ print ('<h3>Silly goofy file upload</h3>')
 print ('<img src="/assets/pinwheel.gif" alt="dog" style="display:block; margin:auto; max-width:300px; max-height:300px;">')
 print ('<p>(me irl btw)</p>')
 print ('<label for="myFilePicker">Please select a file:</label>')
-print ('<form  method = "post" enctype="multipart/form-data" action = "/cgi-bin/file_upload.py">')
+
+print('<iframe name="hiddenFrame" style="display:none;"></iframe>')
+print ('<form  method = "post" enctype="multipart/form-data" action = "/cgi-bin/file_upload.py" target="hiddenFrame" >')
 print ('<input type="file" id="myFilePicker" name="filePicker">')
 print ('<input type = "submit" value = "Submit" />')
 print ('</form>')
-print ('<form  method = "post" action = "/index.html">')
+
+print ('<form  method = "get" action = "/index.html">')
 print ('<button name="goto_index" value="teleport">Go back to main page</button>')
 print ('</form>')
 print ('</div>')
