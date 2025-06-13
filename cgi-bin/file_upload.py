@@ -21,18 +21,14 @@ def log(msg):
 def uploadNewFile():
 
 	fileitem = form['filePicker']
-	log("fileitem: %s" % repr(fileitem))
 	if fileitem.filename:
-		log("filename: %s" % fileitem.filename)
 		script_dir = os.path.dirname(os.path.abspath(__file__))
 		upload_dir = os.path.join(script_dir, '..', 'server_files', 'uploads') #use actual names
 		filename = os.path.basename(fileitem.filename)
 		path = os.path.join(upload_dir, filename)
 		data = fileitem.file.read()
-		log("data length: %d" % len(data))
 		with open(path, 'wb') as f:
 			f.write(data)
-		log("saved to: %s" % path)
 	else:
 		log("No filename found in fileitem.")
 
