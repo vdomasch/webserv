@@ -12,11 +12,11 @@ void	HTTPConfig::set_filename(std::string filename)					{ _filename = filename; 
 
 size_t	HTTPConfig::get_client_max_body_size()
 {
-	int client_max_body_size = 0;
+	ssize_t client_max_body_size = 0;
 	std::map<std::string, std::string>::iterator it = _map_http.find("client_max_body_size");
 	if (it != _map_http.end() && it->second != "UNSET")
 	{
-		try { client_max_body_size = convert<int>(it->second); }
+		try { client_max_body_size = convert<ssize_t>(it->second); }
 		catch (std::exception &e) {
 			return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0);
 		}

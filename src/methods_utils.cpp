@@ -62,19 +62,6 @@ std::string remove_prefix(std::string target, std::string prefix)
 	return target;
 }
 
-
-std::string	normalize_path(const std::string &path)
-{
-	std::string normalized = path;
-	if (normalized.empty() || normalized == "/")
-		return "/";
-	if (normalized[0] != '/')
-		normalized = "/" + normalized;
-	if (normalized.at(normalized.size() - 1) == '/')
-		normalized.erase(normalized.size() - 1, 1);
-	return normalized;
-}
-
 void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection)
 {
 	HttpResponse res;
@@ -91,19 +78,20 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	req.is_finished();
 }
 
-std::string	displayErrorPage(const std::string& code, const std::string& location_name, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data, const std::string& server_name)
+std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
 {
-	std::string error_uri = find_error_page(code, location_name, server_name, http_config);
+	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
     if (error_uri.empty() || req._is_error_request)
 	{
 		std::cerr << "Error: Error Page Not Found" << std::endl;
 		return "<html><body><h1>" + code + " " +  message_status(code) + "</h1></body></html>";
 	}
-
+	std::cout << "Error Page URI: " << error_uri << std::endl;
 	req.set_target(error_uri);
 	req._is_error_request = true;
+	req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex);
 
-	get_request(http_config, req, fd_data, server_name);
+	get_request(http_config, req, fd_data);
 
 	if (req.get_response().empty())
 	{
@@ -235,7 +223,7 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 
 	if (check_allowed_methods(server, server.get_location_list().find(location_name)->second, method) == false)
 	{
-		std::cerr << "Error: Method GET not allowed for location: " << location_name << std::endl;
+		std::cerr << "Error: Method " << method << " not allowed for location: " << location_name << std::endl;
 		return "405";
 	}
 	return "";

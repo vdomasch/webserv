@@ -146,31 +146,23 @@ bool	create_directories(ServerConfig& server, std::string path)    ////might be 
 	return true;
 }
 
-void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
+void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 {
 	int errcode = 0;
-	std::string target = normalize_path(req.get_target());
+	std::string	target = req.get_target();
+	std::string	root = req._location_root;
 
 	// Trouver la configuration serveur
-	ServerConfig &server = find_current_server(http_config, server_name);
-	bool autoindex = server.get_autoindex();
+	ServerConfig &server = find_current_server(http_config, req._server_name);
 
-	std::string location_name, root;
-	try { location_name = find_location_name_and_set_root(target, server, root, autoindex); }
-	catch (std::exception &e)
-	{
-		std::cerr << "Error finding matching location: " << e.what() << std::endl;
-		return (build_response(req, "404", displayErrorPage("404", location_name, http_config, req, fd_data, server_name), false));
-	}
-	std::string error_code = validate_request_context(location_name, root, errcode, server, "POST");
+	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "POST");
 	if (!error_code.empty())
 	{
 		std::cerr << "Error validating request context: " << error_code << std::endl;
-		return (build_response(req, error_code, displayErrorPage(error_code, location_name, http_config, req, fd_data, server_name), false));
+		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false));
 	}
 
-
-	if (location_name == "/cgi-bin/")
+	if (req._location_name == "/cgi-bin/")
 	{
 		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
 		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
@@ -185,8 +177,8 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	std::string head, body;
 	parse_post_body(req, head, body);
 
-	std::string filename = remove_prefix(create_filename(root, head), location_name);
-	if (location_name.find("upload") == std::string::npos)
+	std::string filename = remove_prefix(create_filename(root, head), req._location_name);
+	if (req._location_name.find("upload") == std::string::npos)
 		root += "/uploads/";
 	std::string file_path = root + filename; // Chemin complet du fichier
 

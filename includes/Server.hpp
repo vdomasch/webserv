@@ -30,7 +30,7 @@ class Server
 		std::map<int, int>																	_socket_to_port_map;
 		std::map<int , HttpRequest>															_socket_states;
 
-		std::map<std::string, void(*)(HTTPConfig& , HttpRequest& , t_fd_data &, std::string )>	_method_map;
+		std::map<std::string, void(*)(HTTPConfig& , HttpRequest& , t_fd_data & )>	_method_map;
 
 		int			initialize_server(ServerConfig &server, sockaddr_in &servaddr);
 		void		running_loop(HTTPConfig &http_config, sockaddr_in &servaddr);
@@ -46,6 +46,7 @@ class Server
 		void		clean_sockets();
 		bool		reading_data(int fd);
 		bool		is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound);
+		bool		client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config);
 
 };
 

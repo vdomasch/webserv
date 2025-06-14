@@ -1,4 +1,5 @@
 #include "HttpRequest.hpp"
+#include "HTTPConfig.hpp"
 #include "webserv.hpp"
 #include <iostream>
 #include <string>
@@ -37,6 +38,7 @@ void HttpRequest::append_data(const std::string &data)
 			}
 		}
 		was_in_header = true;
+		return;
 	}
 	if (_state == RECEIVING_BODY)
 	{
@@ -74,6 +76,19 @@ bool HttpRequest::check_keep_alive() const
 	return true;
 }
 
+
+std::string	normalize_path(const std::string &path)
+{
+	std::string normalized = path;
+	if (normalized.empty() || normalized == "/")
+		return "/";
+	if (normalized[0] != '/')
+		normalized = "/" + normalized;
+	if (normalized.at(normalized.size() - 1) == '/')
+		normalized.erase(normalized.size() - 1, 1);
+	return normalized;
+}
+
 void	HttpRequest::parse_headers()
 {
 	std::istringstream stream(_header);
@@ -101,7 +116,7 @@ void	HttpRequest::parse_headers()
 	if (query_pos != std::string::npos)
 	{
 		_query_string = _target.substr(query_pos + 1);
-		_target = _target.substr(0, query_pos);
+		_target = normalize_path(_target.substr(0, query_pos));
 	}
 
 	if (_http_version != "HTTP/1.1")
@@ -169,9 +184,10 @@ bool	HttpRequest::has_error() const			{ return (_state == ERROR || _errcode != 0
 
 /////////// GETTERS ///////////
 
-std::string		HttpRequest::get_response() const		{ return _response; }
 bool			HttpRequest::getKeepAlive() const		{ return _keep_alive; }
 bool			HttpRequest::get_is_multipart() const	{ return _is_multipart; }
+ssize_t			HttpRequest::get_content_length() const	{ return _content_length; }
+std::string		HttpRequest::get_response() const		{ return _response; }
 std::string		HttpRequest::get_method() const			{ return _method; }
 std::string		HttpRequest::get_target() const			{ return _target; }
 std::string		HttpRequest::get_rootpath() const		{ return _rootpath; } /// temporary for CGI

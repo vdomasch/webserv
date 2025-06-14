@@ -2,6 +2,7 @@
 #define HTTPREQUEST_HPP
 
 #include "struct.hpp"
+#include "ServerConfig.hpp"
 
 # include <iostream> 
 
@@ -22,7 +23,12 @@ class HttpRequest
 		HttpRequest();
 		~HttpRequest();
 
-		bool		_is_error_request;
+		bool			_is_error_request;
+		bool			_autoindex;
+		std::string		_server_name;
+		std::string		_location_name;
+		std::string 	_location_root;
+		ServerConfig	_server;
 		
 
 		void		append_data(const std::string &data);
@@ -35,6 +41,7 @@ class HttpRequest
 		bool			getKeepAlive() const;
 		bool 			get_is_multipart() const;
 		bool			is_server_socket() const;
+		ssize_t			get_content_length() const;
 		std::string		get_response() const;
 		std::string 	get_method() const;
 		std::string 	get_target() const;
@@ -77,8 +84,6 @@ class HttpRequest
 		std::string		_response;
 		std::string		_boundary;
 		std::string		_content_type;
-		std::string		_location_name;
-		std::string		_server_name;
 
 		void	parse_headers();
 		bool 	check_keep_alive() const;

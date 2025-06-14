@@ -236,7 +236,7 @@ bool	Server::reading_data(int fd)
 	}
 	if (!_socket_states[fd].is_ready())
 	{
-		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
+		//std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
 	}
 	
@@ -250,21 +250,74 @@ bool	Server::reading_data(int fd)
 	return 0; // Request is ready
 }
 
+bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config)
+{
+	size_t max_body_size = request._server.get_location_list()[request._location_name].get_client_max_body_size();
+	if (max_body_size == 0)
+	{
+		max_body_size = request._server.get_client_max_body_size();
+		if (max_body_size == 0)
+			max_body_size = http_config.get_client_max_body_size();
+		if (max_body_size == 0)
+			return false; // No limit set, so we assume it's okay
+	}
+
+	size_t	content_length = request.get_content_length();
+	if (content_length == 0)
+	{
+		content_length = request.get_body().size(); // If no Content-Length header, use body size
+		if (content_length == 0)
+			return false; // No body, so no size issue
+	}
+	if (content_length > max_body_size)
+	{
+		std::cerr << "Error: Client body size too large (" << content_length << " > " << max_body_size << ")" << std::endl;
+		return true; // Body size exceeds the limit
+	}
+	return false; // Body size is within the limit
+}
+
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
+	if (_socket_states[fd]._server_name.empty())
+	{
+		try { 
+		 		_socket_states[fd]._server_name = get_server_name(fd);
+				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]._server_name);
+				_socket_states[fd]._autoindex = _socket_states[fd]._server.get_autoindex();
+		}
+		catch (std::exception &e)
+		{
+			std::cerr << "Error getting server name: " << e.what() << std::endl;
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			close_msg(fd, "Bad request", 1, -1);
+			return;
+		}
+	}
 	if (reading_data(fd))
 		return;
-
-	std::string server_name;
-
-	try { server_name = get_server_name(fd); }
-	catch (std::exception &e)
+	if (_socket_states[fd].get_state() == RECEIVING_BODY || _socket_states[fd].get_state() == COMPLETE)
 	{
-		std::cerr << "Error getting server name: " << e.what() << std::endl;
-		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
-		close_msg(fd, "Bad request", 1, -1);
-		return;
+		try { 
+			_socket_states[fd]._location_name = find_location_name_and_set_root(_socket_states[fd].get_target(), _socket_states[fd]._server, _socket_states[fd]._location_root, _socket_states[fd]._autoindex);
+			if (client_body_size_too_large(_socket_states[fd], http_config))
+			{
+				std::cerr << "Error: Client body size too large" << std::endl;
+				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false);
+				close_msg(fd, "Bad request", 1, -1);
+				return;
+			}
+		}
+		catch (std::exception &e)
+		{
+			std::cerr << "Error finding matching location: " << e.what() << std::endl;
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			close_msg(fd, "Bad request", 1, -1);
+			return;
+		}
 	}
+
+
 
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
@@ -273,7 +326,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
-			_method_map[method](http_config, _socket_states[fd], _socket_data, server_name);
+			_method_map[method](http_config, _socket_states[fd], _socket_data);
 		}
 		else
 		{
