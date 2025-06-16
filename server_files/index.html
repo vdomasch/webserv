@@ -49,6 +49,7 @@
 							} else {
 								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
 							}
+							fileInput.value = "";
 						});
 					})
 					.catch(error => {

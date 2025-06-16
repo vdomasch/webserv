@@ -236,7 +236,7 @@ bool	Server::reading_data(int fd)
 	}
 	if (!_socket_states[fd].is_ready())
 	{
-		//std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
+		// std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
 	}
 	
@@ -394,8 +394,8 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 			if (!_socket_states[i].is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
 			{
-				close_msg(i, "Idle connection closed", 0, 0);
 				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
+				close_msg(i, "Idle connection closed", 0, 0);
 				_socket_states.erase(i); // Supprimer l'état de la socket
 			}
 		}

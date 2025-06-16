@@ -40,6 +40,7 @@ void HttpRequest::append_data(const std::string &data)
 		was_in_header = true;
 		return;
 	}
+	// std::cout << "1 : " <<  _state << "\n";
 	if (_state == RECEIVING_BODY)
 	{
 		if (!was_in_header)
@@ -193,7 +194,8 @@ std::string		HttpRequest::get_target() const			{ return _target; }
 std::string		HttpRequest::get_rootpath() const		{ return _rootpath; } /// temporary for CGI
 std::string		HttpRequest::get_boundary() const		{ return _boundary; }
 std::string		HttpRequest::get_content_type() const	{ return _content_type; }
-std::string HttpRequest::get_body() const				{ return _body;} 
+std::string 	HttpRequest::get_body() const			{ return _body;}
+std::string		HttpRequest::get_query_string() const	{ return _query_string; }
 unsigned long	HttpRequest::get_time() const			{ return _last_time; };
 RequestState	HttpRequest::get_state() const			{ return _state; } // added only for request debug
 std::string HttpRequest::get_header(const std::string& key) const

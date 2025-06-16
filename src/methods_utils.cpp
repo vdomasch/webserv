@@ -3,13 +3,18 @@
 std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
 	std::string	CGIBody;
+	std::string	method;
 	int			CGI_body_size;
 
-	printf("\033[35mHandeling CGI ....\n\n\033[0m|");
+	printf("\033[35mHandeling CGI ....\n\n\033[0m");
 
 	req.set_rootpath("/home/lchapard/Documents/Webserv"); // ugly but temporary
-	std::cout << " | " << (req.get_rootpath() +  req.get_target())<< " | " << d.Content_Type<< " | " << d.Content_Length<< " | " << req.get_method() << "\n";
-	d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, req.get_method());
+	method = req.get_method();
+	
+	if (method == "POST")
+		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method);
+	else if (method == "GET")
+		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method);
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
@@ -17,12 +22,13 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	//test, avoid zombie i guess ?
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
-	if(WEXITSTATUS(status) != 0)
+	int exit_code = WEXITSTATUS(status);
+	if (exit_code != 0)
 	{
-		printf("Ptit flop\n\n");
+		printf("Ptit flop: child exited with code %d\n", exit_code);
+		printf("Raw status: 0x%04x\n", status);
 		return ("emptyerror");
 	}
-
 	d.response_len = CGI_body_size;
 	*errcode = 0;
 	return CGIBody;
@@ -68,6 +74,7 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
 	res.add_header("Content-Type", req.get_content_type());
+
 	if (keep_alive_connection)
 		res.add_header("Connection", "keep-alive");
 	else

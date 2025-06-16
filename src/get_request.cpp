@@ -66,9 +66,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	if (req._location_name == "/cgi-bin/")
 	{
-		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
-		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		std::string body = handleCGI(req, fd_data, &errcode);
+		fd_data.QueryString = req.get_query_string();
+		std::string body;
+
+		body = handleCGI(req, fd_data, &errcode);
+		build_response(req, "200", body, req.getKeepAlive()); /// not sure if the right code ?
+		return ;
 	}
 
 	std::string path_no_index = root + remove_prefix(target, req._location_name); // Supprimer le préfixe location du target
