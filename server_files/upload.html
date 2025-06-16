@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+		<link rel="stylesheet" href="/assets/css_files/styles.css">
+		<title>Home</title>
+	</head>
+	<body>
+		<section class="title">
+			<a href="index.html">
+				<h1 class="title">Webserv</h1>
+			</a>
+		</section>
+		<section>
+			<div class="block">
+				<h3>Send a file</h3>
+				<p>Choose a file to send. Server will choose the path.</p>
+		
+				<label for="myfile">Select a file:</label><br>
+				<input type="file" id="myfile" name="myfile"><br><br>
+		
+				<button onclick="sendPost()">Send</button>
+		
+				<p id="uploadResult" style="margin-top: 1em;"></p>
+			</div>
+		
+			<script>
+				function sendPost() {
+					const fileInput = document.getElementById("myfile");
+					const file = fileInput.files[0];
+					
+					if (!file) {
+						document.getElementById("uploadResult").innerText = "❌ Please select a file.";
+						return;
+					}
+				
+					const formData = new FormData();
+					formData.append("myfile", file);
+				
+					fetch(window.location.pathname, {
+						method: "POST",
+						body: formData
+					})
+					.then(response => {
+						return response.text().then(text => {
+							if (response.ok) {
+								document.getElementById("uploadResult").innerText = "✅ File send. Path : " + text;
+							} else {
+								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
+							}
+							fileInput.value = "";
+						});
+					})
+					.catch(error => {
+						document.getElementById("uploadResult").innerText = "❌ Error network : " + error;
+					});
+				}
+			</script>
+			</section>
+	</body>
+</html>

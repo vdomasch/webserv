@@ -1,0 +1,89 @@
+html {
+	height: 100%;
+}
+
+body {
+	font-family: Calibri, Arial, sans-serif;
+	background-color: #769FCD;
+	background-size: 20% 20%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.title {
+	color: #B9D7EA;
+	font-size: 60px;
+	text-align: center;
+	padding: 10px;
+	margin: 20px;
+}
+
+.title a,
+.title a:visited,
+.title a:hover,
+.title a:active,
+.title a:focus {
+  text-decoration: none;
+  color: inherit; /* Ensures it takes the .title color */
+}
+
+.block {
+	text-align: center;
+	font-size: 1.2em;
+	line-height: 1.5;
+	padding: 2em;
+	border: 1px solid #F7FBFC;
+	border-radius: 5px;
+	background-color: #F7FBFC;
+	box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+	margin: 10px;
+}
+
+/* Responsive button row */
+.responsive-row {
+	display: flex;
+	gap: 1em;
+	justify-content: center;
+	margin: 2em 0;
+}
+
+/* Clickable button style for links */
+.responsive-item {
+	display: block;
+	flex: 1 1 0;
+	min-width: 150px;
+	background: #B9D7EA;
+	border: 1px solid #aac4e0;
+	border-radius: 8px;
+	padding: 1.5em;
+	text-align: center;
+	font-size: 1.2em;
+	box-shadow: 0 2px 8px #B9D7EA;
+	transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+	text-decoration: none;
+	color: #22223b;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.responsive-item:hover, .responsive-item:focus {
+	background: #D6E6F2;
+	color: #164863;
+	box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+	text-decoration: none;
+	outline: none;
+}
+
+.responsive-item:active {
+	background: #B9D7EA;
+	color: #164863;
+}
+
+/* Responsive: stack vertically on small screens */
+@media (max-width: 700px) {
+	.responsive-row {
+		flex-direction: column;
+		gap: 1.5em;
+	}
+}
