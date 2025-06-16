@@ -30,6 +30,7 @@ void HttpRequest::append_data(const std::string &data)
 		}
 		was_in_header = true;
 	}
+	// std::cout << "1 : " <<  _state << "\n";
 	if (_state == RECEIVING_BODY)
 	{
 		if (!was_in_header)
@@ -39,11 +40,13 @@ void HttpRequest::append_data(const std::string &data)
 			// multipart → fin du body par le boundary final
 			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
 				_state = COMPLETE;
+			// std::cout << "is multipart : " <<  _state << "\n";
 		}
 		else
 		{
 			if (_body.length() >= _content_length)
 				_state = COMPLETE;
+			// std::cout << "is not multipart : " <<  _state << "\n";
 		}
 	}
 }
@@ -158,6 +161,7 @@ std::string HttpRequest::get_response() const		{ return _response; }
 bool		HttpRequest::getKeepAlive() const		{ return _keep_alive; }
 bool 		HttpRequest::get_is_multipart() const	{ return _is_multipart; }
 std::string HttpRequest::get_method() const			{ return _method; }
+std::string HttpRequest::get_query_string() const			{ return _query_string; } // for GET on CGI
 std::string HttpRequest::get_target() const			{ return _target; }
 std::string HttpRequest::get_rootpath() const			{ return _rootpath; } /// temporary for CGI
 std::string HttpRequest::get_boundary() const		{ return _boundary; }

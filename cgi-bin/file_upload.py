@@ -32,6 +32,8 @@ def uploadNewFile():
 	else:
 		log("No filename found in fileitem.")
 
+uploadNewFile()
+
 # print ('<!DOCTYPE html>')
 # print ('<html>')
 # print ('<head>')
@@ -41,7 +43,6 @@ def uploadNewFile():
 # print ('<body>')
 # print ('<h2>File was successfully uploaded ! !</h2>')
 
-uploadNewFile()
 
 # print ('<form  method = "get" action = "/index.html" accept-charset=utf-8>')
 # print ('<button name="goto_index" value="teleport">Go back to main page</button>')

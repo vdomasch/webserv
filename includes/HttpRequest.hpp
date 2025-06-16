@@ -36,6 +36,7 @@ class HttpRequest
 		bool 		get_is_multipart() const;
 		std::string	get_response() const;
 		std::string get_method() const;
+		std::string get_query_string() const; // used in CGI for GET
 		std::string get_target() const;
 		std::string get_header(const std::string& key) const;
 		std::string get_body() const;

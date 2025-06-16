@@ -233,7 +233,7 @@ bool	Server::reading_data(int fd)
 	}
 	if (!_socket_states[fd].is_ready())
 	{
-		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
+		// std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
 	}
 	

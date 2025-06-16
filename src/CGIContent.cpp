@@ -76,27 +76,26 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
 	script_name_var = cgi_path.substr(pos);
-	// printf("type (%s)\n", type.c_str());
-	// printf("len (%s)\n", len.c_str());
-	// printf("script_name_var (%s)\n", script_name_var.c_str());
-	// printf("method (%s)\n", method.c_str());
 
-	// this->_cgi_env_map["HTTP_COOKIE"] = "default";
-	// this->_cgi_env_map["HTTP_USER_AGENT"] = "default";
-	// this->_cgi_env_map["PATH_INFO"] = "default";
-	// this->_cgi_env_map["REMOTE_ADDR"] = "default";
-	// this->_cgi_env_map["REMOTE_HOST"] = "default";
-	// this->_cgi_env_map["SERVER_SOFTWARE"] = "AMANIX";
-	// this->_cgi_env_map["SERVER_NAME"] = "default";
+	std::cout << "\n[METHOD] = " << method;
+	std::cout << "\n[SCRIPT_NAME] = " << script_name_var;
 
-	this->_cgi_env_map["CONTENT_LENGTH"] = len; // ln in header
-	this->_cgi_env_map["CONTENT_TYPE"] = type; // must be of form "multipart/form-data; boundary=----geckoformboundarybd99e35cc2"
-	this->_cgi_env_map["QUERY_STRING"] = ""; // to test if i can extract it
+	if (method == "GET")
+	{
+		this->_cgi_env_map["QUERY_STRING"] = type;
+		std::cout << "\n[QUERY_STRING] = " << type << "\n\n";
+	}
+	else
+	{
+		this->_cgi_env_map["CONTENT_LENGTH"] = len;
+		this->_cgi_env_map["CONTENT_TYPE"] = type; // must be of form "multipart/form-data; boundary=----geckoformboundarybd99e35cc2"
+		std::cout << "\n[CONTENT_TYPE] = " << type;
+		std::cout << "\n[CONTENT_LENGTH] = " << len << "\n\n";
+	}
 	this->_cgi_env_map["REQUEST_METHOD"] = method;   // POST, GET, HEAD ....
 	this->_cgi_env_map["SCRIPT_FILENAME"] = cgi_path;	// full path to the CGI script
 	this->_cgi_env_map["SCRIPT_NAME"] = script_name_var; // truncated path to cgi
-
-
+	
 	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
 
 	int i = 0;
@@ -106,14 +105,8 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 		this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
 		i++;
 	}
-	// printf("\n\n\n");
 	this->_cgi_env[i] = NULL;
-	// for (int i = 0; this->_cgi_env[i]; i++)
-	// 	printf("%s \n",this->_cgi_env[i]);
-
 	this->_cgi_path = cgi_path; // for debug, will be taken from config file
-
-
 	this->_argv = (char **)malloc(sizeof(char *) * 3);
 	this->_argv[0] = strdup("/usr/bin/python3");
 	this->_argv[1] = strdup(this->_cgi_path.c_str());
@@ -185,7 +178,7 @@ int	CGIContent::sendCGIBody(std::string body)
 			
 		}
 		total_written += written;
-		printf("[%lu]", total_written);
+		// printf("[%lu]", total_written);
 	}
 	close(pipe_in[1]);	// Signal EOF to child
 	return (0);

@@ -32,7 +32,7 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "application/pdf") return ".pdf";
 	if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
 	if (content_type == "application/octet-stream") return ".bin"; // Default for binary files
-	return ".bin";
+	return "";
 }
 
 std::string	get_extension(const std::string& head)
@@ -132,7 +132,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 			current += '/'; // Ensure we have a trailing slash
 		current += token;
 
-		std::cout << "Analysing create directories ... : (" << current.c_str() << ")\n";
+		// std::cout << "Analysing create directories ... : (" << current.c_str() << ")\n";
 
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
@@ -151,7 +151,7 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 			return false;
 		}
 
-		std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
+		// std::cout << "Adding \"" << current << "\" to autorised delete path file !\n";
 
 		authorized_delete_paths << current << std::endl; // Add the path to the authorized delete paths file
 		authorized_delete_paths.close();
@@ -162,9 +162,9 @@ bool	create_directories(std::string path, std::string root)    ////might be the 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, std::string server_name)
 {
 	int errcode = 0;
-	std::cout << "[post_request] Entering ....\n";
+	// std::cout << "[post_request] Entering ....\n";
 	std::string target = normalize_path(req.get_target());
-	std::cout << "[post_request] path normed ....\n";
+	// std::cout << "[post_request] path normed ....\n";
 
 	// Trouver la configuration serveur
 	ServerConfig &server = find_current_server(http_config, server_name);
@@ -186,10 +186,8 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	if (location_name == "/cgi-bin/")
 	{
 		// PRINT_DEBUG2
-		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
-		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		// std::cout << "Content Type is : \n" << fd_data.Content_Type << "\n";
-		// std::cout << "Content Length is : \n" << fd_data.Content_Length << "\n";
+		fd_data.Content_Type = req.get_header("Content-Type"); // ---> double the data, since we pass both fd_data AND req to handleCGI
+		fd_data.Content_Length = req.get_header("Content-Length"); 
 
 		std::string body;
 
@@ -225,4 +223,5 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data,
 	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
 	build_response(req, "201", response_body.str(), req.getKeepAlive());
+	
 }

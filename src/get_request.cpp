@@ -78,14 +78,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data, 
 
 	if (location_name == "/cgi-bin/")
 	{
-		PRINT_DEBUG2
-		//std::string	c_type = request.substr(request.find("Content-Type:") + 14); // + 14 is to skip "Content-Type: " and to only grab the type
-		//d->Content_Type = c_type.substr(0, c_type.find("\r\n"));
-		//std::string	c_len = request.substr(request.find("Content-Length:") + 16); // same thing
-		//d->Content_Length = c_len.substr(0, c_len.find("\r\n"));
-		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
-		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
-		std::string body = handleCGI(req, fd_data, &errcode);
+		fd_data.QueryString = req.get_query_string();
+		std::string body;
+
+		body = handleCGI(req, fd_data, &errcode);
+		build_response(req, "200", body, req.getKeepAlive()); /// not sure if the right code ?
+		return ;
 	}
 
 	// std::cout << "ḦERE: " << remove_prefix(target, location_name) << std::endl;
