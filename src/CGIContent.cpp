@@ -95,11 +95,13 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 	this->_cgi_env_map["REQUEST_METHOD"] = method;   // POST, GET, HEAD ....
 	this->_cgi_env_map["SCRIPT_FILENAME"] = cgi_path;	// full path to the CGI script
 	this->_cgi_env_map["SCRIPT_NAME"] = script_name_var; // truncated path to cgi
+	this->_cgi_env_map["REDIRECT_STATUS"] = "200"; // to avoid 404 error, not sure if needed
+
 	
 	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
 
 	int i = 0;
-	for (std::map<std::string, std::string>::iterator it=this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
+	for (std::map<std::string, std::string>::iterator it = this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
 	{
 		// std::cout << it->first << " = " << it->second << "\n";
 		this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
@@ -108,7 +110,11 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 	this->_cgi_env[i] = NULL;
 	this->_cgi_path = cgi_path; // for debug, will be taken from config file
 	this->_argv = (char **)malloc(sizeof(char *) * 3);
-	this->_argv[0] = strdup("/usr/bin/python3");
+	std::cout << "\n[CGI_PATH] = " << this->_cgi_path << "\n\n";
+	if (cgi_path.find(".php") != std::string::npos)
+		_argv[0] = strdup("/usr/bin/php-cgi");
+	else if (cgi_path.find(".py")  != std::string::npos)
+		_argv[0] = strdup("/usr/bin/python3");
 	this->_argv[1] = strdup(this->_cgi_path.c_str());
 	this->_argv[2] = NULL;
 	// std::cout << "\033[31m|-----###---" << this->_argv[0] << "---------------|\033[0m\n\n" << std::endl;
@@ -140,6 +146,7 @@ void 	CGIContent::executeCGI()
 		close(pipe_in[1]);
 		close(pipe_out[0]);
 		close(pipe_out[1]);
+
 		
 		this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
 		

@@ -159,7 +159,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	if (!error_code.empty())
 	{
 		std::cerr << "Error validating request context: " << error_code << std::endl;
-		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false));
+		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false, false));
 	}
 
 	if (req._location_name == "/cgi-bin/")
@@ -170,7 +170,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		build_response(req, "200", body, req.getKeepAlive());
+		build_response(req, "200", body, req.getKeepAlive(), true);
 		return ;
 	}
 
@@ -185,13 +185,13 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
 	{
 		std::cerr << "Error: Failed to create directories for POST data." << std::endl;
-		return (build_response(req, "500", "Failed to create directories for POST data", false));
+		return (build_response(req, "500", "Failed to create directories for POST data", false, false));
 	}
 	std::ofstream out(file_path.c_str(), std::ios::binary);
 	if (!out.is_open())
 	{
 		std::cerr << "Error: Failed to open file for writing: " << file_path << std::endl;
-		return (build_response(req, "500", "Failed to store POST data", false));
+		return (build_response(req, "500", "Failed to store POST data", false, false));
 	}
 	out << body; // Stockage brut, sans analyse de type MIME
 	out.close();
@@ -200,6 +200,6 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	//std::string filename = file_path.substr(file_path.rfind('/') + 1); // Extraire le nom de fichier
 	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
 
-	build_response(req, "201", response_body.str(), req.getKeepAlive());
+	build_response(req, "201", response_body.str(), req.getKeepAlive(), false);
 	
 }

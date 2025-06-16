@@ -1,0 +1,58 @@
+#!/usr/bin/php-cgi
+<?php
+
+//echo "Content-type: text/html\r\n\r\n";
+
+// Parse GET query string manually (alternative to $_GET for CGI)
+parse_str($_SERVER['QUERY_STRING'], $params);
+
+$n1 = isset($params['n1']) ? $params['n1'] : null;
+$n2 = isset($params['n2']) ? $params['n2'] : null;
+$op = isset($params['op']) ? $params['op'] : null;
+
+$result = "";
+
+class Calculator
+{
+    var $a;
+    var $b;
+
+    function checkoperation($op)
+    {
+        switch($op)
+        {
+            case '+': return $this->a + $this->b;
+            case '-': return $this->a - $this->b;
+            case '*': return $this->a * $this->b;
+            case '/': return ($this->b == 0) ? "Division by zero" : $this->a / $this->b;
+            default:  return "Invalid operation";
+        }
+    }
+
+    function getresult($a, $b, $op)
+    {
+        $this->a = $a;
+        $this->b = $b;
+        return $this->checkoperation($op);
+    }
+}
+
+if ($n1 !== null && $n2 !== null && $op !== null) {
+    $calc = new Calculator();
+    $result = $calc->getresult($n1, $n2, $op);
+}
+
+echo "<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Result</title>
+</head>
+<body style='background-color: #bee8fd;'>
+    <h2 style='text-align:center;'>Result: $result</h2>
+    <div style='text-align:center;'>
+        <a href='/inner_folder/'>Back to Calculator</a>
+    </div>
+</body>
+</html>";
+?>

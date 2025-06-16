@@ -226,7 +226,6 @@ bool	Server::reading_data(int fd)
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
-
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error in request: " << std::endl;
@@ -236,7 +235,7 @@ bool	Server::reading_data(int fd)
 	}
 	if (!_socket_states[fd].is_ready())
 	{
-		// std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
+		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
 	}
 	
@@ -285,11 +284,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		 		_socket_states[fd]._server_name = get_server_name(fd);
 				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]._server_name);
 				_socket_states[fd]._autoindex = _socket_states[fd]._server.get_autoindex();
+				_socket_states[fd].set_rootpath(_socket_states[fd]._server.get_root());
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Error getting server name: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
 			close_msg(fd, "Bad request", 1, -1);
 			return;
 		}
@@ -303,7 +303,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			if (client_body_size_too_large(_socket_states[fd], http_config))
 			{
 				std::cerr << "Error: Client body size too large" << std::endl;
-				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false);
+				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false, false);
 				close_msg(fd, "Bad request", 1, -1);
 				return;
 			}
@@ -311,7 +311,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		catch (std::exception &e)
 		{
 			std::cerr << "Error finding matching location: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
 			close_msg(fd, "Bad request", 1, -1);
 			return;
 		}
@@ -339,18 +339,14 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Content-Type", "text/plain");
 			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
 			res.add_header("Connection", "close");
-			_socket_states[fd].set_response(res.generate_response());
+			_socket_states[fd].set_response(res.generate_response(false));
 		}
 		std::string response = _socket_states[fd].get_response();
 		send(fd, response.c_str(), response.size(), 0);
-
+		_socket_states[fd].set_state(RESPONDED);
 		if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
 			close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
-		else 
-			_socket_states[fd] = HttpRequest(); // Optionnel : reset request state for next request
 	}
-	if (_socket_states[fd].is_finished())
-		_socket_states[fd] = HttpRequest();
 }
 
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
@@ -370,7 +366,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
-
 		// Parcours des sockets actifs
 		unsigned long now = time(NULL);
 		for (int i = 3; i <= _socket_data.max_fd; ++i) 
@@ -385,16 +380,17 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				{
 					_socket_states[i].set_time(time(NULL));
 
-					handle_client_request(http_config, i);
-					if (_socket_states[i].is_ready())
+					if (_socket_states[i].is_finished())
 						_socket_states[i] = HttpRequest();
+					handle_client_request(http_config, i);
 
 				}
 			}
 
 			if (!_socket_states[i].is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
 			{
-				send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
+				if (_socket_states[i].get_state() != RESPONDED)
+					send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
 				close_msg(i, "Idle connection closed", 0, 0);
 				_socket_states.erase(i); // Supprimer l'état de la socket
 			}

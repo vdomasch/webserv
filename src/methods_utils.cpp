@@ -8,7 +8,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 
 	printf("\033[35mHandeling CGI ....\n\n\033[0m");
 
-	req.set_rootpath("/home/lchapard/Documents/Webserv"); // ugly but temporary
 	method = req.get_method();
 	
 	if (method == "POST")
@@ -18,6 +17,8 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
+	PRINT_DEBUG2
+	std::cout << "There: " << CGIBody << std::endl;
 
 	//test, avoid zombie i guess ?
 	int status = 0;
@@ -68,8 +69,9 @@ std::string remove_prefix(std::string target, std::string prefix)
 	return target;
 }
 
-void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection)
+void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection, bool is_cgi)
 {
+
 	HttpResponse res;
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
@@ -79,10 +81,12 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 		res.add_header("Connection", "keep-alive");
 	else
 		res.add_header("Connection", "close");
-	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-	req.set_response(res.generate_response());
-	req.is_finished();
+	if (!is_cgi)
+	{
+		try { res.add_header("Content-Length", convert<std::string>(body.size())); }
+		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+	}
+	req.set_response(res.generate_response(is_cgi));
 }
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
