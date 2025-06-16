@@ -25,7 +25,7 @@ body {
 .title a:active,
 .title a:focus {
   text-decoration: none;
-  color: inherit; /* Ensures it takes the .title color */
+  color: inherit;
 }
 
 .block {
@@ -53,7 +53,7 @@ body {
 	display: block;
 	flex: 1 1 0;
 	min-width: 150px;
-	background: #B9D7EA;
+	background: #D6E6F2;
 	border: 1px solid #aac4e0;
 	border-radius: 8px;
 	padding: 1.5em;
@@ -68,7 +68,7 @@ body {
 }
 
 .responsive-item:hover, .responsive-item:focus {
-	background: #D6E6F2;
+	background: #B9D7EA;
 	color: #164863;
 	box-shadow: 0 4px 16px rgba(0,0,0,0.13);
 	text-decoration: none;
