@@ -1,9 +1,5 @@
 #!/usr/bin/python3
 
-int i = 0
-while true:
-	i = 4
-
 
 print ('<!DOCTYPE html>')
 print ('<html>')

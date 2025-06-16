@@ -413,7 +413,6 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	if (it != _location_list.end())
 	{
 		autoindex = it->second.get_autoindex(autoindex);
-		std::cout << "Falling back to default location '/'" << std::endl;
 		return "/";
 	}
 	

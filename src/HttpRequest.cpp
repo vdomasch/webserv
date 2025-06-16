@@ -24,23 +24,24 @@ void HttpRequest::append_data(const std::string &data)
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
 			
+			
 			parse_headers();
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
 			{
+				PRINT_DEBUG
 				_state = COMPLETE;
 				_last_time = time(NULL);
 			}
 			else
 			{
+				PRINT_DEBUG
 				_state = RECEIVING_BODY;
 				_last_time = time(NULL);
 			}
 		}
 		was_in_header = true;
-		return;
 	}
-	// std::cout << "1 : " <<  _state << "\n";
 	if (_state == RECEIVING_BODY)
 	{
 		if (!was_in_header)

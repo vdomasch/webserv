@@ -62,7 +62,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string root = req._location_root;
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");
 	if (!error_code.empty())
-		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false));
+		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false, false));
 
 	if (req._location_name == "/cgi-bin/")
 	{
@@ -70,7 +70,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		build_response(req, "200", body, req.getKeepAlive()); /// not sure if the right code ?
+		build_response(req, "200", body, req.getKeepAlive(), true); /// not sure if the right code ?
 		return ;
 	}
 
@@ -83,7 +83,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		if (!req._autoindex)
 		{
 			std::cerr << "Error: Forbidden request: " << file_path << std::endl;
-			return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), false));
+			return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), false, false));
 		}
 		if (req._autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
 		{
@@ -93,21 +93,21 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 			//fd_data.content_len = 0;
 			fd_data.folderContent.clear();
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
-			return (build_response(req, "200", body, false));
+			return (build_response(req, "200", body, false, false));
 		}
 		std::cerr << "Error: File not found: " << file_path << std::endl;
-		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), false));
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), false, false));
 	}
 
 	std::ifstream file(file_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
 		std::cerr << "Error: opening file: " << file_path << std::endl;
-		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), false));
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), false, false));
 	}
 	std::ostringstream content;
 	content << file.rdbuf();
 	std::string body = content.str();
 	req.set_content_type(get_content_type(file_path));
-	build_response(req, "200", body, req.getKeepAlive());
+	build_response(req, "200", body, req.getKeepAlive(), false);
 }

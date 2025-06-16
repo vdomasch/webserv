@@ -23,13 +23,12 @@ public:
 	std::string get_body() const;
 	bool get_keep_alive() const;
 
-
 	void set_keep_alive(bool keep_alive);
     void set_status(const std::string& code, const std::string& message);
     void set_body(const std::string& body);
     void add_header(const std::string& key, const std::string& value);
 
-    std::string generate_response() const;
+    std::string generate_response(bool is_cgi) const;
 };
 
 #endif
