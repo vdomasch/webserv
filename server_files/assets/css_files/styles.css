@@ -1,0 +1,107 @@
+html {
+	height: 100%;
+}
+
+body {
+	font-family: Calibri, Arial, sans-serif;
+	background-color: #769FCD;
+	background-size: 20% 20%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.title {
+	color: #B9D7EA;
+	font-size: 60px;
+	text-align: center;
+	padding: 10px;
+	margin: 20px;
+}
+
+.title a,
+.title a:visited,
+.title a:hover,
+.title a:active,
+.title a:focus {
+	text-decoration: none;
+	color: inherit;
+}
+
+.block {
+	text-align: center;
+	font-size: 1.2em;
+	line-height: 1.5;
+	padding: 2em;
+	border: 1px solid #F7FBFC;
+	border-radius: 5px;
+	background-color: #F7FBFC;
+	box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+	margin: 10px;
+}
+
+.responsive-row {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	align-items: center;
+	max-width: 400px;
+	margin: 0 auto;
+  }
+
+.responsive-item {
+	width: 100%;
+	box-sizing: border-box;
+	flex: 1;
+	text-align: center;
+	background: #D6E6F2;
+	border: 1px solid #aac4e0;
+	border-radius: 8px;
+	padding: 1.2em;
+	color: #22223b;
+	font-weight: bold;
+	text-align: center;
+	text-decoration: none;
+	box-shadow: 0 2px 8px #B9D7EA;
+	transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+	cursor: pointer;
+}
+
+.responsive-row form {
+	display: contents;
+	height: 100%;
+}
+
+.responsive-item button,
+.responsive-item input[type="submit"] {
+	all: unset;
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: inherit;
+	border: none;
+	color: inherit;
+	font: inherit;
+	text-align: center;
+	cursor: pointer;
+	padding: 0;
+}
+
+.responsive-item,
+.responsive-item * {
+	font-size: 1.1em;
+	font-family: inherit;
+	font-weight: bold;
+	line-height: 1.2;
+}
+
+.responsive-item:hover,
+.responsive-item:focus,
+.responsive-item:active,
+.responsive-item:has(button:hover),   /* for the button inside */
+.responsive-item:has(button:focus) {
+	background: #B9D7EA;
+	color: #22223b;
+	box-shadow: 0 4px 16px #aac4e0;
+}

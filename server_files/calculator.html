@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!--<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">-->
+		<link rel="stylesheet" href="/assets/css_files/styles.css">
+		<title>Calculator</title>
+	</head>
+	<body>
+		<section class="title">
+			<a href="index.html">
+				<h1 class="title">Webserv</h1>
+			</a>
+		</section>
+		<section class="block">
+			<h2>Calculator</h2>
+			<form method="get" action="/cgi-bin/calculator.php">
+				<table align="center">
+					<tr>
+						<td>Enter 1st Number</td>
+						<td><input type="text" name="n1" required></td>
+					</tr>
+					<tr>
+						<td>Enter 2nd Number</td>
+						<td><input type="text" name="n2" required></td>
+					</tr>
+					<tr>
+						<td>Select Operator</td>
+						<td>
+							<select name="op">
+								<option value="+">+</option>
+								<option value="-">-</option>
+								<option value="*">*</option>
+								<option value="/">/</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><input type="submit" value="="></td>
+					</tr>
+				</table>
+			</form>
+		</section>
+	</body>
+</html>

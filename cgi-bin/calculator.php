@@ -44,15 +44,28 @@ if ($n1 !== null && $n2 !== null && $op !== null) {
 
 echo "<!DOCTYPE html>
 <html>
-<head>
-    <meta charset='UTF-8'>
-    <title>Result</title>
-</head>
-<body style='background-color: #bee8fd;'>
-    <h2 style='text-align:center;'>Result: $result</h2>
-    <div style='text-align:center;'>
-        <a href='/inner_folder/'>Back to Calculator</a>
-    </div>
-</body>
+	<head>
+		<meta charset='UTF-8'>
+		<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+		<link rel='icon' type='image/x-icon' href='/icons/favicon.ico'>
+		<link rel='stylesheet' href='/assets/css_files/styles.css'>
+		<title>calculator</title>
+	</head>
+	<body>
+		<section class='title'>
+			<a href='/index.html'>
+				<h1 class='title'>Webserv</h1>
+			</a>
+		</section>
+		<section class='block'>
+			<h2>Here is your result</h2>
+			<div class='responsive-row'>
+				<h2 style='text-align:center;'>Result: $result</h2>
+			</div>
+    		<div class='responsive-item'>
+        		<a href='/calculator.html'>Back to Calculator</a>
+			</div>
+		</section>
+	</body>
 </html>";
 ?>
