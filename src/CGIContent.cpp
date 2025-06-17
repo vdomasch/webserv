@@ -3,10 +3,14 @@
 
 CGIContent::CGIContent()
 {
-	// printf("calling default ! \n");
+	printf("calling default ! \n");
 
 	this->_cgi_path = "default";
-	//this->_argv = NULL;
+	_cgi_env_map.clear();
+	this->_argv.clear();
+	this->_cgi_env.clear();
+	this->_env_storage.clear();
+	this->_argv_storage.clear();
 	//this->_cgi_env = NULL;
 	this->_exitcode = -42;
 	this->pipe_in[0] = -42;
@@ -14,18 +18,6 @@ CGIContent::CGIContent()
 	this->pipe_out[0] = -42;
 	this->pipe_out[1] = -42;
 	//this->_cgi_env_map = NULL; not possible
-}
-
-CGIContent::CGIContent(std::string path)
-{
-	this->_cgi_path = path;
-	//this->_argv = NULL;
-	//this->_cgi_env = NULL;
-	this->_exitcode = -42;
-	this->pipe_in[0] = -42;
-	this->pipe_in[1] = -42;
-	this->pipe_out[0] = -42;
-	this->pipe_out[1] = -42;
 }
 
 CGIContent::~CGIContent()
@@ -45,57 +37,80 @@ CGIContent::~CGIContent()
 	this->_cgi_env_map.clear();
 }
 
-CGIContent::CGIContent(CGIContent const &other)
-{
-	this->_cgi_path = other._cgi_path;
-	this->_argv =  other._argv;
-	this->_cgi_env =  other._cgi_env;
-	this->_cgi_env_map =  other._cgi_env_map;
-	this->_exitcode =  other._exitcode;
-}
-
-
-CGIContent &CGIContent::operator=(CGIContent const &copy)
-{
-	if (this != &copy)
-	{
-		this->_cgi_path = copy._cgi_path;
-		this->_cgi_env =  copy._cgi_env;
-		this->_cgi_env_map =  copy._cgi_env_map;
-		this->_exitcode =  copy._exitcode;
-		this->_argv =  copy._argv;
-	}
-	return (*this);
-}
-
 void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method) // string for now, replace by iterator of whatever struct we use
 {	
 	std::string	script_name_var;
 	size_t		pos;
 
+	for (std::map<std::string, std::string>::iterator it = _cgi_env_map.begin(); it != _cgi_env_map.end(); ++it)
+	{
+		if (it != _cgi_env_map.end())
+			std::cout << "CGI ENV MAP : ";
+		else
+			std::cout << "CGI ENV MAP END : ";
+		std::cout << it->first << " = " << it->second << "\n";
+	}
+	for (std::vector<std::string>::iterator it = _env_storage.begin(); it != _env_storage.end(); ++it)
+	{
+		if (it != _env_storage.end())
+			std::cout << "CGI ENV STORAGE EMPTY" << std::endl;
+		std::cout << "CGI ENV STORAGE : " << *it << std::endl;
+	}
+	for (std::vector<std::string>::iterator it = _argv_storage.begin(); it != _argv_storage.end(); ++it)
+	{
+		if (it != _env_storage.end())
+			std::cout << "CGI ARGV STORAGE EMPTY" << std::endl;
+		std::cout << "CGI ARGV STORAGE : " << *it << std::endl;
+	}
+	for (std::vector<char*>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); ++it)
+	{
+		if (it != _cgi_env.end())
+			std::cout << "CGI ENV EMPTY" << std::endl;
+		std::cout << "CGI ENV : " << *it << std::endl;
+	}
+	for (std::vector<char*>::iterator it = _argv.begin(); it != _argv.end(); ++it)
+	{
+		if (it != _argv.end())
+			std::cout << "CGI ARGV EMPTY" << std::endl;
+		std::cout << "CGI ARGV : " << *it << std::endl;
+	}
+
 
 	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
 	script_name_var = cgi_path.substr(pos);
-
-	std::cout << "\n[METHOD] = " << method;
-	std::cout << "\n[SCRIPT_NAME] = " << script_name_var;
+	_cgi_path = cgi_path;
 
 	if (method == "GET")
-	{
-		this->_cgi_env_map["QUERY_STRING"] = type;
-		std::cout << "\n[QUERY_STRING] = " << type << "\n\n";
-	}
+		_cgi_env_map["QUERY_STRING"] = type;
 	else
 	{
-		this->_cgi_env_map["CONTENT_LENGTH"] = len;
-		this->_cgi_env_map["CONTENT_TYPE"] = type; // must be of form "multipart/form-data; boundary=----geckoformboundarybd99e35cc2"
-		std::cout << "\n[CONTENT_TYPE] = " << type;
-		std::cout << "\n[CONTENT_LENGTH] = " << len << "\n\n";
+		_cgi_env_map["CONTENT_LENGTH"] = len;
+		_cgi_env_map["CONTENT_TYPE"] = type; // must be of form "multipart/form-data; boundary=----geckoformboundarybd99e35cc2"
 	}
-	this->_cgi_env_map["REQUEST_METHOD"] = method;   // POST, GET, HEAD ....
-	this->_cgi_env_map["SCRIPT_FILENAME"] = cgi_path;	// full path to the CGI script
-	this->_cgi_env_map["SCRIPT_NAME"] = script_name_var; // truncated path to cgi
-	this->_cgi_env_map["REDIRECT_STATUS"] = "200"; // to avoid 404 error, not sure if needed
+	_cgi_env_map["REQUEST_METHOD"] = method;   // POST, GET, HEAD ....
+	_cgi_env_map["SCRIPT_FILENAME"] = cgi_path;	// full path to the CGI script
+	_cgi_env_map["SCRIPT_NAME"] = script_name_var; // truncated path to cgi
+	_cgi_env_map["REDIRECT_STATUS"] = "200"; // to avoid 404 error, not sure if needed
+
+
+	 // get the env storage from the config file
+	for (std::map<std::string, std::string>::iterator it = _cgi_env_map.begin(); it != _cgi_env_map.end(); ++it)
+		_env_storage.push_back(it->first + "=" + it->second);
+
+	for (std::vector<std::string>::iterator it = _env_storage.begin(); it != _env_storage.end(); ++it)
+		_cgi_env.push_back(const_cast<char*>(it->c_str()));
+	_cgi_env.push_back(NULL);
+
+
+	if (cgi_path.find(".php") != std::string::npos)
+		_argv_storage.push_back("/usr/bin/php-cgi");
+	else if (cgi_path.find(".py")  != std::string::npos)
+		_argv_storage.push_back("/usr/bin/python3");
+	_argv_storage.push_back(cgi_path);
+
+	for (std::vector<std::string>::iterator it = _argv_storage.begin(); it != _argv_storage.end(); ++it)
+		_argv.push_back(const_cast<char*>(it->c_str()));
+	_argv.push_back(NULL);
 
 	
 	//this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
@@ -116,42 +131,12 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 	//else if (cgi_path.find(".py")  != std::string::npos)
 	//	_argv[0] = strdup("/usr/bin/python3");
 	//this->_argv[1] = strdup(this->_cgi_path.c_str());
+
+
 	//this->_argv[2] = NULL;
 	// std::cout << "\033[31m|-----###---" << this->_argv[0] << "---------------|\033[0m\n\n" << std::endl;
 	// std::cout << "\033[31m|------###--" << this->_argv[1] << "---------------|\033[0m\n\n" << std::endl;
 
-
-	// 2. Convert to envp-style array;
-
-	std::map<std::string, std::string>::iterator it;
-	for (it = _cgi_env_map.begin(); it != _cgi_env_map.end(); ++it)
-	{
-		_cgi_env.push_back(const_cast<char*>((it->first + "=" + it->second).c_str()));
-	}
-
-		//for (size_t i = 0; i < _env_storage.size(); ++i)
-		//	_cgi_env.push_back(const_cast<char*>(_env_storage[i].c_str()));
-
-		_cgi_env.push_back(NULL); // Null-terminate
-
-		// 3. Set up argv
-		_cgi_path = cgi_path;
-		//_argv_storage.clear();
-		//_argv.clear();
-
-		std::cout << "\n[CGI_PATH] = " << _cgi_path << "\n\n";
-
-		if (_cgi_path.find(".php") != std::string::npos)
-			_argv.push_back(const_cast<char*>("/usr/bin/php-cgi"));
-		else if (_cgi_path.find(".py") != std::string::npos)
-			_argv.push_back(const_cast<char*>("/usr/bin/python3"));
-
-		_argv.push_back(const_cast<char*>(cgi_path.c_str()));
-
-		//for (size_t i = 0; i < _argv_storage.size(); ++i)
-		//	_argv.push_back(const_cast<char*>(_argv_storage[i].c_str()));
-
-		_argv.push_back(NULL); // Null-terminate
 }
 
 
@@ -172,9 +157,23 @@ void 	CGIContent::executeCGI()
 		this->_exitcode = -1; // to change
 		return ;
 	}
-	
+
+		for (std::vector<char*>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); ++it)
+		{
+			if (*it == NULL)
+				continue;
+			std::cout << "CGI ENV : " << *it << std::endl;
+		}
+
+		for (std::vector<char*>::iterator it = _argv.begin(); it != _argv.end(); ++it)
+		{
+			if (*it == NULL)
+				continue;
+			std::cout << "CGI ARGV : " << *it << std::endl;
+		}
 
 	this->cgi_forkfd = fork();
+	
 	if (this->cgi_forkfd == 0)
 	{
 		dup2(pipe_in[0], STDIN_FILENO);
@@ -183,10 +182,10 @@ void 	CGIContent::executeCGI()
 		close(pipe_in[1]);
 		close(pipe_out[0]);
 		close(pipe_out[1]);
-
 		
 		//this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
-		this->_exitcode = execve(getArgv()[0], getArgv(), getEnv());
+		//this->_exitcode = execve(getArgv()[0], getArgv(), getEnv());
+		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
 		std::cerr << "EXECVE FAILED !\r\n";
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO

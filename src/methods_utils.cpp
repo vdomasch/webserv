@@ -9,7 +9,8 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	printf("\033[35mHandeling CGI ....\n\n\033[0m");
 
 	method = req.get_method();
-	
+	// reset CGI class
+	d.cg = CGIContent();	
 	if (method == "POST")
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method);
 	else if (method == "GET")
@@ -17,8 +18,8 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
-	PRINT_DEBUG2
-	std::cout << "There: " << CGIBody << std::endl;
+	//PRINT_DEBUG2
+	//std::cout << "There: " << CGIBody << std::endl;
 
 	//test, avoid zombie i guess ?
 	int status = 0;

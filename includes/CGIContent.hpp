@@ -33,6 +33,9 @@ class CGIContent
 		int									_exitcode;
 		std::string							_cgi_path;
 		std::map<std::string, std::string>	_cgi_env_map;
+		std::vector<std::string>			_env_storage;
+		std::vector<std::string>			_argv_storage;
+
 
 		
 		public :
@@ -43,10 +46,7 @@ class CGIContent
 
 
 	CGIContent();
-	CGIContent(std::string path);
 	~CGIContent();
-	CGIContent(CGIContent const &other);
-	CGIContent &operator=(CGIContent const &rhs);
 
 	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
 	void 			executeCGI();
