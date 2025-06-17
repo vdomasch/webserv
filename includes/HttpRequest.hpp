@@ -40,7 +40,8 @@ class HttpRequest
 
 		bool			getKeepAlive() const;
 		bool 			get_is_multipart() const;
-		bool			is_server_socket() const;
+		bool			get_is_server_socket() const;
+		int				get_status_code() const;
 		ssize_t			get_content_length() const;
 		std::string		get_response() const;
 		std::string 	get_method() const;
@@ -56,7 +57,7 @@ class HttpRequest
 
 		void	set_is_server_socket(bool is_server_socket);
 		void	set_response(const std::string& response);
-		void	set_errorcode(int code);
+		void	set_status_code(int code);
 		void	set_target(const std::string& target);
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
@@ -80,7 +81,7 @@ class HttpRequest
 		bool			_header_parsed;
 		bool			_keep_alive;
 		bool			_is_multipart;
-		int				_errcode;
+		int				_status_code;
 		unsigned long	_last_time;
 		std::string		_response;
 		std::string		_boundary;

@@ -47,7 +47,7 @@
 							if (response.ok) {
 								document.getElementById("uploadResult").innerText = "✅ File send. Path : " + text;
 							} else {
-								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
+								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${response.statusText}`;
 							}
 							fileInput.value = "";
 						});

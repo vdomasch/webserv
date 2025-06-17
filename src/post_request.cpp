@@ -95,7 +95,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	if (body.empty())
 	{
 		std::cerr << "Error: POST body is empty." << std::endl;
-		req.set_errorcode(400); // Bad Request
+		req.set_status_code(400); // Bad Request
 		return;
 	}
 	if (req.get_is_multipart())
@@ -104,7 +104,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 		if (delimiter.empty())
 		{
 			std::cerr << "Error: No boundary found in multipart POST request." << std::endl;
-			req.set_errorcode(400); // Bad Request
+			req.set_status_code(400); // Bad Request
 			return;
 		}
 		if (body.find(delimiter) != std::string::npos)

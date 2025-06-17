@@ -15,6 +15,7 @@ SRV_FILES = main			\
 			parsing_utils	\
 			Server			\
 			HttpRequest		\
+			utils			\
 			get_request		\
 			post_request	\
 			HttpResponse	\

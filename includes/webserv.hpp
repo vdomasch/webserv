@@ -7,6 +7,7 @@
 # include "methods_utils.hpp"
 # include "struct.hpp"
 # include "CGIContent.hpp"
+# include "utils.hpp"
 
 # include <stdio.h>
 # include <iostream>//std::cout
