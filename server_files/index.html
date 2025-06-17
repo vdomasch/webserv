@@ -7,57 +7,11 @@
 		<link rel="stylesheet" href="/assets/css_files/styles.css">
 		<title>Home</title>
 	</head>
-	<body style="background-color: #bee8fd;">
-		<section>
-			<section>
-				<div class="container" style="text-align: center; margin-top: 6em; font-family: Calibri; font-size: 20px; line-height: 1.5; padding: 2em; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);"> 
-					<h3>Envoyer un fichier</h3>
-					<p>Choisissez un fichier à envoyer. Le serveur décidera de son emplacement.</p>
-			
-					<label for="myfile">Sélectionner un fichier :</label><br>
-					<input type="file" id="myfile" name="myfile"><br><br>
-			
-					<button onclick="sendPost()">Envoyer</button>
-			
-					<p id="uploadResult" style="margin-top: 1em;"></p>
-
-					<form  method = "post" action = "/cgi-bin/upload_page.py">
-						<button name="goto_upload" value="teleport">Upload par CGI</button>
-					</form>
-				</div>
-			
-				<script>
-				function sendPost() {
-					const fileInput = document.getElementById("myfile");
-					const file = fileInput.files[0];
-			
-					if (!file) {
-						document.getElementById("uploadResult").innerText = "❌ Please select a file.";
-						return;
-					}
-			
-					const formData = new FormData();
-					formData.append("myfile", file);
-			
-					fetch(window.location.pathname, {
-						method: "POST",
-						body: formData
-					})
-					.then(response => {
-						return response.text().then(text => {
-							if (response.ok) {
-								document.getElementById("uploadResult").innerText = "✅ File send. Path : " + text;
-							} else {
-								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${response.statusText}`;
-							}
-							fileInput.value = "";
-						});
-					})
-					.catch(error => {
-						document.getElementById("uploadResult").innerText = "❌ Error network : " + error;
-					});
-				}
-				</script>
+	<body>
+		<section class="title">
+			<a href="index.html">
+				<h1 class="title">Webserv</h1>
+			</a>
 		</section>
 		<section class="block">
 			<h2>Welcome to our Webserv project!</h2>
