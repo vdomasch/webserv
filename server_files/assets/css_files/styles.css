@@ -24,8 +24,8 @@ body {
 .title a:hover,
 .title a:active,
 .title a:focus {
-  text-decoration: none;
-  color: inherit;
+	text-decoration: none;
+	color: inherit;
 }
 
 .block {
@@ -40,50 +40,68 @@ body {
 	margin: 10px;
 }
 
-/* Responsive button row */
 .responsive-row {
 	display: flex;
+	flex-direction: column;
 	gap: 1em;
-	justify-content: center;
-	margin: 2em 0;
-}
+	align-items: center;
+	max-width: 400px;
+	margin: 0 auto;
+  }
 
-/* Clickable button style for links */
 .responsive-item {
-	display: block;
-	flex: 1 1 0;
-	min-width: 150px;
+	width: 100%;
+	box-sizing: border-box;
+	flex: 1;
+	text-align: center;
 	background: #D6E6F2;
 	border: 1px solid #aac4e0;
 	border-radius: 8px;
-	padding: 1.5em;
-	text-align: center;
-	font-size: 1.2em;
-	box-shadow: 0 2px 8px #B9D7EA;
-	transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-	text-decoration: none;
+	padding: 1.2em;
 	color: #22223b;
 	font-weight: bold;
+	text-align: center;
+	text-decoration: none;
+	box-shadow: 0 2px 8px #B9D7EA;
+	transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 	cursor: pointer;
 }
 
-.responsive-item:hover, .responsive-item:focus {
-	background: #B9D7EA;
-	color: #164863;
-	box-shadow: 0 4px 16px rgba(0,0,0,0.13);
-	text-decoration: none;
-	outline: none;
+.responsive-row form {
+	display: contents;
+	height: 100%;
 }
 
-.responsive-item:active {
-	background: #B9D7EA;
-	color: #164863;
+.responsive-item button,
+.responsive-item input[type="submit"] {
+	all: unset;
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: inherit;
+	border: none;
+	color: inherit;
+	font: inherit;
+	text-align: center;
+	cursor: pointer;
+	padding: 0;
 }
 
-/* Responsive: stack vertically on small screens */
-@media (max-width: 700px) {
-	.responsive-row {
-		flex-direction: column;
-		gap: 1.5em;
-	}
+.responsive-item,
+.responsive-item * {
+	font-size: 1.1em;
+	font-family: inherit;
+	font-weight: bold;
+	line-height: 1.2;
+}
+
+.responsive-item:hover,
+.responsive-item:focus,
+.responsive-item:active,
+.responsive-item:has(button:hover),   /* for the button inside */
+.responsive-item:has(button:focus) {
+	background: #B9D7EA;
+	color: #22223b;
+	box-shadow: 0 4px 16px #aac4e0;
 }
