@@ -26,8 +26,10 @@
 class CGIContent
 {
 	private :
-		char**								_argv;
-		char**								_cgi_env;
+		//char**								_argv;
+		std::vector<char*>					_argv;
+		//char**								_cgi_env;
+		std::vector<char*>					_cgi_env;
 		int									_exitcode;
 		std::string							_cgi_path;
 		std::map<std::string, std::string>	_cgi_env_map;
@@ -51,6 +53,9 @@ class CGIContent
 	std::string		grabCGIBody(int	&bodySize);
 	int				sendCGIBody(std::string body);
 	//getters et setters
+
+	char**	getEnv();
+	char**	getArgv();
 };
 
 #endif

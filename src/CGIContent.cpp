@@ -6,8 +6,8 @@ CGIContent::CGIContent()
 	// printf("calling default ! \n");
 
 	this->_cgi_path = "default";
-	this->_argv = NULL;
-	this->_cgi_env = NULL;
+	//this->_argv = NULL;
+	//this->_cgi_env = NULL;
 	this->_exitcode = -42;
 	this->pipe_in[0] = -42;
 	this->pipe_in[1] = -42;
@@ -19,8 +19,8 @@ CGIContent::CGIContent()
 CGIContent::CGIContent(std::string path)
 {
 	this->_cgi_path = path;
-	this->_argv = NULL;
-	this->_cgi_env = NULL;
+	//this->_argv = NULL;
+	//this->_cgi_env = NULL;
 	this->_exitcode = -42;
 	this->pipe_in[0] = -42;
 	this->pipe_in[1] = -42;
@@ -98,28 +98,65 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 	this->_cgi_env_map["REDIRECT_STATUS"] = "200"; // to avoid 404 error, not sure if needed
 
 	
-	this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
+	//this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
 
-	int i = 0;
-	for (std::map<std::string, std::string>::iterator it = this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
-	{
-		// std::cout << it->first << " = " << it->second << "\n";
-		this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
-		i++;
-	}
-	this->_cgi_env[i] = NULL;
-	this->_cgi_path = cgi_path; // for debug, will be taken from config file
-	this->_argv = (char **)malloc(sizeof(char *) * 3);
-	std::cout << "\n[CGI_PATH] = " << this->_cgi_path << "\n\n";
-	if (cgi_path.find(".php") != std::string::npos)
-		_argv[0] = strdup("/usr/bin/php-cgi");
-	else if (cgi_path.find(".py")  != std::string::npos)
-		_argv[0] = strdup("/usr/bin/python3");
-	this->_argv[1] = strdup(this->_cgi_path.c_str());
-	this->_argv[2] = NULL;
+	//int i = 0;
+	//for (std::map<std::string, std::string>::iterator it = this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
+	//{
+	//	// std::cout << it->first << " = " << it->second << "\n";
+	//	this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
+	//	i++;
+	//}
+	//this->_cgi_env[i] = NULL;
+	//this->_cgi_path = cgi_path; // for debug, will be taken from config file
+	//this->_argv = (char **)malloc(sizeof(char *) * 3);
+	//std::cout << "\n[CGI_PATH] = " << this->_cgi_path << "\n\n";
+	//if (cgi_path.find(".php") != std::string::npos)
+	//	_argv[0] = strdup("/usr/bin/php-cgi");
+	//else if (cgi_path.find(".py")  != std::string::npos)
+	//	_argv[0] = strdup("/usr/bin/python3");
+	//this->_argv[1] = strdup(this->_cgi_path.c_str());
+	//this->_argv[2] = NULL;
 	// std::cout << "\033[31m|-----###---" << this->_argv[0] << "---------------|\033[0m\n\n" << std::endl;
 	// std::cout << "\033[31m|------###--" << this->_argv[1] << "---------------|\033[0m\n\n" << std::endl;
+
+
+	// 2. Convert to envp-style array;
+
+	std::map<std::string, std::string>::iterator it;
+	for (it = _cgi_env_map.begin(); it != _cgi_env_map.end(); ++it)
+	{
+		_cgi_env.push_back(const_cast<char*>((it->first + "=" + it->second).c_str()));
+	}
+
+		//for (size_t i = 0; i < _env_storage.size(); ++i)
+		//	_cgi_env.push_back(const_cast<char*>(_env_storage[i].c_str()));
+
+		_cgi_env.push_back(NULL); // Null-terminate
+
+		// 3. Set up argv
+		_cgi_path = cgi_path;
+		//_argv_storage.clear();
+		//_argv.clear();
+
+		std::cout << "\n[CGI_PATH] = " << _cgi_path << "\n\n";
+
+		if (_cgi_path.find(".php") != std::string::npos)
+			_argv.push_back(const_cast<char*>("/usr/bin/php-cgi"));
+		else if (_cgi_path.find(".py") != std::string::npos)
+			_argv.push_back(const_cast<char*>("/usr/bin/python3"));
+
+		_argv.push_back(const_cast<char*>(cgi_path.c_str()));
+
+		//for (size_t i = 0; i < _argv_storage.size(); ++i)
+		//	_argv.push_back(const_cast<char*>(_argv_storage[i].c_str()));
+
+		_argv.push_back(NULL); // Null-terminate
 }
+
+
+char** CGIContent::getEnv() { return &_cgi_env[0]; }
+char** CGIContent::getArgv() { return &_argv[0]; }
 
 void 	CGIContent::executeCGI()
 {	
@@ -148,8 +185,8 @@ void 	CGIContent::executeCGI()
 		close(pipe_out[1]);
 
 		
-		this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
-		
+		//this->_exitcode = execve(this->_argv[0], this->_argv, this->_cgi_env);
+		this->_exitcode = execve(getArgv()[0], getArgv(), getEnv());
 		std::cerr << "EXECVE FAILED !\r\n";
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
