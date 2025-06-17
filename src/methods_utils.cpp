@@ -18,10 +18,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
-	//PRINT_DEBUG2
-	//std::cout << "There: " << CGIBody << std::endl;
 
-	//test, avoid zombie i guess ?
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
 	int exit_code = WEXITSTATUS(status);
@@ -68,15 +65,6 @@ std::string remove_prefix(std::string target, std::string prefix)
 		target.erase(0, 1);
 
 	return target;
-}
-
-std::string	create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection)
-{
-	std::string header = "HTTP/1.1 " + status + "\r\n";
-	header += "Content-Type: " + content_type + "\r\n";
-	header += "Content-Length: " + content_length + "\r\n";
-	header += "Connection: " + connection + "\r\n\r\n";
-	return header;
 }
 
 bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const std::string &method)
