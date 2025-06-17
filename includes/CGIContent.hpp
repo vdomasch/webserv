@@ -26,9 +26,7 @@
 class CGIContent
 {
 	private :
-		//char**								_argv;
 		std::vector<char*>					_argv;
-		//char**								_cgi_env;
 		std::vector<char*>					_cgi_env;
 		int									_exitcode;
 		std::string							_cgi_path;
