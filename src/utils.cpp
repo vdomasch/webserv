@@ -64,7 +64,7 @@ std::string find_location_name_and_set_root(const std::string &target, ServerCon
 	return location_name;
 }
 
-void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection, bool is_cgi)
+void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection)
 {
 	HttpResponse res;
 	res.set_status(status_code, message_status(status_code));
@@ -75,14 +75,12 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 		res.add_header("Connection", "keep-alive");
 	else
 		res.add_header("Connection", "close");
-	if (!is_cgi)
-	{
-		try { res.add_header("Content-Length", convert<std::string>(body.size())); }
-		catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
-	}
+	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
+	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+	
 	try { req.set_status_code(convert<int>(status_code)); }
 	catch (std::exception &e) { std::cerr << "Error converting status code: " << e.what() << std::endl; }
-	req.set_response(res.generate_response(is_cgi));
+	req.set_response(res.generate_response());
 }
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)

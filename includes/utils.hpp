@@ -11,7 +11,7 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_n
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex);
 
-void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection, bool is_cgi);
+void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection);
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data);
 

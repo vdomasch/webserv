@@ -10,7 +10,7 @@ int	check_object_type(std::string& path, int *errcode);
 
 std::string	remove_prefix(std::string target, const std::string prefix);
 
-void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool close_connection, bool is_cgi);
+void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool close_connection);
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data);
 

@@ -289,7 +289,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		catch (std::exception &e)
 		{
 			std::cerr << "Error getting server name: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
 			//close_msg(fd, "Bad request", 1, -1);
 			return;
 		}
@@ -303,13 +303,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			if (client_body_size_too_large(_socket_states[fd], http_config))
 			{
 				std::cerr << "Error: Client body size too large" << std::endl;
-				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false, false);
+				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false);
 			}
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Error finding matching location: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
 		}
 	}
 
@@ -335,7 +335,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Content-Type", "text/plain");
 			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
 			res.add_header("Connection", "close");
-			_socket_states[fd].set_response(res.generate_response(false));
+			_socket_states[fd].set_response(res.generate_response());
 		}
 
 	}
