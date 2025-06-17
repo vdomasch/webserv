@@ -20,12 +20,7 @@ std::string	create_header(const std::string &status, const std::string &content_
 
 bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const std::string &method);
 
-ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_name);
-
-std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex);
-
 std::string	validate_request_context(std::string &location_name, std::string &root, int &errcode, ServerConfig &server, const std::string &method);
 
-std::string	message_status(const std::string &code);
 
 #endif

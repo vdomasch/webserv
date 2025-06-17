@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _errcode(0), _content_type("text/html")
+HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _status_code(0), _content_type("text/html")
 {
 	_last_time = time(NULL);
 }
@@ -29,13 +29,11 @@ void HttpRequest::append_data(const std::string &data)
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
 			{
-				PRINT_DEBUG
 				_state = COMPLETE;
 				_last_time = time(NULL);
 			}
 			else
 			{
-				PRINT_DEBUG
 				_state = RECEIVING_BODY;
 				_last_time = time(NULL);
 			}
@@ -101,7 +99,7 @@ void	HttpRequest::parse_headers()
 	{
 		std::cerr << "Error reading request line" << std::endl;
 		_state = ERROR;
-		_errcode = 400;
+		_status_code = 400;
 		return;
 	}
 
@@ -110,7 +108,7 @@ void	HttpRequest::parse_headers()
 	{
 		std::cerr << "Invalid request line: " << line << std::endl;
 		_state = ERROR;
-		_errcode = 400;
+		_status_code = 400;
 		return;
 	}
 
@@ -125,7 +123,7 @@ void	HttpRequest::parse_headers()
 	{
 		std::cerr << "Unsupported HTTP version: " << _http_version << std::endl;
 		_state = ERROR;
-		_errcode = 505; // HTTP Version Not Supported
+		_status_code = 505; // HTTP Version Not Supported
 		return;
 	}
 
@@ -151,7 +149,7 @@ void	HttpRequest::parse_headers()
 		catch (const std::exception &e)	{
 			std::cerr << "Error converting Content-Length: " << e.what() << std::endl;
 			_state = ERROR;
-			_errcode = 400; // Bad Request
+			_status_code = 400; // Bad Request
 			return;
 		}
 	}
@@ -179,26 +177,28 @@ void	HttpRequest::parse_headers()
 	}
 }
 
-bool	HttpRequest::is_server_socket() const	{ return _is_server_socket; }
-bool	HttpRequest::is_ready() const			{ return _state == COMPLETE; }
+bool	HttpRequest::is_ready() const			{ return _state == COMPLETE && !is_error(_status_code); }
 bool	HttpRequest::is_finished() const		{ return _state == RESPONDED; }
-bool	HttpRequest::has_error() const			{ return (_state == ERROR || _errcode != 0); } 
+bool	HttpRequest::has_error() const			{ return (_state == ERROR || is_error(_status_code) != 0); } 
+
 
 /////////// GETTERS ///////////
 
-bool			HttpRequest::getKeepAlive() const		{ return _keep_alive; }
-bool			HttpRequest::get_is_multipart() const	{ return _is_multipart; }
-ssize_t			HttpRequest::get_content_length() const	{ return _content_length; }
-std::string		HttpRequest::get_response() const		{ return _response; }
-std::string		HttpRequest::get_method() const			{ return _method; }
-std::string		HttpRequest::get_target() const			{ return _target; }
-std::string		HttpRequest::get_rootpath() const		{ return _rootpath; } /// temporary for CGI
-std::string		HttpRequest::get_boundary() const		{ return _boundary; }
-std::string		HttpRequest::get_content_type() const	{ return _content_type; }
-std::string 	HttpRequest::get_body() const			{ return _body;}
-std::string		HttpRequest::get_query_string() const	{ return _query_string; }
-unsigned long	HttpRequest::get_time() const			{ return _last_time; };
-RequestState	HttpRequest::get_state() const			{ return _state; } // added only for request debug
+bool			HttpRequest::get_is_server_socket() const	{ return _is_server_socket; }
+bool			HttpRequest::getKeepAlive() const			{ return _keep_alive; }
+bool			HttpRequest::get_is_multipart() const		{ return _is_multipart; }
+int				HttpRequest::get_status_code() const		{ return _status_code; }
+ssize_t			HttpRequest::get_content_length() const		{ return _content_length; }
+std::string		HttpRequest::get_response() const			{ return _response; }
+std::string		HttpRequest::get_method() const				{ return _method; }
+std::string		HttpRequest::get_target() const				{ return _target; }
+std::string		HttpRequest::get_rootpath() const			{ return _rootpath; } /// temporary for CGI
+std::string		HttpRequest::get_boundary() const			{ return _boundary; }
+std::string		HttpRequest::get_content_type() const		{ return _content_type; }
+std::string 	HttpRequest::get_body() const				{ return _body;}
+std::string		HttpRequest::get_query_string() const		{ return _query_string; }
+unsigned long	HttpRequest::get_time() const				{ return _last_time; };
+RequestState	HttpRequest::get_state() const				{ return _state; } // added only for request debug
 std::string HttpRequest::get_header(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers_map.find(key);
@@ -212,7 +212,7 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 void	HttpRequest::set_is_server_socket(bool is_server_sock)		{ _is_server_socket = is_server_sock; }
 void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
-void	HttpRequest::set_errorcode(int code)					{ _state = ERROR, _errcode = code; }
+void	HttpRequest::set_status_code(int code)					{ _state = ERROR, _status_code = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_rootpath(const std::string& rootpath)	{ _rootpath = rootpath; } /// temporary for CGI
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }

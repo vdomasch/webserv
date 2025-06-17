@@ -220,7 +220,7 @@ bool	Server::reading_data(int fd)
 			;
 		if (bytes_read == 0)
 		{
-			close_msg(fd, "Client Disconnected", 0, -1);
+			close_msg(fd, "Client Disconnected", 0, 0);
 			return 1;
 		}
 		if (bytes_read > 0)
@@ -290,7 +290,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		{
 			std::cerr << "Error getting server name: " << e.what() << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
-			close_msg(fd, "Bad request", 1, -1);
+			//close_msg(fd, "Bad request", 1, -1);
 			return;
 		}
 	}
@@ -304,16 +304,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			{
 				std::cerr << "Error: Client body size too large" << std::endl;
 				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false, false);
-				close_msg(fd, "Bad request", 1, -1);
-				return;
 			}
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Error finding matching location: " << e.what() << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false, false);
-			close_msg(fd, "Bad request", 1, -1);
-			return;
 		}
 	}
 
@@ -341,12 +337,16 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Connection", "close");
 			_socket_states[fd].set_response(res.generate_response(false));
 		}
-		std::string response = _socket_states[fd].get_response();
-		send(fd, response.c_str(), response.size(), 0);
-		_socket_states[fd].set_state(RESPONDED);
-		if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
-			close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
+
 	}
+	std::string response = _socket_states[fd].get_response();
+	send(fd, response.c_str(), response.size(), 0);
+	_socket_states[fd].set_state(RESPONDED);
+	
+	if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
+		close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
+	if (is_error(_socket_states[fd].get_status_code()))
+		close_msg(fd, "Error response sent", 1, _socket_states[fd].get_status_code());
 }
 
 void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
@@ -387,7 +387,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 			}
 
-			if (!_socket_states[i].is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
+			if (!_socket_states[i].get_is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
 					send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
@@ -427,18 +427,17 @@ void	Server::update_max_fd(int fd)
 			_socket_data.max_fd--;
 }
 
-int Server::close_msg(int fd, const std::string &message, int err, int return_code)
+int Server::close_msg(int fd, const std::string &message, int err, int code)
 {
-
 	if (err)
-		std::cerr << "\033[31m" << message << " (fd " << fd << ") - ERROR\033[0m" << std::endl;
+		std::cerr << "\033[31m" << message << " (fd " << fd << ") - ERROR " << code << "\033[0m" << std::endl;
 	else
 		std::cout << "\033[32m" << message << " (fd " << fd << ") - CLOSED\033[0m" << std::endl;
 
 	close(fd);
 	FD_CLR(fd, &_socket_data.saved_readsockets);
 	update_max_fd(fd);
-	return return_code;
+	return code;
 }
 
 bool	Server::is_server_socket(int fd)

@@ -39,19 +39,6 @@ std::string	try_index_file(std::string &path, const std::string &index)
 
 std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode);
 
-std::string find_location_name(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
-{
-	std::map<std::string, LocationConfig>::iterator it_loc;
-	std::string location_name = server.get_matching_location(target, autoindex);
-	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
-	it_loc = location_list.find(location_name);
-	if (it_loc != location_list.end())
-		root = it_loc->second.get_root();
-	else
-		return "";
-	return location_name;
-}
-
 void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 {
 	int errcode = 0;
