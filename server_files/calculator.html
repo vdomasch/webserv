@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<!--<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">-->
+		<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 		<link rel="stylesheet" href="/assets/css_files/styles.css">
 		<title>Calculator</title>
 	</head>
@@ -13,35 +13,153 @@
 				<h1 class="title">Webserv</h1>
 			</a>
 		</section>
-		<section class="block">
+		<section class="block">	
 			<h2>Calculator</h2>
-			<form method="get" action="/cgi-bin/calculator.php">
+			<form class="calcBody" method="get" action="/cgi-bin/calculator.php">
 				<table align="center">
-					<tr>
-						<td>Enter 1st Number</td>
-						<td><input type="text" name="n1" required></td>
+				<tbody style="width: 100%; border: 2px solid rgb(1, 1, 15);">
+					<tr class="calcRow">
+						<td class="calcTD"><input class="calcButton" type="button" id="1" value="1" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="2" value="2" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="3" value="3" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
 					</tr>
-					<tr>
-						<td>Enter 2nd Number</td>
-						<td><input type="text" name="n2" required></td>
+					<tr class="calcRow">
+						<td class="calcTD"><input class="calcButton" type="button" id="4" value="4" onclick="addToprocessLine(this.value);" ></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="5" value="5" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="6" value="6"onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="minus" value="-" onclick="addToprocessLine(this.value);"></td>
 					</tr>
-					<tr>
-						<td>Select Operator</td>
-						<td>
-							<select name="op">
-								<option value="+">+</option>
-								<option value="-">-</option>
-								<option value="*">*</option>
-								<option value="/">/</option>
-							</select>
-						</td>
+					<tr class="calcRow">
+						<td class="calcTD"><input class="calcButton" type="button" id="7" value="7" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="8" value="8" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="9" value="9" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="times" value="*" onclick="addToprocessLine(this.value);"></td>
 					</tr>
-					<tr>
-						<td></td>
-						<td><input type="submit" value="="></td>
+					<tr class="calcRow">
+						<td><input id= "subbbb" type="submit" value="=" disabled></td>
+						<td><input type="button" value="==" onclick="processFinalValue();"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="delete" value="ret" onclick="addToprocessLine(this.value);"></td>
 					</tr>
+					<p id="calcResult" style="margin-top: 1em;">***</p>
+				</tbody>	
 				</table>
+				<input hidden type="text" name="op" id="op">
+				<input hidden type="text" name="n1" id="n1">
+				<input hidden type="text" name="n2" id="n2">
 			</form>
 		</section>
 	</body>
 </html>
+
+
+<script>
+
+	let lastOP = "$"
+
+	function addToprocessLine(buttonvalue) {
+
+
+		console.log("Entering func .....");
+		const processLine = document.getElementById("calcResult");
+
+
+		if (buttonvalue == "ret")
+		{
+			if (processLine.innerText == "***" || processLine.innerText === "")
+			{
+				console.log("Empty my guy");
+				return ;
+			}
+			else
+			{
+				lastPressed = processLine.innerText.slice(-1)
+				if (lastPressed == "+" || lastPressed == "-" || lastPressed == "*")
+					{
+						document.getElementById("plus").disabled = false;
+						document.getElementById("times").disabled = false;
+						document.getElementById("minus").disabled = false;
+					}
+				processLine.innerText = processLine.innerText.slice(0, -1);
+				if (processLine.innerText === "")
+					processLine.innerText = "***";
+				return ;
+			}
+		}
+		
+		if (processLine.innerText == "***")
+		{
+			if ((buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*"))
+				return ;
+			else
+			processLine.innerText = "";
+		}
+	
+		processLine.innerText +=  buttonvalue;
+		processLine.innerText += "";
+		console.log("Added :" + buttonvalue);
+	
+		if ( (buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*"))
+		{
+			document.getElementById("plus").disabled = true;
+			document.getElementById("times").disabled = true;
+			document.getElementById("minus").disabled = true;
+			lastOP = buttonvalue;
+		}
+		processFinalValue(lastOP);
+	}
+
+	function processFinalValue(operator) {
+
+		const processLine = document.getElementById("calcResult");
+
+		lastPressed = processLine.innerText.slice(-1)
+		isValid = processLine.innerText.includes("+") && !((lastPressed == "+" || lastPressed == "-" || lastPressed == "*"))
+
+		op = "+-*";
+		i = 0;
+		opFound = false;
+		while (true)
+		{
+			indexOP = processLine.innerText.indexOf(op.charAt(i))
+			if (indexOP != -1)
+			{
+				console.log("Found op at position " + indexOP + " !");
+				opFound = true;
+				break ;
+			}
+			console.log("Not found at position " + i + " of op string");
+			i++;
+			if (op.charAt(i) == "")
+			{
+				opFound = false;
+				break ;
+			}
+		}
+		if (opFound == false)
+		{
+			nb1 = "null";
+			nb2 = "null";
+			document.getElementById("subbbb").disabled = true;
+		}
+		else
+		{
+			// console.log("INDEX " + indexOP + " !");
+			nb1 = processLine.innerText.substring(0, indexOP);
+			nb2 = processLine.innerText.substring(indexOP + 1);
+			if (nb1 && nb2)
+			{
+				console.log("NB1 is " + nb1 + " !");
+				console.log("NB1 is " + nb2 + " !");
+				console.log("op is " + operator + " !");
+				document.getElementById("subbbb").disabled = false;
+				document.getElementById("op").value = operator;
+				document.getElementById("n1").value = nb1;
+				document.getElementById("n2").value = nb2;
+			}
+		}
+		// console.log("Found op at position :");
+		// console.log(i);
+	}
+
+</script>				
