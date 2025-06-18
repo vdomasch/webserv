@@ -58,7 +58,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 		body = handleCGI(req, fd_data, &errcode);
 		std::cout << "\033[1;31m--------------------------------------" << body << "--------------------------------\033[0m" << std::endl;
-
 		build_response(req, "200", body, req.getKeepAlive()); /// not sure if the right code ?
 		return ;
 	}
