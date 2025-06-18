@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+	
 
 print ('<!DOCTYPE html>')
 print ('<html>')

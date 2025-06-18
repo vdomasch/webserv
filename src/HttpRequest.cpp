@@ -20,6 +20,7 @@ void HttpRequest::append_data(const std::string &data)
 			_body = _raw_data.substr(pos + 4);
 			
 			std::cout << "-----------------\n" << _header << "\n-----------------\n" << std::endl;
+			// std::cout << "-----------------\n" << _body << "\n-----------------\n" << std::endl;
 			
 			parse_headers();
 			_header_parsed = true;
