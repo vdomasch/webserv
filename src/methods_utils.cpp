@@ -57,13 +57,13 @@ std::string remove_prefix(std::string target, std::string prefix)
 
 	if (!prefix.empty() && prefix.at(prefix.size() - 1) == '/')
 		prefix.erase(prefix.size() - 1, 1);
+	std::cout << "remove_prefix: target: " << target << ", prefix: " << prefix << std::endl;
 
 	if (target.find(prefix) == 0 && (target.size() == prefix.size() || target.at(prefix.size()) == '/'))
 		target.erase(0, prefix.size());
 
 	if (target.at(0) == '/')
 		target.erase(0, 1);
-
 	return target;
 }
 
@@ -94,12 +94,36 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 		return "500";
 	}
 
-	if (check_object_type(root, &errcode) != IS_DIRECTORY)
+	int status = check_object_type(root, &errcode);
+	if (method != "DELETE" && status != IS_DIRECTORY)
 	{
 		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
 		return "500";
 	}
-
+	std::cout << "Validating request context for method: " << method << ", obj_type: " << status << ", root: " << root << std::endl;
+	if (method == "DELETE")
+	{
+		if (status == IS_DIRECTORY)
+		{
+			std::cerr << "Error: Directory deletion is not permitted on this server." << std::endl;
+			return "403";
+		}
+		else if (status == MISSINGFILE)
+		{
+			std::cerr << "Error: File not found for deletion: " << root << std::endl;
+			return "404";
+		}
+		else if (status == FILE_NOT_FOUND)
+		{
+			std::cerr << "Error: File not found or is not a regular file: " << root << std::endl;
+			return "404";
+		}
+		else if (status != IS_EXISTINGFILE)
+		{
+			std::cerr << "Error: Invalid object type for DELETE method: " << status << std::endl;
+			return "500";
+		}
+	}
 	if (check_allowed_methods(server, server.get_location_list().find(location_name)->second, method) == false)
 	{
 		std::cerr << "Error: Method " << method << " not allowed for location: " << location_name << std::endl;
