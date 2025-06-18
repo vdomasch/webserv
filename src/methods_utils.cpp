@@ -33,7 +33,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	return CGIBody;
 }
 
-int	check_object_type(std::string& path, int *errcode)
+int	check_object_type(const std::string& path, int *errcode)
 {
 	struct stat fileinfo;  
 
@@ -57,11 +57,13 @@ std::string remove_prefix(std::string target, std::string prefix)
 
 	if (!prefix.empty() && prefix.at(prefix.size() - 1) == '/')
 		prefix.erase(prefix.size() - 1, 1);
-	std::cout << "remove_prefix: target: " << target << ", prefix: " << prefix << std::endl;
 
 	if (target.find(prefix) == 0 && (target.size() == prefix.size() || target.at(prefix.size()) == '/'))
 		target.erase(0, prefix.size());
 
+	if (target.empty())
+		return "";
+		
 	if (target.at(0) == '/')
 		target.erase(0, 1);
 	return target;
@@ -100,14 +102,10 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 		std::cerr << "Error: Root directory does not exist or is not a directory: " << root << std::endl;
 		return "500";
 	}
-	std::cout << "Validating request context for method: " << method << ", obj_type: " << status << ", root: " << root << std::endl;
 	if (method == "DELETE")
 	{
 		if (status == IS_DIRECTORY)
-		{
-			std::cerr << "Error: Directory deletion is not permitted on this server." << std::endl;
-			return "403";
-		}
+			return "";
 		else if (status == MISSINGFILE)
 		{
 			std::cerr << "Error: File not found for deletion: " << root << std::endl;

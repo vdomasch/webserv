@@ -6,7 +6,7 @@
 
 std::string	handleCGI(HttpRequest &req, t_fd_data &d, int *errcode);
 
-int	check_object_type(std::string& path, int *errcode);
+int	check_object_type(const std::string& path, int *errcode);
 
 std::string	remove_prefix(std::string target, const std::string prefix);
 

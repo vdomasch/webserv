@@ -21,17 +21,17 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 			{ 
 				LocationConfig &location = it_loc->second;
 				std::map<std::string, std::string> location_map = location.get_map_location();
-				if (location_map.count("allow_methods") && location_map.count("DELETE"))
+				if ((location_map.count("allow_methods") && location_map.count("DELETE")) || server.get_map_server().count("DELETE"))
 				{
-						std::string location_root = location.get_root();
-						if (!location_root.empty())
-						{
-							if (!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
-								location_root += "uploads/";
-							server.add_authorized_paths(location_root);
-						}
+					std::string location_root = location.get_root();
+					if (!location_root.empty())
+					{
+						if (/*(it->first == "/uploads/" || it->first == "/upload/") && */!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
+							location_root += "uploads/";
+						server.add_authorized_paths(location_root);
+					}
 				}
-				else if (server.get_map_server().count("DELETE"))
+				/* if (server.get_map_server().count("DELETE"))
 				{
 					std::string server_root = server.get_root();
 					if (!server_root.empty())
@@ -40,7 +40,7 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 							server_root += "uploads/";
 						server.add_authorized_paths(server_root);
 					}
-				}
+				}*/
 			}
 		}
 	}

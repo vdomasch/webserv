@@ -3,6 +3,18 @@
 
 bool	is_authorized_path(const std::string &path, const std::set<std::string> &authorized_paths)
 {
+	int status = 0;
+	status = check_object_type(path, &status);
+	if (status == FILE_NOT_FOUND)
+	{
+		std::cerr << "Error: Path not found: " << path << std::endl;
+		return false;
+	}
+	if (status == IS_DIRECTORY)
+	{
+		std::cerr << "Error: Path is a directory, not a file: " << path << std::endl;
+		return false;
+	}
 	for (std::set<std::string>::const_iterator it = authorized_paths.begin(); it != authorized_paths.end(); ++it)
 	{
 		if (path.find(*it) != std::string::npos)
@@ -13,7 +25,6 @@ bool	is_authorized_path(const std::string &path, const std::set<std::string> &au
 
 void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 {
-	std::cout << "\033[3;34m++ DELETE Request ++\033[0m" << std::endl;
 	int errcode = 0;
 
 	std::string target = req.get_target();
@@ -27,13 +38,10 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 	std::string filename = remove_prefix(target, req._location_name);
 	std::string path = root + filename;
 
-	//std::string path = root.substr(0, root.size() - 1) + req.get_target()/*.substr(req.get_target().find("uploads") + 7, req.get_target().size() - 1)*/; // remove the root and the /uploads/ part from the target
-
 	if (!is_authorized_path(path, server.get_authorized_paths()))
-	{
-		std::cerr << "Error: Path not authorized: " << path << std::endl;
 		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), false));
-	}
+
+
 
 	if (std::remove(path.c_str()) != 0)
 	{	
