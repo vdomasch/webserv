@@ -335,7 +335,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Content-Type", "text/plain");
 			res.add_header("Content-Length", convert<std::string>(res.get_body().size()));
 			res.add_header("Connection", "close");
-			_socket_states[fd].set_response(res.generate_response());
+			_socket_states[fd].set_response(res.generate_response(_socket_states[fd]._is_php_cgi));
 		}
 
 	}

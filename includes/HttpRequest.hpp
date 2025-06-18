@@ -25,10 +25,12 @@ class HttpRequest
 
 		bool			_is_error_request;
 		bool			_autoindex;
+		bool			_is_php_cgi;
 		std::string		_server_name;
 		std::string		_location_name;
 		std::string 	_location_root;
 		ServerConfig	_server;
+
 		
 
 		void		append_data(const std::string &data);

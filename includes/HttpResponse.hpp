@@ -28,7 +28,7 @@ public:
     void set_body(const std::string& body);
     void add_header(const std::string& key, const std::string& value);
 
-    std::string generate_response() const;
+    std::string generate_response(bool& ) const;
 };
 
 #endif

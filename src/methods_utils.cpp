@@ -12,9 +12,9 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	// reset CGI class
 	d.cg = CGIContent();	
 	if (method == "POST")
-		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method);
+		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method, req._is_php_cgi);
 	else if (method == "GET")
-		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method);
+		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method, req._is_php_cgi);
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?

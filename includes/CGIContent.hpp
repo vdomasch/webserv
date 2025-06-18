@@ -46,7 +46,7 @@ class CGIContent
 	CGIContent();
 	~CGIContent();
 
-	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
+	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi);
 	void 			executeCGI();
 	std::string		grabCGIBody(int	&bodySize);
 	int				sendCGIBody(std::string body);

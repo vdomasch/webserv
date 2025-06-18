@@ -33,7 +33,7 @@ CGIContent::~CGIContent()
 	this->_cgi_env_map.clear();
 }
 
-void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method) // string for now, replace by iterator of whatever struct we use
+void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi) // string for now, replace by iterator of whatever struct we use
 {	
 	std::string	script_name_var;
 	size_t		pos;
@@ -65,7 +65,10 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 
 	if (cgi_path.find(".php") != std::string::npos)
+	{
 		_argv_storage.push_back("/usr/bin/php-cgi");
+		is_php_cgi = true;
+	}
 	else if (cgi_path.find(".py")  != std::string::npos)
 		_argv_storage.push_back("/usr/bin/python3");
 	_argv_storage.push_back(cgi_path);

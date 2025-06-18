@@ -69,7 +69,8 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	HttpResponse res;
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
-	res.add_header("Content-Type", req.get_content_type());
+	if (!req._is_php_cgi)
+		res.add_header("Content-Type", req.get_content_type());
 
 	if (keep_alive_connection)
 		res.add_header("Connection", "keep-alive");
@@ -80,7 +81,7 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	
 	try { req.set_status_code(convert<int>(status_code)); }
 	catch (std::exception &e) { std::cerr << "Error converting status code: " << e.what() << std::endl; }
-	req.set_response(res.generate_response());
+	req.set_response(res.generate_response(req._is_php_cgi));
 }
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
