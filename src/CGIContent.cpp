@@ -208,6 +208,7 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 	memset(buffer, 0, sizeof(buffer));
 	printf("\ntotal read %d\n", total_read);
 	printf("total len %lu\n", result.length());
+	// std::cout << "\n\n BODY O_O \n" << result << "\n\n\n\n\n\n\n";
 	bodySize = result.length();
 
 	return (result);

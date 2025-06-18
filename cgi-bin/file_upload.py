@@ -20,8 +20,13 @@ def log(msg):
 
 def uploadNewFile():
 
-	fileitem = form['filePicker']
+
+	# log("Starting a file upload ...")
+	fileitem = form['myFilePicker']
 	if fileitem.filename:
+		# log("File was uploaded: " + str(fileitem.filename))
+		# log("Full keys: ")
+		# log("Form keys: " + str(list(form.keys())))
 		script_dir = os.path.dirname(os.path.abspath(__file__))
 		upload_dir = os.path.join(script_dir, '..', 'server_files', 'uploads') #use actual names
 		filename = os.path.basename(fileitem.filename)
