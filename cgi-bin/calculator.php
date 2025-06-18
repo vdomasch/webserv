@@ -10,10 +10,39 @@ $op = isset($params['op']) ? $params['op'] : null;
 
 $result = "";
 
+if (!is_numeric($n1) || !is_numeric($n2))
+{
+	echo "<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='UTF-8'>
+		<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+		<link rel='icon' type='image/x-icon' href='/icons/favicon.ico'>
+		<link rel='stylesheet' href='/assets/css_files/styles.css'>
+		<title>calculator</title>
+	</head>
+	<body>
+		<section class='title'>
+			<a href='/index.html'>
+				<h1 class='title'>Webserv</h1>
+			</a>
+		</section>
+		<section class='block'>
+			<h2>Invalid input: Both numbers must be numeric.</h2>
+    		<div class='responsive-item'>
+        		<a href='/calculator.html'>Back to Calculator</a>
+			</div>
+		</section>
+	</body>
+</html>";
+	exit;
+}
+
 class Calculator
 {
     var $a;
     var $b;
+
 
     function checkoperation($op)
     {
