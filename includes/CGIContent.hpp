@@ -26,9 +26,7 @@
 class CGIContent
 {
 	private :
-		//char**								_argv;
 		std::vector<char*>					_argv;
-		//char**								_cgi_env;
 		std::vector<char*>					_cgi_env;
 		int									_exitcode;
 		std::string							_cgi_path;
@@ -48,7 +46,7 @@ class CGIContent
 	CGIContent();
 	~CGIContent();
 
-	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method);
+	void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi);
 	void 			executeCGI();
 	std::string		grabCGIBody(int	&bodySize);
 	int				sendCGIBody(std::string body);

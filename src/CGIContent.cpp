@@ -3,21 +3,17 @@
 
 CGIContent::CGIContent()
 {
-	printf("calling default ! \n");
-
 	this->_cgi_path = "default";
-	_cgi_env_map.clear();
+	this->_cgi_env_map.clear();
 	this->_argv.clear();
 	this->_cgi_env.clear();
 	this->_env_storage.clear();
 	this->_argv_storage.clear();
-	//this->_cgi_env = NULL;
 	this->_exitcode = -42;
 	this->pipe_in[0] = -42;
 	this->pipe_in[1] = -42;
 	this->pipe_out[0] = -42;
 	this->pipe_out[1] = -42;
-	//this->_cgi_env_map = NULL; not possible
 }
 
 CGIContent::~CGIContent()
@@ -37,44 +33,10 @@ CGIContent::~CGIContent()
 	this->_cgi_env_map.clear();
 }
 
-void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method) // string for now, replace by iterator of whatever struct we use
+void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi) // string for now, replace by iterator of whatever struct we use
 {	
 	std::string	script_name_var;
 	size_t		pos;
-
-	for (std::map<std::string, std::string>::iterator it = _cgi_env_map.begin(); it != _cgi_env_map.end(); ++it)
-	{
-		if (it != _cgi_env_map.end())
-			std::cout << "CGI ENV MAP : ";
-		else
-			std::cout << "CGI ENV MAP END : ";
-		std::cout << it->first << " = " << it->second << "\n";
-	}
-	for (std::vector<std::string>::iterator it = _env_storage.begin(); it != _env_storage.end(); ++it)
-	{
-		if (it != _env_storage.end())
-			std::cout << "CGI ENV STORAGE EMPTY" << std::endl;
-		std::cout << "CGI ENV STORAGE : " << *it << std::endl;
-	}
-	for (std::vector<std::string>::iterator it = _argv_storage.begin(); it != _argv_storage.end(); ++it)
-	{
-		if (it != _env_storage.end())
-			std::cout << "CGI ARGV STORAGE EMPTY" << std::endl;
-		std::cout << "CGI ARGV STORAGE : " << *it << std::endl;
-	}
-	for (std::vector<char*>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); ++it)
-	{
-		if (it != _cgi_env.end())
-			std::cout << "CGI ENV EMPTY" << std::endl;
-		std::cout << "CGI ENV : " << *it << std::endl;
-	}
-	for (std::vector<char*>::iterator it = _argv.begin(); it != _argv.end(); ++it)
-	{
-		if (it != _argv.end())
-			std::cout << "CGI ARGV EMPTY" << std::endl;
-		std::cout << "CGI ARGV : " << *it << std::endl;
-	}
-
 
 	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
 	script_name_var = cgi_path.substr(pos);
@@ -103,7 +65,10 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 
 	if (cgi_path.find(".php") != std::string::npos)
+	{
 		_argv_storage.push_back("/usr/bin/php-cgi");
+		is_php_cgi = true;
+	}
 	else if (cgi_path.find(".py")  != std::string::npos)
 		_argv_storage.push_back("/usr/bin/python3");
 	_argv_storage.push_back(cgi_path);
@@ -111,31 +76,6 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 	for (std::vector<std::string>::iterator it = _argv_storage.begin(); it != _argv_storage.end(); ++it)
 		_argv.push_back(const_cast<char*>(it->c_str()));
 	_argv.push_back(NULL);
-
-	
-	//this->_cgi_env = (char **)calloc(sizeof(char *), this->_cgi_env_map.size() + 1); // is calloc allowed ? no ?
-
-	//int i = 0;
-	//for (std::map<std::string, std::string>::iterator it = this->_cgi_env_map.begin() ; it != this->_cgi_env_map.end(); ++it)
-	//{
-	//	// std::cout << it->first << " = " << it->second << "\n";
-	//	this->_cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
-	//	i++;
-	//}
-	//this->_cgi_env[i] = NULL;
-	//this->_cgi_path = cgi_path; // for debug, will be taken from config file
-	//this->_argv = (char **)malloc(sizeof(char *) * 3);
-	//std::cout << "\n[CGI_PATH] = " << this->_cgi_path << "\n\n";
-	//if (cgi_path.find(".php") != std::string::npos)
-	//	_argv[0] = strdup("/usr/bin/php-cgi");
-	//else if (cgi_path.find(".py")  != std::string::npos)
-	//	_argv[0] = strdup("/usr/bin/python3");
-	//this->_argv[1] = strdup(this->_cgi_path.c_str());
-
-
-	//this->_argv[2] = NULL;
-	// std::cout << "\033[31m|-----###---" << this->_argv[0] << "---------------|\033[0m\n\n" << std::endl;
-	// std::cout << "\033[31m|------###--" << this->_argv[1] << "---------------|\033[0m\n\n" << std::endl;
 
 }
 
@@ -157,20 +97,6 @@ void 	CGIContent::executeCGI()
 		this->_exitcode = -1; // to change
 		return ;
 	}
-
-		for (std::vector<char*>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); ++it)
-		{
-			if (*it == NULL)
-				continue;
-			std::cout << "CGI ENV : " << *it << std::endl;
-		}
-
-		for (std::vector<char*>::iterator it = _argv.begin(); it != _argv.end(); ++it)
-		{
-			if (*it == NULL)
-				continue;
-			std::cout << "CGI ARGV : " << *it << std::endl;
-		}
 
 	this->cgi_forkfd = fork();
 	
@@ -210,7 +136,6 @@ int	CGIContent::sendCGIBody(std::string body)
 {
 	size_t total_written = 0;
 
-
 	while (total_written < body.size()) 
 	{
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
@@ -238,7 +163,6 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 
 	while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
 	{
-		// printf("CGI READ : %d\n", bytes_read);
 		result.append(buffer, bytes_read);  //might be an issue with binary data ?
 		total_read += bytes_read;
 	}

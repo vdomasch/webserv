@@ -16,8 +16,6 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 
 std::string	find_error_page(const std::string& code, const std::string& location_name, const std::string& server_name, HTTPConfig& http);
 
-std::string	create_header(const std::string &status, const std::string &content_type, const std::string &content_length, const std::string &connection);
-
 bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const std::string &method);
 
 std::string	validate_request_context(std::string &location_name, std::string &root, int &errcode, ServerConfig &server, const std::string &method);

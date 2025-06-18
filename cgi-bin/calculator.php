@@ -1,9 +1,7 @@
 #!/usr/bin/php-cgi
 <?php
 
-//echo "Content-type: text/html\r\n\r\n";
 
-// Parse GET query string manually (alternative to $_GET for CGI)
 parse_str($_SERVER['QUERY_STRING'], $params);
 
 $n1 = isset($params['n1']) ? $params['n1'] : null;
