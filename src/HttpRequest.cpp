@@ -4,7 +4,9 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest(): _is_error_request(false), _is_server_socket(false), _state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true), _is_multipart(false), _status_code(0), _content_type("text/html")
+HttpRequest::HttpRequest():	_is_error_request(false), _autoindex(true), _is_php_cgi(false), _is_server_socket(false),
+							_state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true),
+							_is_multipart(false), _status_code(0), _content_type("text/html")
 {
 	_last_time = time(NULL);
 }

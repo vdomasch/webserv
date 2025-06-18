@@ -339,6 +339,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 
 	}
+	
 	std::string response = _socket_states[fd].get_response();
 
 	send(fd, response.c_str(), response.size(), 0);
