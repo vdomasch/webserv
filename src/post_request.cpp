@@ -178,9 +178,9 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string head, body;
 	parse_post_body(req, head, body);
 
-	std::string filename = remove_prefix(create_filename(root, head), req._location_name);
-	if (req._location_name.find("upload") == std::string::npos)
-		root += "uploads/";
+	std::string filename = /*remove_prefix(*/create_filename(root, head)/*, req._location_name)*/;
+	//if (req._location_name.find("upload") == std::string::npos)
+	//	root += "uploads/";
 	std::string file_path = root + filename; // Chemin complet du fichier
 
 	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
@@ -198,7 +198,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	out.close();
 
 	std::ostringstream response_body;
-	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) + "uploads/" + filename;
+	response_body << req.get_target().substr(0, req.get_target().rfind('/') + 1) /*+ "uploads/"*/ + filename;
 
 	build_response(req, "201", response_body.str(), req.getKeepAlive());
 	

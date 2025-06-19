@@ -322,6 +322,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		std::string method = _socket_states[fd].get_method();
 		if (_method_map.count(method))
 		{
+			std::cout << "request path: " << _socket_states[fd].get_target() << std::endl;
 			_method_map[method](http_config, _socket_states[fd], _socket_data);
 		}
 		else
