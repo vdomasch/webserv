@@ -6,8 +6,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	std::string	method;
 	int			CGI_body_size;
 
-	printf("\033[35mHandeling CGI ....\n\n\033[0m");
-
 	method = req.get_method();
 
 	d.cg = CGIContent();	
