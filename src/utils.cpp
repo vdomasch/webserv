@@ -89,7 +89,7 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
 	if (error_uri.empty() || req._is_error_request)
 	{
-		std::cerr << "Error: Error Page Not Found" << std::endl;
+		std::cout << "No error page specified, sending default." << std::endl;
 		return "<html><body><h1>" + code + " " +  message_status(code) + "</h1></body></html>";
 	}
 	req.set_target(error_uri);
