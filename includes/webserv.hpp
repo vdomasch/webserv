@@ -10,26 +10,22 @@
 # include "utils.hpp"
 
 # include <stdio.h>
-# include <iostream>//std::cout
-# include <sys/socket.h> //socket
-# include <strings.h> //bzero
-# include <netinet/in.h> // struct addr
-# include <arpa/inet.h> // inet_addr
-# include <unistd.h> //read & write
-# include <string.h> // strlen
-# include <fstream> // std::ofstream
-# include <sys/stat.h> // stat for file status
-# include <sstream> // Content Size
-# include <vector> // .ico handling
-# include <stdlib.h> // atof
-# include <fcntl.h>// open
-# include <algorithm> // std::sort
-# include <dirent.h> // dirent for opendir
-# include <cmath> // floor for size
-# include <map> // std::map
-# include <string> //string::npos
-# include <sys/types.h> //waitpid
-# include <sys/wait.h> //waitpid
+# include <iostream>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <unistd.h>
+# include <fstream>
+# include <sys/stat.h>
+# include <sstream>
+# include <vector>
+# include <algorithm>
+# include <dirent.h>
+# include <cmath>
+# include <map>
+# include <string>
+# include <sys/types.h>
+# include <sys/wait.h>
 # include <set>
 # include <ctime>
 
@@ -48,11 +44,10 @@
 # define CSSHANDELING 4
 # define PNGHANDELING 5
 # define JPGHANDELING 6
-# define DEBUG_INDEX_EXISTS 1 // for debug purposes, change between index redirection and auto-index (1 for list)
 
-# define TIMEOUT 5 //seconds
-# define SELECT_TIMEOUT_USEC 500000 // microseconds
-# define SELECT_TIMEOUT_SEC 0 // seconds
+# define TIMEOUT_SEC 5
+# define SELECT_TIMEOUT_USEC 500000
+# define SELECT_TIMEOUT_SEC 0
 
 #define PRINT_DEBUG std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __FUNCTION__ << "\033[0m " << std::endl;
 #define PRINT_DEBUG2 std::cout << "\n\033[32m[DEBUG] " << __FILE__ << ": " << __LINE__ << " in " << __PRETTY_FUNCTION__ << "\033[0m " << std::endl;
@@ -76,17 +71,17 @@ struct s_socket_data
 {
 	fd_set		ready_readsockets;
 	fd_set		ready_writesockets;
-	fd_set		saved_readsockets; // current sockets
+	fd_set		saved_readsockets;	// current sockets
 	fd_set		saved_writesockets; // current sockets
-	std::string	serverFolder; // contains the files to display (index.html etc etc ...)
-	std::string	requestedFilePath; // obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
-	std::string	method_name; // the name of the method used and truncated from the original request
+	std::string	serverFolder;		// contains the files to display (index.html etc etc ...)
+	std::string	requestedFilePath;	// obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
+	std::string	method_name;		// the name of the method used and truncated from the original request
 	int			max_sckt_fd;
 
-	std::string			Content_Type; // right now, is used for POST requests
-	std::string			Content_Length; // right now, is used for POST requests
-	unsigned int		response_len; // Was previously content_len, is used only for the response header right now.
-	bool				is_binaryContent; //used for the final send, to know is we need to send binaryContent;
+	std::string			Content_Type;		// right now, is used for POST requests
+	std::string			Content_Length;		// right now, is used for POST requests
+	unsigned int		response_len;		// Was previously content_len, is used only for the response header right now.
+	bool				is_binaryContent;	//used for the final send, to know is we need to send binaryContent;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;
 	CGIContent			cg;

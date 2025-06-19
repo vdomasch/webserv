@@ -16,7 +16,7 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "text/html") return ".html";
 	if (content_type == "text/plain") return ".txt";
 	if (content_type == "text/css") return ".css";
-	if (content_type == "text/xml") return ".xml"; // For compatibility with old servers
+	if (content_type == "text/xml") return ".xml";
 	if (content_type == "application/javascript" || content_type == "application/x-javascript") return ".js";
 	if (content_type == "application/xml") return ".xml";
 	if (content_type == "application/x-www-form-urlencoded") return ".url"; 
@@ -31,7 +31,7 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "application/x-rar-compressed") return ".rar";
 	if (content_type == "application/pdf") return ".pdf";
 	if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
-	if (content_type == "application/octet-stream") return ".bin"; // Default for binary files
+	if (content_type == "application/octet-stream") return ".bin";
 	return "";
 }
 
@@ -39,12 +39,11 @@ std::string	get_extension(const std::string& head)
 {
 	size_t pos = head.find("Content-Type: ");
 	if (pos == std::string::npos)
-		return ".bin";
-	pos += 14; // Length of "Content-Type: "
-
+		return "";
+	pos += 14;
 	size_t end_pos = head.find("\r\n");
 	if (end_pos == std::string::npos)
-		return ".bin"; // Default extension if not found
+		return "";
 	std::string content_type = head.substr(pos, end_pos - pos);
 	return get_content_extension(content_type);
 }
@@ -54,7 +53,7 @@ std::string	get_filename(const std::string& head)
 	size_t pos = head.find("filename=\"");
 	if (pos == std::string::npos)
 		return "upload_"; // Default filename if not found
-	pos += 10; // Length of "filename=\""
+	pos += 10;
 
 	size_t end_pos = head.find("\"", pos);
 	if (end_pos == std::string::npos)
@@ -95,7 +94,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	if (body.empty())
 	{
 		std::cerr << "Error: POST body is empty." << std::endl;
-		req.set_status_code(400); // Bad Request
+		req.set_status_code(400);
 		return;
 	}
 	if (req.get_is_multipart())
@@ -104,7 +103,7 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 		if (delimiter.empty())
 		{
 			std::cerr << "Error: No boundary found in multipart POST request." << std::endl;
-			req.set_status_code(400); // Bad Request
+			req.set_status_code(400);
 			return;
 		}
 		if (body.find(delimiter) != std::string::npos)
@@ -116,9 +115,8 @@ void	parse_post_body(HttpRequest &req, std::string& head, std::string& body)
 	}
 }
 
-bool	create_directories(ServerConfig& server, std::string path)    ////might be the issue
+bool	create_directories(ServerConfig& server, std::string path) 
 {
-	PRINT_DEBUG2
 	std::istringstream iss(path);
 	std::string token;
 	std::string current = "/";
@@ -126,23 +124,23 @@ bool	create_directories(ServerConfig& server, std::string path)    ////might be 
 	while (getline(iss, token, '/'))
 	{
 		if (token.empty())
-			continue; // Skip root directory or current directory
+			continue;
 
 		if (!current.empty() && current.at(current.size() - 1) != '/')
-			current += '/'; // Ensure we have a trailing slash
+			current += '/';
 		current += token;
 
 		if (mkdir(current.c_str(), 0755) != 0)
 		{
 			if (errno == EEXIST)
-				continue; // already exists, that's OK
+				continue;
 			else
 			{
 				std::cerr << "Failed to create directory: " << current << std::endl;
 				return false;
             }
 		}
-		server.add_authorized_paths(current); // Add to authorized paths
+		server.add_authorized_paths(current);
 	}
 	return true;
 }
@@ -153,7 +151,6 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string	target = req.get_target();
 	std::string	root = req._location_root;
 
-	// Trouver la configuration serveur
 	ServerConfig &server = find_current_server(http_config, req._server_name);
 
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "POST");
@@ -165,8 +162,8 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	if (req._location_name == "/cgi-bin/")
 	{
-		fd_data.Content_Type = req.get_header("Content-Type"); // Assurez-vous que le Content-Type est présent
-		fd_data.Content_Length = req.get_header("Content-Length"); // Assurez-vous que le Content-Length est présent
+		fd_data.Content_Type = req.get_header("Content-Type");
+		fd_data.Content_Length = req.get_header("Content-Length");
 
 		std::string body;
 
@@ -194,7 +191,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::cerr << "Error: Failed to open file for writing: " << file_path << std::endl;
 		return (build_response(req, "500", "Failed to store POST data", false));
 	}
-	out << body; // Stockage brut, sans analyse de type MIME
+	out << body;
 	out.close();
 
 	std::ostringstream response_body;

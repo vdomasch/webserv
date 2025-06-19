@@ -92,7 +92,6 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 		std::cerr << "Error: Error Page Not Found" << std::endl;
 		return "<html><body><h1>" + code + " " +  message_status(code) + "</h1></body></html>";
 	}
-	std::cout << "Error Page URI: " << error_uri << std::endl;
 	req.set_target(error_uri);
 	req._is_error_request = true;
 	req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex);
@@ -115,7 +114,7 @@ std::string	find_error_page(const std::string& code, const std::string& location
 
 	std::map<std::string, ServerConfig>& server_list = http.get_server_list();
 	std::map<std::string, ServerConfig>::iterator it_serv = server_list.find(server_name);
-	// Vérifie Location (si fourni)
+
 	if (!location_name.empty())
 	{
 		std::map<std::string, LocationConfig>::iterator it_loc = it_serv->second.get_location_list().find(location_name);
@@ -128,7 +127,6 @@ std::string	find_error_page(const std::string& code, const std::string& location
 		}
 	}
 
-	// Vérifie Server
 	if (it_serv == server_list.end())
 	{
 		std::string server_default_name = server_name.substr(server_name.find(':') + 1);
@@ -149,11 +147,10 @@ std::string	find_error_page(const std::string& code, const std::string& location
 			return it->second;
 	}
 
-	// Vérifie HTTP global
 	std::map<std::string, std::string> map = http.get_http_map();
 	it = map.find(code);
 	if (it != map.end())
 		return it->second;
 
-	return ""; // Pas trouvé
+	return "";
 }

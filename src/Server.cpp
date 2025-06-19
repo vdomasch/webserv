@@ -16,14 +16,12 @@ void handle_signal(int signum) { if (signum) { g_running = false; } }
 
 Server::Server()
 {
-	// Initialize the socket data
 	FD_ZERO(&_socket_data.saved_readsockets);
 	FD_ZERO(&_socket_data.ready_readsockets);
 	FD_ZERO(&_socket_data.ready_readsockets);
 	FD_ZERO(&_socket_data.ready_writesockets);
 	FD_ZERO(&_socket_data.saved_readsockets);
 	FD_ZERO(&_socket_data.saved_writesockets);
-	//_socket_data.max_fd = 0;
 	_port_to_socket_map.clear();
 	_method_map["GET"] = &get_request;
 	_method_map["POST"] = &post_request;
@@ -48,7 +46,7 @@ std::string ServerConfig::get_host_ip() const
 	if (it != _map_server.end() && !it->second.empty()) {
 		return it->second;
 	}
-	return "0.0.0.0"; // Default if not provided
+	return "0.0.0.0";
 }
 
 bool	Server::is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound)
@@ -56,14 +54,13 @@ bool	Server::is_conflicting_binding(const std::string& ip, std::string port, con
 	std::string this_key = ip + ":" + port;
 	std::string any_key = "0.0.0.0:" + port;
 
-	// If we're binding to 0.0.0.0, check if any specific IP is already bound on that port
 	if (ip == "0.0.0.0")
 	{
 		for (std::set<std::string>::const_iterator it = already_bound.begin(); it != already_bound.end(); ++it)
 			if (it->substr(it->find(":")) == ":" + port)
-				return true; // same port is already bound to a specific IP
+				return true; 
 	}
-	else // If we're binding to a specific IP, check if INADDR_ANY is already bound		
+	else	
 		if (already_bound.find(any_key) != already_bound.end())
 			return true;
 	return already_bound.find(this_key) != already_bound.end();
@@ -81,8 +78,6 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) == -1)
 		return close_msg(server_fd, "Failed to set socket options", true, -1);
 	
-	memset(&servaddr, 0, sizeof(servaddr));
-
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(server.get_uint_port_number());
 
@@ -104,14 +99,13 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 void	Server::launch_server(HTTPConfig &http_config)
 {
 	std::map<std::string, ServerConfig> servers_list = http_config.get_server_list();
-	sockaddr_in servaddr;
+	sockaddr_in servaddr = sockaddr_in();
 
 	for (std::map<std::string, ServerConfig>::iterator it = servers_list.begin(); it != servers_list.end(); ++it)
 	{
 		ServerConfig server = it->second;
 		int port = server.get_uint_port_number();
 
-		// Only create a socket once per port
 		if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
 		{
 			std::string ip = server.get_host_ip();
@@ -121,7 +115,7 @@ void	Server::launch_server(HTTPConfig &http_config)
 			if (is_conflicting_binding(ip, str_port, _ip_port_bound))
 			{
 				std::cerr << "Conflict: Cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
-				continue; // or return, depending on how strict the error handling should be
+				continue;
 			}
 
 			int server_socket = initialize_server(server, servaddr);
@@ -133,7 +127,7 @@ void	Server::launch_server(HTTPConfig &http_config)
 			_ip_port_bound.insert(key);
 			_port_to_socket_map[port] = server_socket;
 			_socket_to_port_map[server_socket] = port;
-			_socket_states[server_socket] = HttpRequest(); // Initialize the request state for the server socket
+			_socket_states[server_socket] = HttpRequest();
 			_socket_states[server_socket].set_is_server_socket(true);
 			FD_SET(server_socket, &_socket_data.saved_readsockets);
 			if (server_socket > _socket_data.max_fd)
@@ -177,7 +171,7 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	std::cout << "\033[1;32mNew client connected on socket " << client_socket << " through server port " << _socket_to_port_map[fd] << "\033[0m" << std::endl;
 	_socket_to_port_map[client_socket] = _socket_to_port_map[fd];
 
-	_socket_states[client_socket] = HttpRequest(); // Initialize the request state for the new client socket
+	_socket_states[client_socket] = HttpRequest();
 	_socket_states[client_socket].set_time(time(NULL));
 }
 
@@ -188,31 +182,26 @@ std::string Server::get_server_name(int fd)
 	{
 		int port = it->second;
 		std::string port_str;
-		port_str = convert<std::string>(port); // get port to str
+		port_str = convert<std::string>(port);
 
-		std::string host = _socket_states[fd].get_header("Host"); // get host from header
+		std::string host = _socket_states[fd].get_header("Host");
 		if (host.empty())
-			return port_str; // if host is empty, return port
+			return port_str;
 
-		std::string host_port = host.substr(host.find(":") + 1); // if host has port
+		std::string host_port = host.substr(host.find(":") + 1);
 		if (host_port.empty())
-		{
-			return host + port_str; // if host has no port, return host + port
-		}
-		else if (port_str.find_first_not_of("0123456789") != std::string::npos) // if port is not a number
-		{
-			throw std::runtime_error("Invalid port number in Host header: " + host_port); // throw exception
-		}
+			return host + port_str;
+		else if (port_str.find_first_not_of("0123456789") != std::string::npos)
+			throw std::runtime_error("Invalid port number in Host header: " + host_port);
 		else
-			return host; // retrun host
+			return host;
 	}
 	return ""; 
 }
 
 bool	Server::reading_data(int fd)
 {
-	char buffer[BUFFER_SIZE];
-	memset(buffer, 0, BUFFER_SIZE); // Clear the buffer
+	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read;
 	do {
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
@@ -246,7 +235,7 @@ bool	Server::reading_data(int fd)
 		close_msg(fd, "Bad request", 1, -1);
 		return 1;
 	}
-	return 0; // Request is ready
+	return 0;
 }
 
 bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config)
@@ -258,7 +247,7 @@ bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_c
 		if (max_body_size == 0)
 			max_body_size = http_config.get_client_max_body_size();
 		if (max_body_size == 0)
-			return false; // No limit set, so we assume it's okay
+			return false;
 	}
 
 	size_t	content_length = request.get_content_length();
@@ -290,8 +279,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		{
 			std::cerr << "Error getting server name: " << e.what() << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
-			//close_msg(fd, "Bad request", 1, -1);
-			return;
 		}
 	}
 	if (reading_data(fd))
@@ -347,7 +334,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	send(fd, response.c_str(), response.size(), 0);
 	_socket_states[fd].set_state(RESPONDED);
 	
-	if (!_socket_states[fd].getKeepAlive()/* || _socket_states[fd].get_method() == "DELETE"*/) // To review ?? add POST in it ?
+	if (!_socket_states[fd].getKeepAlive())
 		close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
 	if (is_error(_socket_states[fd].get_status_code()))
 		close_msg(fd, "Error response sent", 1, _socket_states[fd].get_status_code());
@@ -359,7 +346,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 	{
 		clean_sockets();
 
-		// Timeout de 0.5 secondes pour éviter le blocage
 		struct timeval timeout;
 		timeout.tv_sec = SELECT_TIMEOUT_SEC;
 		timeout.tv_usec = SELECT_TIMEOUT_USEC;
@@ -370,7 +356,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
-		// Parcours des sockets actifs
 		unsigned long now = time(NULL);
 		for (int i = 3; i <= _socket_data.max_fd; ++i) 
 		{
@@ -378,7 +363,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			{
 				if (is_server_socket(i))
 				{
-					handle_new_connection(i, servaddr); // socket d'écoute
+					handle_new_connection(i, servaddr);
 				}
 				else
 				{
@@ -391,12 +376,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 			}
 
-			if (!_socket_states[i].get_is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT)
+			if (!_socket_states[i].get_is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT_SEC)
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
 					send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
 				close_msg(i, "Idle connection closed", 0, 0);
-				_socket_states.erase(i); // Supprimer l'état de la socket
+				_socket_states.erase(i);
 			}
 		}
 	}
@@ -404,10 +389,10 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 
 void	Server::clean_sockets()
 {
-		// Rafraîchir la copie des sockets surveillés
+		// Update the ready readsockets set
 		_socket_data.ready_readsockets = _socket_data.saved_readsockets;
 
-		// Nettoyage préventif des sockets invalides
+		// Check for invalid sockets
 		for (int i = 0; i <= _socket_data.max_fd; ++i)
 		{
 			if (FD_ISSET(i, &_socket_data.saved_readsockets))
@@ -426,6 +411,7 @@ void	Server::clean_sockets()
 
 void	Server::update_max_fd(int fd)
 {
+	// Update the maximum file descriptor if necessary
 	if (fd == _socket_data.max_fd)
 		while (_socket_data.max_fd > 0 && !FD_ISSET(_socket_data.max_fd, &_socket_data.saved_readsockets))
 			_socket_data.max_fd--;

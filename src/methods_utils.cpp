@@ -9,7 +9,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	printf("\033[35mHandeling CGI ....\n\n\033[0m");
 
 	method = req.get_method();
-	// reset CGI class
+
 	d.cg = CGIContent();	
 	if (method == "POST")
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method, req._is_php_cgi);
@@ -17,7 +17,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method, req._is_php_cgi);
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
-	CGIBody = d.cg.grabCGIBody(CGI_body_size); // errcode si fail read ?
+	CGIBody = d.cg.grabCGIBody(CGI_body_size);
 
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
@@ -37,7 +37,7 @@ int	check_object_type(const std::string& path, int *errcode)
 {
 	struct stat fileinfo;  
 
-    if (stat (path.c_str(), &fileinfo) != 0) // then file exists --> to secure better, check requestedFilePath too
+    if (stat (path.c_str(), &fileinfo) != 0)
 	{
 		*errcode = MISSINGFILE;
 		return (MISSINGFILE);
