@@ -50,8 +50,6 @@ int main(int argc, char **argv)
 
 	authorized_delete_paths(http_config);
 
-	http_config.DEBUG_HTTP_show();
-
 	Server server;
 	
 	server.launch_server(http_config);
