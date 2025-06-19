@@ -17,7 +17,7 @@
 			<h2>Calculator</h2>
 			<form class="calcBody" method="get" action="/cgi-bin/calculator.php">
 				<div id= "resultBar">
-						<input type="button" id="delete" value="del" onclick="addToprocessLine(this.value);">
+						<input type="button" id="delete" value="Del" onclick="addToprocessLine(this.value);">
 						<p id="calcResult" style="margin-top: 1em;">***</p>
 					</div>
 				<table align="center">
@@ -26,7 +26,7 @@
 						<td class="calcTD"><input class="calcButton" type="button" id="7" value="7" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="8" value="8" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="9" value="9" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="reset" value="AC" onclick="resetProcessLine();"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<tr class="calcRow">
 						<td class="calcTD"><input class="calcButton" type="button" id="4" value="4" onclick="addToprocessLine(this.value);" ></td>
@@ -42,9 +42,9 @@
 						<td class="calcTD"><input class="calcButton"type="button" id="times" value="*" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<tr class="calcRow">
+						<td class="calcTD"><input class="calcButton"type="button" id="reset" value="AC" onclick="resetProcessLine();"></td>
 						<td class="calcTD"><input class="calcButton"type="button" id="0" value="0" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input id= "subbbb" type="submit" value="=" disabled></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton"type="button" id="minus" value="-" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					

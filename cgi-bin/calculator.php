@@ -99,9 +99,7 @@ echo "<!DOCTYPE html>
 			<div class='responsive-row'>
 				<h2 style='text-align:center;'> --> $result</h2>
 			</div>
-    		<div class='responsive-item'>
-        		<a href='/calculator.html'>Back to Calculator</a>
-			</div>
+        	<a href='/calculator.html' class='responsive-item'>Back to Calculator</a>
 		</section>
 	</body>
 </html>";

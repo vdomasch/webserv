@@ -122,17 +122,19 @@ table {
 	height: 50%;
 	margin-left: auto;
 	margin-right: auto;
-	border: 2px solid rgb(225, 82, 49);
+	border: 10px solid #769FCD;
+	border-radius: 20px;
+	background-color: #F7FBFC;
 }
 
 .calcRow {
 	padding-top: 5%;
-	/* border: 2px solid rgb(52, 52, 198); */
+	/*border: 2px solid rgb(52, 52, 198);*/
 }
 
 .calcTD {
 	width: 25%;
-	border: 2px solid rgb(180, 180, 224);
+	border: 2px solid #769FCD;
 	padding-top: 2%;
 	padding-bottom: 2%;
 }
@@ -142,7 +144,8 @@ table {
 	padding-right: 25%;
 	padding-top: 10%;
 	padding-bottom: 10%;
-	border: 2px solid rgb(214, 70, 132);
+	font-size: 1.5em;
+	border-radius: 20px;
 }
 
 #subbbb {
@@ -153,6 +156,8 @@ table {
 	border: 2px solid rgb(0, 0, 0);
 	background-color: indianred;
 	color: white;
+	font-size: 1.5em;
+	border-radius: 20px;
 }
 
 #subbbb:hover
@@ -172,12 +177,13 @@ table {
 	border: 2px solid rgb(0, 0, 0);
 	background-color: indianred;
 	color: white;
-	padding-left: 5%;
-	padding-right: 5%;
+	padding-left: 3%;
+	padding-right: 3%;
 	padding-top: 2%;
 	padding-bottom: 2%;
 	margin-left: 2%;
-	
+	font-size: 1.5em;
+	border-radius: 20px;
 }
 
 #delete:hover
@@ -190,6 +196,8 @@ table {
 	border: 2px solid rgb(0, 0, 0);
 	background-color: indianred;
 	color: white;
+	padding-left: 15%;
+	padding-right: 15%;
 }
 
 #reset:hover
@@ -274,6 +282,8 @@ table {
 
 #calcResult {
 	text-align: right;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 #resultBar {
