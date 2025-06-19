@@ -26,7 +26,8 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	{
 		printf("Ptit flop: child exited with code %d\n", exit_code);
 		printf("Raw status: 0x%04x\n", status);
-		return ("emptyerror");
+		*errcode = 500;
+		return ("");
 	}
 	d.response_len = CGI_body_size;
 	*errcode = 0;

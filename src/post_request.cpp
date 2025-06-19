@@ -153,11 +153,11 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	ServerConfig &server = find_current_server(http_config, req._server_name);
 
-	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "POST");
-	if (!error_code.empty())
+	std::string context_status_errcode = validate_request_context(req._location_name, root, errcode, server, "POST");
+	if (!context_status_errcode.empty())
 	{
-		std::cerr << "Error validating request context: " << error_code << std::endl;
-		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false));
+		std::cerr << "Error validating request context: " << context_status_errcode << std::endl;
+		return (build_response(req, context_status_errcode, displayErrorPage(context_status_errcode, http_config, req, fd_data), false));
 	}
 
 	if (req._location_name == "/cgi-bin/")
@@ -168,6 +168,11 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
+		if (errcode != 0)
+		{
+			std::cerr << "Error handling CGI: " << errcode << std::endl;
+			return build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), false);
+		}
 		build_response(req, "200", body, req.getKeepAlive());
 		return ;
 	}
