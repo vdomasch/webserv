@@ -37,9 +37,9 @@
 					}
 				
 					const formData = new FormData();
-					formData.append("myfile", file);
+					formData.append("myfile", file, "uploads/" + file.name);
 				
-					fetch(window.location.pathname, {
+					fetch("/uploads/", {
 						method: "POST",
 						body: formData
 					})

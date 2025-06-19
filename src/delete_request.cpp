@@ -39,7 +39,10 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 	std::string path = root + target;//filename;
 
 	if (!is_authorized_path(path, server.get_authorized_paths()))
+	{
+		std::cerr << "Error: Unauthorized DELETE request for path: " << path << std::endl;
 		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), false));
+	}
 
 
 
