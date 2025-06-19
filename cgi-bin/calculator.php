@@ -38,8 +38,17 @@ class Calculator
 }
 
 if ($n1 !== null && $n2 !== null && $op !== null) {
-    $calc = new Calculator();
-    $result = $calc->getresult($n1, $n2, $op);
+
+	if ($n1 == 0 && $n2 == 0 && $op == "+")
+	{
+		$result = "LA TETE A TOTO 0+0";
+	}
+	else
+	{
+		$calc = new Calculator();
+		$result = $calc->getresult($n1, $n2, $op);
+	}
+
 }
 
 echo "<!DOCTYPE html>
@@ -59,9 +68,9 @@ echo "<!DOCTYPE html>
 		</section>
 		<section class='block'>
 		<h2>You entered : $n1 $op $n2</h2>
-			<h2>Here is your result</h2>
+			<h2>Here is your result !</h2>
 			<div class='responsive-row'>
-				<h2 style='text-align:center;'>Result: $result</h2>
+				<h2 style='text-align:center;'> --> $result</h2>
 			</div>
     		<div class='responsive-item'>
         		<a href='/calculator.html'>Back to Calculator</a>

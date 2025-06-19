@@ -16,33 +16,38 @@
 		<section class="block">	
 			<h2>Calculator</h2>
 			<form class="calcBody" method="get" action="/cgi-bin/calculator.php">
+				<div id= "resultBar">
+						<input type="button" id="delete" value="del" onclick="addToprocessLine(this.value);">
+						<p id="calcResult" style="margin-top: 1em;">***</p>
+					</div>
 				<table align="center">
 				<tbody style="width: 100%; border: 2px solid rgb(1, 1, 15);">
 					<tr class="calcRow">
-						<td class="calcTD"><input class="calcButton" type="button" id="1" value="1" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="2" value="2" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="3" value="3" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="delete" value="del" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="7" value="7" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="8" value="8" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="9" value="9" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="reset" value="AC" onclick="resetProcessLine();"></td>
 					</tr>
 					<tr class="calcRow">
 						<td class="calcTD"><input class="calcButton" type="button" id="4" value="4" onclick="addToprocessLine(this.value);" ></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="5" value="5" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="6" value="6"onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="reset" value="AC" onclick="resetProcessLine();"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="divide" value="/" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<tr class="calcRow">
-						<td class="calcTD"><input class="calcButton" type="button" id="7" value="7" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="8" value="8" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="9" value="9" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="1" value="1" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="2" value="2" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="3" value="3" onclick="addToprocessLine(this.value);"></td>
+						
 						<td class="calcTD"><input class="calcButton"type="button" id="times" value="*" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<tr class="calcRow">
-						<td><input id= "subbbb" type="submit" value="=" disabled></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="0" value="0" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input id= "subbbb" type="submit" value="=" disabled></td>
 						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton"type="button" id="minus" value="-" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="divide" value="/" onclick="addToprocessLine(this.value);"></td>
 					</tr>
-					<p id="calcResult" style="margin-top: 1em;">***</p>
+					
 				</tbody>	
 				</table>
 				<input hidden type="text" name="op" id="op">
@@ -85,6 +90,7 @@
 				processLine.innerText = processLine.innerText.slice(0, -1);
 				if (processLine.innerText === "")
 					processLine.innerText = "***";
+				processFinalValue(lastOP);
 				return ;
 			}
 		}
@@ -140,8 +146,8 @@
 		}
 		if (opFound == false)
 		{
-			nb1 = "null";
-			nb2 = "null";
+			nb1 = "";
+			nb2 = "";
 			document.getElementById("subbbb").disabled = true;
 		}
 		else
@@ -159,6 +165,8 @@
 				document.getElementById("n1").value = nb1;
 				document.getElementById("n2").value = nb2;
 			}
+			else
+				document.getElementById("subbbb").disabled = true;
 		}
 		// console.log("Found op at position :");
 		// console.log(i);
