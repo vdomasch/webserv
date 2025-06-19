@@ -26,7 +26,6 @@ void HttpRequest::append_data(const std::string &data)
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
 			
-			
 			parse_headers();
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
@@ -83,11 +82,14 @@ std::string	normalize_path(const std::string &path)
 {
 	std::string normalized = path;
 	if (normalized.empty() || normalized == "/")
-		return "/";
-	if (normalized[0] != '/')
-		normalized = "/" + normalized;
+		//return "/";
+		return "";
+	//if (normalized[0] != '/')
+	//	normalized = "/" + normalized;
+	if (normalized.at(0) == '/')
+		normalized.erase(0, 1); // Enlever le slash initial
 	if (normalized.at(normalized.size() - 1) == '/')
-		normalized.erase(normalized.size() - 1, 1);
+		normalized.erase(normalized.size() - 2, 1);
 	return normalized;
 }
 
@@ -119,6 +121,11 @@ void	HttpRequest::parse_headers()
 	{
 		_query_string = _target.substr(query_pos + 1);
 		_target = normalize_path(_target.substr(0, query_pos));
+	}
+	else 
+	{
+		_query_string.clear();
+		_target = normalize_path(_target);
 	}
 
 	if (_http_version != "HTTP/1.1")
