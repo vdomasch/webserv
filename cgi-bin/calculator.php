@@ -58,6 +58,7 @@ echo "<!DOCTYPE html>
 			</a>
 		</section>
 		<section class='block'>
+		<h2>You entered : $n1 $op $n2</h2>
 			<h2>Here is your result</h2>
 			<div class='responsive-row'>
 				<h2 style='text-align:center;'>Result: $result</h2>

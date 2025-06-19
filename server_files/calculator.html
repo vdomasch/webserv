@@ -7,7 +7,7 @@
 		<link rel="stylesheet" href="/assets/css_files/styles.css">
 		<title>Calculator</title>
 	</head>
-	<body>
+	<body onload="resetProcessLine()">
 		<section class="title">
 			<a href="index.html">
 				<h1 class="title">Webserv</h1>
@@ -22,13 +22,13 @@
 						<td class="calcTD"><input class="calcButton" type="button" id="1" value="1" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="2" value="2" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="3" value="3" onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton" type="button" id="delete" value="del" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<tr class="calcRow">
 						<td class="calcTD"><input class="calcButton" type="button" id="4" value="4" onclick="addToprocessLine(this.value);" ></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="5" value="5" onclick="addToprocessLine(this.value);"></td>
 						<td class="calcTD"><input class="calcButton" type="button" id="6" value="6"onclick="addToprocessLine(this.value);"></td>
-						<td class="calcTD"><input class="calcButton"type="button" id="minus" value="-" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="reset" value="AC" onclick="resetProcessLine();"></td>
 					</tr>
 					<tr class="calcRow">
 						<td class="calcTD"><input class="calcButton" type="button" id="7" value="7" onclick="addToprocessLine(this.value);"></td>
@@ -38,8 +38,9 @@
 					</tr>
 					<tr class="calcRow">
 						<td><input id= "subbbb" type="submit" value="=" disabled></td>
-						<td><input type="button" value="==" onclick="processFinalValue();"></td>
-						<td class="calcTD"><input class="calcButton" type="button" id="delete" value="ret" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="plus" value="+" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="minus" value="-" onclick="addToprocessLine(this.value);"></td>
+						<td class="calcTD"><input class="calcButton"type="button" id="divide" value="/" onclick="addToprocessLine(this.value);"></td>
 					</tr>
 					<p id="calcResult" style="margin-top: 1em;">***</p>
 				</tbody>	
@@ -64,7 +65,7 @@
 		const processLine = document.getElementById("calcResult");
 
 
-		if (buttonvalue == "ret")
+		if (buttonvalue == "del")
 		{
 			if (processLine.innerText == "***" || processLine.innerText === "")
 			{
@@ -74,11 +75,12 @@
 			else
 			{
 				lastPressed = processLine.innerText.slice(-1)
-				if (lastPressed == "+" || lastPressed == "-" || lastPressed == "*")
+				if (lastPressed == "+" || lastPressed == "-" || lastPressed == "*" || lastPressed == "/")
 					{
 						document.getElementById("plus").disabled = false;
 						document.getElementById("times").disabled = false;
 						document.getElementById("minus").disabled = false;
+						document.getElementById("divide").disabled = false;
 					}
 				processLine.innerText = processLine.innerText.slice(0, -1);
 				if (processLine.innerText === "")
@@ -89,7 +91,7 @@
 		
 		if (processLine.innerText == "***")
 		{
-			if ((buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*"))
+			if ((buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*" || buttonvalue == "/"))
 				return ;
 			else
 			processLine.innerText = "";
@@ -99,11 +101,12 @@
 		processLine.innerText += "";
 		console.log("Added :" + buttonvalue);
 	
-		if ( (buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*"))
+		if ( (buttonvalue == "+" || buttonvalue == "-" || buttonvalue == "*" || buttonvalue == "/"))
 		{
 			document.getElementById("plus").disabled = true;
 			document.getElementById("times").disabled = true;
 			document.getElementById("minus").disabled = true;
+			document.getElementById("divide").disabled = true;
 			lastOP = buttonvalue;
 		}
 		processFinalValue(lastOP);
@@ -114,9 +117,8 @@
 		const processLine = document.getElementById("calcResult");
 
 		lastPressed = processLine.innerText.slice(-1)
-		isValid = processLine.innerText.includes("+") && !((lastPressed == "+" || lastPressed == "-" || lastPressed == "*"))
 
-		op = "+-*";
+		op = "+-*/";
 		i = 0;
 		opFound = false;
 		while (true)
@@ -160,6 +162,16 @@
 		}
 		// console.log("Found op at position :");
 		// console.log(i);
+	}
+
+
+	function resetProcessLine() {
+		document.getElementById("subbbb").disabled = true;
+		document.getElementById("calcResult").innerText = "***";
+		document.getElementById("plus").disabled = false;
+		document.getElementById("times").disabled = false;
+		document.getElementById("minus").disabled = false;
+		document.getElementById("divide").disabled = false;
 	}
 
 </script>				
