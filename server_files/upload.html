@@ -21,7 +21,7 @@
 				<label for="myfile">Select a file:</label><br>
 				<input type="file" id="myfile" name="myfile"><br><br>
 		
-				<button onclick="sendPost()">Send</button>
+				<button onclick="sendPost()">Submit</button>
 		
 				<p id="uploadResult" style="margin-top: 1em;"></p>
 			</div>
@@ -46,7 +46,7 @@
 					.then(response => {
 						return response.text().then(text => {
 							if (response.ok) {
-								document.getElementById("uploadResult").innerText = "✅ File send. Path : " + text;
+								document.getElementById("uploadResult").innerText = "✅ File sent. Path : " + text;
 							} else {
 								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
 							}
