@@ -17,13 +17,11 @@ class Server
 		
 		void		launch_server(HTTPConfig &http_config);
 
-		//int					get_client_max_body_size();
 		std::map<int, int>	get_port_to_socket_map() const;
 		std::map<int, int> 	get_socket_to_port_map() const;
 		
 	private:
-		t_fd_data		_socket_data;	// to keep track of all active sockets
-		//HttpRequest		_req;			// to parse the request
+		t_fd_data		_socket_data;
 
 		std::set<std::string>																_ip_port_bound;
 		std::map<int, int>																	_port_to_socket_map;

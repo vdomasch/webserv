@@ -48,7 +48,6 @@ void HttpRequest::append_data(const std::string &data)
 			_body += data;
 		if (_is_multipart) 
 		{
-			// multipart → fin du body par le boundary final
 			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
 			{
 				_state = COMPLETE;
@@ -96,7 +95,6 @@ void	HttpRequest::parse_headers()
 	std::istringstream stream(_header);
 	std::string line;
 
-	// Première ligne = ligne de requête
 	if (!std::getline(stream, line))
 	{
 		std::cerr << "Error reading request line" << std::endl;
@@ -125,11 +123,10 @@ void	HttpRequest::parse_headers()
 	{
 		std::cerr << "Unsupported HTTP version: " << _http_version << std::endl;
 		_state = ERROR;
-		_status_code = 505; // HTTP Version Not Supported
+		_status_code = 505;
 		return;
 	}
 
-	// En-têtes HTTP (key: value)
 	while (std::getline(stream, line))
 	{
 		if (line == "\r" || line.empty()) continue;
@@ -138,7 +135,7 @@ void	HttpRequest::parse_headers()
 
 		std::string key = line.substr(0, colon);
 		std::string value = line.substr(colon + 1);
-		// Nettoyage des espaces
+
 		key.erase(key.find_last_not_of(" \t\r") + 1);
 		value.erase(0, value.find_first_not_of(" \t"));
 		value.erase(value.find_last_not_of(" \t\r") + 1);
@@ -151,7 +148,7 @@ void	HttpRequest::parse_headers()
 		catch (const std::exception &e)	{
 			std::cerr << "Error converting Content-Length: " << e.what() << std::endl;
 			_state = ERROR;
-			_status_code = 400; // Bad Request
+			_status_code = 400;
 			return;
 		}
 	}
@@ -164,7 +161,7 @@ void	HttpRequest::parse_headers()
 			size_t pos = content_type.find("boundary=");
 			if (pos != std::string::npos)
 			{
-				_boundary = "--" + content_type.substr(pos + 9); // "boundary=..." → on ajoute les "--"
+				_boundary = "--" + content_type.substr(pos + 9);
 				_is_multipart = true;
 			}
 		}
@@ -194,13 +191,13 @@ ssize_t			HttpRequest::get_content_length() const		{ return _content_length; }
 std::string		HttpRequest::get_response() const			{ return _response; }
 std::string		HttpRequest::get_method() const				{ return _method; }
 std::string		HttpRequest::get_target() const				{ return _target; }
-std::string		HttpRequest::get_rootpath() const			{ return _rootpath; } /// temporary for CGI
+std::string		HttpRequest::get_rootpath() const			{ return _rootpath; }
 std::string		HttpRequest::get_boundary() const			{ return _boundary; }
 std::string		HttpRequest::get_content_type() const		{ return _content_type; }
 std::string 	HttpRequest::get_body() const				{ return _body;}
 std::string		HttpRequest::get_query_string() const		{ return _query_string; }
 unsigned long	HttpRequest::get_time() const				{ return _last_time; };
-RequestState	HttpRequest::get_state() const				{ return _state; } // added only for request debug
+RequestState	HttpRequest::get_state() const				{ return _state; }
 std::string HttpRequest::get_header(const std::string& key) const
 {
 	std::map<std::string, std::string>::const_iterator it = _headers_map.find(key);
@@ -216,7 +213,7 @@ void	HttpRequest::set_is_server_socket(bool is_server_sock)		{ _is_server_socket
 void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
 void	HttpRequest::set_status_code(int code)					{ _state = ERROR, _status_code = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
-void	HttpRequest::set_rootpath(const std::string& rootpath)	{ _rootpath = rootpath; } /// temporary for CGI
+void	HttpRequest::set_rootpath(const std::string& rootpath)	{ _rootpath = rootpath; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
 void	HttpRequest::set_time(unsigned long t) 					{ _last_time = t; };

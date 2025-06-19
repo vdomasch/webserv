@@ -26,21 +26,11 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 					std::string location_root = location.get_root();
 					if (!location_root.empty())
 					{
-						if (/*(it->first == "/uploads/" || it->first == "/upload/") && */!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
+						if (!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
 							location_root += "uploads/";
 						server.add_authorized_paths(location_root);
 					}
 				}
-				/* if (server.get_map_server().count("DELETE"))
-				{
-					std::string server_root = server.get_root();
-					if (!server_root.empty())
-					{
-						if (!ends_with(server_root, "/uploads/") && !ends_with(server_root, "/upload/"))
-							server_root += "uploads/";
-						server.add_authorized_paths(server_root);
-					}
-				}*/
 			}
 		}
 	}
@@ -53,7 +43,6 @@ int main(int argc, char **argv)
 		std::cerr << "Please execute as ./Webserv \"config_file_name\"!" << std::endl;
 		return (1);
 	}
-	std::string config_variables[7] = {"listen", "host", "server_name", "error_page", "client_max_body_size", "root", "index"};
 	HTTPConfig http_config;
 	http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
@@ -63,6 +52,6 @@ int main(int argc, char **argv)
 
 	Server server;
 	
-	server.launch_server(http_config); // Start the server
+	server.launch_server(http_config);
 	return (0);
 }

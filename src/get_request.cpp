@@ -57,12 +57,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		build_response(req, "200", body, req.getKeepAlive()); /// not sure if the right code ?
+		build_response(req, "200", body, req.getKeepAlive());
 		return ;
 	}
 
-	std::string path_no_index = root + remove_prefix(target, req._location_name); // Supprimer le préfixe location du target
-	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(req._location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::string path_no_index = root + remove_prefix(target, req._location_name); // Delete location prefix of target
+	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(req._location_name)->second.get_index());
 	
 
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
@@ -77,9 +77,13 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 			fd_data.requestedFilePath = path_no_index;
 			fd_data.serverFolder = server.get_map_server()["root"];
 			fd_data.response_len = 0;
-			//fd_data.content_len = 0;
 			fd_data.folderContent.clear();
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
+			if (body.empty())
+			{
+				std::cerr << "Error: Failed to build index page for: " << file_path << std::endl;
+				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), false));
+			}
 			return (build_response(req, "200", body, false));
 		}
 		std::cerr << "Error: File not found: " << file_path << std::endl;

@@ -8,16 +8,16 @@
 
 enum RequestState
 {
-    RECEIVING_HEADER,
-    RECEIVING_BODY,
-    COMPLETE,
-    ERROR,
+	RECEIVING_HEADER,
+	RECEIVING_BODY,
+	COMPLETE,
+	ERROR,
 	RESPONDED
 };
 
-class HTTPConfig;
+class	HTTPConfig;
 
-class HttpRequest
+class	HttpRequest
 {
 	public:
 		HttpRequest();
@@ -28,7 +28,7 @@ class HttpRequest
 		bool			_is_php_cgi;
 		std::string		_server_name;
 		std::string		_location_name;
-		std::string 	_location_root;
+		std::string		_location_root;
 		ServerConfig	_server;
 
 		
@@ -41,18 +41,18 @@ class HttpRequest
 
 
 		bool			getKeepAlive() const;
-		bool 			get_is_multipart() const;
+		bool			get_is_multipart() const;
 		bool			get_is_server_socket() const;
 		int				get_status_code() const;
 		ssize_t			get_content_length() const;
 		std::string		get_response() const;
-		std::string 	get_method() const;
-		std::string 	get_target() const;
-		std::string 	get_header(const std::string& key) const;
-		std::string 	get_body() const;
-		std::string 	get_boundary() const;
-		std::string 	get_content_type() const;
-		std::string 	get_rootpath() const;
+		std::string		get_method() const;
+		std::string		get_target() const;
+		std::string		get_header(const std::string& key) const;
+		std::string		get_body() const;
+		std::string		get_boundary() const;
+		std::string		get_content_type() const;
+		std::string		get_rootpath() const;
 		std::string		get_query_string() const;
 		unsigned long	get_time() const;
 		RequestState	get_state() const;
@@ -64,7 +64,7 @@ class HttpRequest
 		void	set_state(enum RequestState);
 		void	set_content_type(const std::string& type);
 		void	set_time(unsigned long t);
-		void	set_rootpath(const std::string& rootpath); //for CGI full path, is to be modified
+		void	set_rootpath(const std::string& rootpath);
 
 	private:
 		bool		_is_server_socket;
@@ -74,9 +74,9 @@ class HttpRequest
 		std::string	_method;
 		std::string	_target;
 		std::string	_query_string;
-		std::string _http_version;
-		std::string _rootpath;   //for CGI full path, is to be modified
-		std::map<std::string, std::string> _headers_map;
+		std::string	_http_version;
+		std::string	_rootpath;
+		std::map<std::string, std::string>	_headers_map;
 
 		RequestState	_state;
 		size_t			_content_length;
@@ -90,9 +90,9 @@ class HttpRequest
 		std::string		_content_type;
 
 		void	parse_headers();
-		bool 	check_keep_alive() const;
+		bool	check_keep_alive() const;
 };
 
-std::ostream& operator<<(std::ostream &os, const HttpRequest &req);
+std::ostream&	operator<<(std::ostream &os, const HttpRequest &req);
 
 #endif 

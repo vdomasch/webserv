@@ -76,11 +76,6 @@ bool	ServerConfig::set_server_values(std::istringstream &iss, std::string key)
 		if (handle_autoindex(iss, _map_server))
 			return 1;
 	}
-	//else if (key == "host")
-	//{
-	//	if (handle_host(iss, _map_server))
-	//		return 1;
-	//}
 	else if (key == "allow_methods")
 	{
 		if (handle_allow_methods(iss, _map_server))
@@ -385,7 +380,7 @@ bool	ServerConfig::handle_host(std::string value)
 	return 0;
 }
 
-std::string ServerConfig::get_matching_location(const std::string& target, bool &autoindex)  ///issue WAS here, fixed
+std::string ServerConfig::get_matching_location(const std::string& target, bool &autoindex)
 {
 	std::string best_match;
 	size_t max_len = 0;
@@ -408,7 +403,6 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	if (!best_match.empty())
 		return best_match;
 
-	// fallback: location /
 	std::map<std::string, LocationConfig>::iterator it = _location_list.find("/");
 	if (it != _location_list.end())
 	{

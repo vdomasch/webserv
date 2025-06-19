@@ -2,19 +2,12 @@
 #include <ctime>
 #include <iomanip>
 
-//static bool	compareBySize(const orderedFiles& a, const orderedFiles& b)
-//{
-//	return a.lowerName < b.lowerName;
-//}
-
 static bool compareByDirThenName(const orderedFiles& a, const orderedFiles& b)
 {
-    // Dossiers avant fichiers
     if (a.type == DT_DIR && b.type != DT_DIR)
         return true;
     if (a.type != DT_DIR && b.type == DT_DIR)
         return false;
-    // Sinon, trie alphabétique
     return a.lowerName < b.lowerName;
 }
 
@@ -26,7 +19,7 @@ static void	getRightFileOrder(std::vector<orderedFiles> &sorted, std::vector<dir
 		std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
 		sorted.push_back(orderedFiles(i->d_name, filename, i->d_type));
 	}
-	std::sort(sorted.begin(), sorted.end(), compareByDirThenName); //change to sort folder + file in one loop for
+	std::sort(sorted.begin(), sorted.end(), compareByDirThenName);
 }
 
 static std::ifstream::pos_type	filesize(const char *filename)
@@ -60,8 +53,8 @@ static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 	time_t						timestamp;
 	std::vector<orderedFiles>	sorted_names;
 
-	getRightFileOrder(sorted_names, d->folderContent); //sort all elements by name
-	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)  // loop for folder
+	getRightFileOrder(sorted_names, d->folderContent);
+	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)
 	{
 		std::string	m_fpath(i->baseName);
 		std::string fullPath = d->requestedFilePath + "/" + m_fpath;
@@ -139,7 +132,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	std::ostringstream	oss;
 	storeFolderContent(d, errcode);
 	if (*errcode == FAILEDSYSTEMCALL)
-		return (""); // to handle better ??
+		return ("");
 
 	setupHTMLpageStyle(oss);
 
@@ -151,7 +144,6 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	std::string result = oss.str().c_str();
-	//d->content_len = result.length();
 	d->response_len = result.length();
 	d->folderContent.clear();
 	return (result);
