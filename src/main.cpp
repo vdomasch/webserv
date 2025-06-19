@@ -26,8 +26,8 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 					std::string location_root = location.get_root();
 					if (!location_root.empty())
 					{
-						if (/*(it->first == "/uploads/" || it->first == "/upload/") && */!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
-							location_root += "uploads/";
+						//if (/*(it->first == "/uploads/" || it->first == "/upload/") && */!ends_with(location_root, "/uploads/") && !ends_with(location_root, "/upload/"))
+						location_root += "uploads/";
 						server.add_authorized_paths(location_root);
 					}
 				}
@@ -60,6 +60,8 @@ int main(int argc, char **argv)
 		return (1);
 
 	authorized_delete_paths(http_config);
+
+	http_config.DEBUG_HTTP_show();
 
 	Server server;
 	
