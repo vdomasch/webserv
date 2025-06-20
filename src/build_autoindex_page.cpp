@@ -42,7 +42,7 @@ static std::string	displayCorrectFileSize(const char * filename)
 		++i;
 	}
 	std::ostringstream oss;
-	size = floor(size * 10 + 0.5f) / 10.0f; // round to one decimal place
+	size = std::floor(size * 10 + 0.5f) / 10.0f; // round to one decimal place
 	oss << size << units[i];
 	return oss.str();
 }

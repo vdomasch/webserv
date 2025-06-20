@@ -22,8 +22,8 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	int exit_code = WEXITSTATUS(status);
 	if (exit_code != 0)
 	{
-		printf("Ptit flop: child exited with code %d\n", exit_code);
-		printf("Raw status: 0x%04x\n", status);
+		std::cout << "Ptit flop: child exited with code " << exit_code << std::endl;
+		std::cout << "Raw status: 0x" << std::hex << status << std::dec << std::endl;
 		*errcode = 500;
 		return ("");
 	}

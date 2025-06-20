@@ -2,7 +2,6 @@
 #ifndef CGICONTENT_HPP
 # define CGICONTENT_HPP
  
-#include <stdio.h>
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,7 +12,6 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <vector>
-#include <stdlib.h>
 #include <algorithm>
 #include <dirent.h>
 #include <cmath>

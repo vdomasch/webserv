@@ -9,12 +9,10 @@
 # include "CGIContent.hpp"
 # include "utils.hpp"
 
-# include <stdio.h>
 # include <iostream>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
-# include <unistd.h>
 # include <fstream>
 # include <sys/stat.h>
 # include <sstream>

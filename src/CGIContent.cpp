@@ -122,7 +122,7 @@ int	CGIContent::sendCGIBody(std::string body)
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {
-			perror("write failed !");
+			std::cout << "CGI Write failed !" << std::endl;
 			return (-1);
 			
 		}
