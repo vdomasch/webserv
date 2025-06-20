@@ -148,7 +148,7 @@ bool	ServerConfig::select_current_location_to_parse(std::istringstream &iss, std
 
 unsigned int	ServerConfig::get_uint_port_number()
 {
-	return (atol(_map_server["listen"].c_str()));
+	return (std::atol(_map_server["listen"].c_str()));
 }
 
 std::string	ServerConfig::get_port_number()
@@ -305,7 +305,7 @@ bool	ServerConfig::handle_listen_ip_port(std::string &value)
 
 bool	ServerConfig::handle_listen_port(std::string &value)
 {
-	if (value.length() > 6 || atol(value.c_str()) > 65535 || atol(value.c_str()) < 1024)
+	if (value.length() > 6 || std::atol(value.c_str()) > 65535 || std::atol(value.c_str()) < 1024)
 	{
 		std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
@@ -362,7 +362,7 @@ bool	ServerConfig::handle_host(std::string value)
 		std::cerr << "Error: Invalid ip value '" << value << "', range is from 0 to 255!" << std::endl;
 		return 1;
 	}
-	if (atol(ip_1.c_str()) > 255 || atol(ip_2.c_str()) > 255 || atol(ip_3.c_str()) > 255)
+	if (std::atol(ip_1.c_str()) > 255 || std::atol(ip_2.c_str()) > 255 || std::atol(ip_3.c_str()) > 255)
 	{
 		std::cerr << "Error: Invalid ip value '" << value << "', range is from 0 to 255!" << std::endl;
 		return 1;

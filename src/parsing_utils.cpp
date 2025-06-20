@@ -45,7 +45,7 @@ bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_lis
 
 bool	is_error_page_code(std::string code)
 {
-	int int_code = atoi(code.c_str());
+	int int_code = std::atoi(code.c_str());
 
 	if (code.length() == 3 && int_code >= 400 && int_code <= 599)
 		return true;
