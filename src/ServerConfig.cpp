@@ -166,7 +166,7 @@ bool ServerConfig::get_autoindex()
 		else if (it->second == "off")
 			return false;
 	}
-	return false;
+	return true;
 }
 
 std::string ServerConfig::DEBUG_test()

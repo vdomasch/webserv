@@ -85,7 +85,7 @@ std::string	normalize_path(const std::string &path)
 	if (normalized.at(0) == '/')
 		normalized.erase(0, 1); // Enlever le slash initial
 	if (normalized.at(normalized.size() - 1) == '/')
-		normalized.erase(normalized.size() - 2, 1);
+		normalized.erase(normalized.size() - 1, 1);
 	return normalized;
 }
 

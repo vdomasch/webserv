@@ -19,7 +19,7 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-std::string	try_index_file(std::string &path, const std::string &index)
+std::string	try_index_file(std::string path, const std::string &index)
 {
 	int errcode = 0;
 	if (path.empty())
