@@ -205,8 +205,13 @@ bool	Server::reading_data(int fd)
 	ssize_t bytes_read;
 	do {
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+		// bytes_read = -1;
 		if (bytes_read < 0)
+		{	
+			//! Returns "EAGAIN : Resource temporarily unavailable", because fcntl is set to non-blocking
+			//! We might still need to check for other return values ?
 			;
+		}
 		if (bytes_read == 0)
 		{
 			close_msg(fd, "Client Disconnected", 0, 0);
@@ -215,7 +220,10 @@ bool	Server::reading_data(int fd)
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
-	if (_socket_states[fd].has_error())
+
+
+
+	if (_socket_states[fd].has_error()) //! doesn't seem to even work
 	{
 		std::cerr << "Error in request: " << std::endl;
 		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
@@ -224,7 +232,6 @@ bool	Server::reading_data(int fd)
 	}
 	if (!_socket_states[fd].is_ready())
 	{
-		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
 		return 1;
 	}
 	

@@ -81,21 +81,23 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	
 	try { req.set_status_code(convert<int>(status_code)); }
 	catch (std::exception &e) { std::cerr << "Error converting status code: " << e.what() << std::endl; }
+
+
 	req.set_response(res.generate_response(req._is_php_cgi));
 }
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
 {
 	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
-	if (error_uri.empty() || req._is_error_request)
+	if (error_uri.empty() || req._is_error_request) //! shouldn't it be a && ? 
 	{
 		std::cout << "No error page specified, sending default." << std::endl;
 		return "<html><body><h1>" + code + " " +  message_status(code) + "</h1></body></html>";
 	}
 	req.set_target(error_uri);
-	req._is_error_request = true;
+	req._is_error_request = true; //! Never set to false
 	req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex);
-
+	
 	get_request(http_config, req, fd_data);
 
 	if (req.get_response().empty())
@@ -104,7 +106,14 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 		return "<html><body><h1>500 Internal Server Error</h1></body></html>";
 	}
 	else if (req.get_response().find("\r\n\r\n") != std::string::npos)
+	{
+		// std::cerr << "[DEBUG][utils.cpp 108]: " << req.get_response().substr(req.get_response().find("\r\n\r\n") + 4) << "\n\n"; //! TO REMOVE
 		return req.get_response().substr(req.get_response().find("\r\n\r\n") + 4);
+	}
+
+	//! With current build, we never get to that point, since we enter the return above,
+	//! and we end up sending an incorrect default page the next time we enter this function, since req._is_error_request = true
+ 
 	return req.get_response();
 }
 
