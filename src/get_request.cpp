@@ -50,16 +50,22 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), false));
-
-	if (req._location_name == "/cgi-bin/")
+		
+	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
 	{
 		fd_data.QueryString = req.get_query_string();
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		build_response(req, "200", body, req.getKeepAlive());
-		return ;
+		if (body.empty() && errcode == 400)
+		{
+			std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
+			return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), false));
+		}
+		return (build_response(req, "200", body, req.getKeepAlive()));
 	}
+	else if (req._location_name == "/cgi-bin/")
+		req._autoindex = false;
 
 	std::string path_no_index = root + /*remove_prefix(target, req._location_name)*/ target; // Supprimer le préfixe location du target
 	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(req._location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index

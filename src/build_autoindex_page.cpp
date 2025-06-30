@@ -53,19 +53,24 @@ static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss, std::st
 	time_t						timestamp;
 	std::vector<orderedFiles>	sorted_names;
 
+	std::string href = path;
+	if (href.at(href.size() - 1) != '/')
+		href += "/";
 	getRightFileOrder(sorted_names, d->folderContent);
 	for (std::vector<orderedFiles>::const_iterator i = sorted_names.begin(); i != sorted_names.end(); ++i)
 	{
+		std::string tmp;
 		std::string	m_fpath(i->baseName);
 		std::string fullPath = d->requestedFilePath + "/" + m_fpath;
+		tmp = href + m_fpath;
 		if (i->type == DT_DIR)
 		{
-			oss << "<tr><td><a class=\"icon dir\" href=\"" << m_fpath << "\">" << m_fpath << "/</a></td>";
+			oss << "<tr><td><a class=\"icon dir\" href=\"" << tmp << "\">" << m_fpath << "/</a></td>";
 			oss << "<td> - </td>";
 		}
 		else
 		{
-			oss << "<tr><td><a class=\"icon file\" href=\"" << m_fpath << "\">" << m_fpath << "</a></td>";
+			oss << "<tr><td><a class=\"icon file\" href=\"" << tmp << "\">" << m_fpath << "</a></td>";
 			oss << "<td> " << displayCorrectFileSize(fullPath.c_str()) << " </td>";
 		}
 
@@ -102,13 +107,20 @@ static void	storeFolderContent(t_fd_data *d, int *errcode)
 
 std::string getParentHref(const std::string& path)
 {
-	if (path == "/" || path.empty())
-		return "/";
+	std::string clean = path;
+	if (clean.empty() || clean[0] != '/')
+		clean = "/" + clean;
 
-	std::size_t pos = path.find_last_of('/');
+	// Remove trailing slash if present
+	if (clean.size() > 1 && clean.at(clean.size() - 1) == '/')
+		clean.substr(0, clean.size() - 1);
+
+	// Get last slash
+	std::size_t pos = clean.find_last_of('/');
 	if (pos == std::string::npos || pos == 0)
 		return "/";
-	return path.substr(0, pos);
+
+	return clean.substr(0, pos);
 }
 
 static void	setupHTMLpageStyle(std::ostringstream &oss)
@@ -141,7 +153,13 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	oss << "<div><a class=\"icon up\" href=\"" + getParentHref(path) + "\">[parent directory]</a>\n</div>\n";
 	oss << "<table>\n<thead>\n<th> Name </th>\n<th> Size </th>\n<th> Date Modified </th>\n</thead>\n<tbody>\n";
 
-	sendSizeAndLastChange(d, oss, path); // extract the info about file size and last access
+	std::string urlPath = path;
+	if (urlPath.empty() || urlPath[0] != '/')
+		urlPath = "/" + urlPath;
+	if (urlPath.at(urlPath.size() - 1) == '/')
+		urlPath.substr(0, urlPath.size() - 1); // remove trailing slash for hrefs
+
+	sendSizeAndLastChange(d, oss, urlPath); // extract the info about file size and last access
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	std::string result = oss.str().c_str();
