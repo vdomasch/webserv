@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+		<link rel="stylesheet" href="/assets/css_files/styles.css">
+		<title>Delete</title>
+	</head>
+	<body>
+		<section class="title">
+			<a href="/">
+				<h1 class="title">Webserv</h1>
+			</a>
+		</section>
+		<section class="block">
+			<h2>Delete a file</h2>
+
+    		<label for="deletePath">Path of the file to delete:</label><br>
+    		<input type="text" id="deletePath" placeholder="/my/path.txt" size="40"><br><br>
+
+    		<button onclick="sendDelete()">Supprimer</button>
+
+    		<p id="result"></p>
+
+    		<script>
+    		function sendDelete() {
+    		    const path = document.getElementById("deletePath").value;
+			
+    		    fetch(path, { method: 'DELETE' })
+    		    .then(response => {
+    		        if (response.status === 204) {
+    		            document.getElementById("result").innerText = "✅ File successfuly deleted.";
+    		        } else {
+    		            document.getElementById("result").innerText = `❌ Error ${response.status} : ${response.statusText}`;
+    		        }
+    		    })
+    		    .catch(err => {
+    		        document.getElementById("result").innerText = "❌ Error network : " + err;
+    		    });
+    		}
+    		</script>
+		</section>
+	</body>
+</html>

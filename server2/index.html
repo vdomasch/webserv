@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+		<link rel="stylesheet" href="/assets/css_files/styles.css">
+		<title>Home</title>
+	</head>
+	<body>
+		<section class="title">
+			<a href="/">
+				<h1 class="title">Webserv</h1>
+			</a>
+		</section>
+		<section class="block">
+			<h2>Welcome to our Webserv project!</h2>
+			<p>Here you will be able to access different pages via the server. It allows you to upload and delete files. And there are also 2 CGI using python and php scripts!</p>
+		</section>
+		<section class="block">
+			<h2>Access the different pages bellow</h2>
+			<div class="responsive-row">
+				<a href="/upload.html" class="responsive-item">Upload</a>
+				<a href="/delete.html" class="responsive-item">Delete</a>
+				<form  method = "post" action = "/cgi-bin/upload_page.py">
+					<button name="goto_upload" value="teleport" class="responsive-item">Upload with CGI</button>
+				</form>
+				<a href="/calculator.html" class="responsive-item">Calculator</a>
+			</div>
+		</section>
+	</body>
+</html>
