@@ -334,7 +334,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			res.add_header("Connection", "close");
 			_socket_states[fd].set_response(res.generate_response(_socket_states[fd]._is_php_cgi));
 		}
-
 	}
 	
 	std::string response = _socket_states[fd].get_response();
