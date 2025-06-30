@@ -218,7 +218,12 @@ bool	Server::reading_data(int fd)
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error in request: " << std::endl;
-		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0);
+		if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0) < 0);
+		{
+			std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+			close_msg(fd, "Failed to send error response", 1, -1);
+			return 1;
+		}
 		close_msg(fd, "Bad request", 1, -1);
 		return 1;
 	}
@@ -231,7 +236,12 @@ bool	Server::reading_data(int fd)
 	if (_socket_states[fd].get_method().empty())
 	{
 		std::cerr << "Error: No method found in request" << std::endl;
-		send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 39, 0);
+		if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnexion: close\r\n\r\n", 39, 0) < 0);
+		{
+			std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+			close_msg(fd, "Failed to send error response", 1, -1);
+			return 1;
+		}
 		close_msg(fd, "Bad request", 1, -1);
 		return 1;
 	}
@@ -329,7 +339,12 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	
 	std::string response = _socket_states[fd].get_response();
 
-	send(fd, response.c_str(), response.size(), 0);
+	if (send(fd, response.c_str(), response.size(), 0) < 0)
+	{
+		std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+		close_msg(fd, "Failed to send response", 1, -1);
+		return;
+	}
 	_socket_states[fd].set_state(RESPONDED);
 	
 	if (!_socket_states[fd].getKeepAlive())
@@ -377,7 +392,13 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			if (!_socket_states[i].get_is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT_SEC)
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
-					send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0);
+				{
+					if (send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", 63, 0) < 0)
+					{
+						std::cerr << "Error sending timeout response: " << strerror(errno) << std::endl;
+						close_msg(i, "Failed to send timeout response", 1, -1);
+					}
+				}
 				close_msg(i, "Idle connection closed", 0, 0);
 				_socket_states.erase(i);
 			}
