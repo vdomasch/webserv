@@ -35,7 +35,8 @@ def uploadNewFile():
 			os.makedirs(upload_dir)
 
 		filename = os.path.basename(fileitem.filename)
-		path = os.path.join(upload_dir, filename)
+		parsed_name = filename.replace(" ", "_")
+		path = os.path.join(upload_dir, parsed_name)
 		data = fileitem.file.read()
 		with open(path, 'wb') as f:
 			f.write(data)
