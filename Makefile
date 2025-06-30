@@ -1,5 +1,4 @@
-NAME_S = webserv
-NAME_C = client
+NAME = webserv
 
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -MMD -MP
@@ -24,22 +23,14 @@ SRV_FILES = main			\
 			delete_request	\
 			CGIContent
 
-CLIENT_FILES = client
+SRCS = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(SRV_FILES)))
+OBJS = $(patsubst $(SRCS_DIR)/%.cpp,$(OBJS_DIR)/%.o,$(SRCS))
 
-SRCS_C = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(CLIENT_FILES)))
-SRCS_S = $(addprefix $(SRCS_DIR)/,$(addsuffix .cpp,$(SRV_FILES)))
-OBJS_C = $(patsubst $(SRCS_DIR)/%.cpp,$(OBJS_DIR)/%.o,$(SRCS_C))
-OBJS_S = $(patsubst $(SRCS_DIR)/%.cpp,$(OBJS_DIR)/%.o,$(SRCS_S))
+DEPS_S = $(OBJS:.o=.d)
 
-DEPS_C = $(OBJS_C:.o=.d)
-DEPS_S = $(OBJS_S:.o=.d)
+all : $(NAME)
 
-all : $(NAME_C) $(NAME_S)
-
-$(NAME_C) : $(OBJS_C) 
-	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -o $@ $^
-
-$(NAME_S) : $(OBJS_S) 
+$(NAME) : $(OBJS) 
 	$(CC) $(CFLAGS) -I $(INCLUDE_DIR) -o $@ $^
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp Makefile | $(OBJS_DIR)
@@ -49,14 +40,14 @@ $(OBJS_DIR):
 	mkdir -p $(OBJS_DIR)
 
 clean :
-	rm -f $(OBJS_S) $(OBJS_C) $(DEPS_C) $(DEPS_S)
+	rm -f $(OBJS) $(DEPS)
 	rm -rf $(OBJS_DIR)
 
 fclean : clean
-	rm -rf $(NAME_C) $(NAME_S)
+	rm -rf $(NAME)
 
 re : fclean all
 
 .PHONY : all clean fclean re
 
--include $(DEPS_C) $(DEPS_S)
+-include $(DEPS_S)
