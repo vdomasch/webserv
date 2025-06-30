@@ -58,6 +58,8 @@ static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
 	{
 		std::string	m_fpath(i->baseName);
 		std::string fullPath = d->requestedFilePath + "/" + m_fpath;
+		std::cout << "My fpath is : " << m_fpath << "\n\n";
+		std::cout << "My fullPath is : " << fullPath << "\n\n";
 
 		if (i->type == DT_DIR)
 		{
