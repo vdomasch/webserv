@@ -47,7 +47,7 @@ static std::string	displayCorrectFileSize(const char * filename)
 	return oss.str();
 }
 
-static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss)
+static void	sendSizeAndLastChange(t_fd_data *d, std::ostringstream &oss, std::string& path)
 {
 	struct stat					fileinfo;
 	time_t						timestamp;
@@ -116,7 +116,8 @@ std::string getParentHref(const std::string& path)
 
 static void	setupHTMLpageStyle(std::ostringstream &oss)
 {
-	oss << "<!DOCTYPE html>\n<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
+	oss << "<!DOCTYPE html>\n";
+	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
 	oss << "<style>body{font-family:monospace;}table{width:100%;}td{padding:4px;}";
 	oss << "div {\nmargin-bottom: 10px;\npadding-bottom: 10px; display: block;\n}\n";
 	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
@@ -131,6 +132,7 @@ static void	setupHTMLpageStyle(std::ostringstream &oss)
 
 std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 {
+	std::cout << "Building index page for path: " << path << std::endl;
 	std::ostringstream	oss;
 	storeFolderContent(d, errcode);
 	if (*errcode == FAILEDSYSTEMCALL)
@@ -142,7 +144,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	oss << "<div><a class=\"icon up\" href=\"" + getParentHref(path) + "\">[parent directory]</a>\n</div>\n";
 	oss << "<table>\n<thead>\n<th> Name </th>\n<th> Size </th>\n<th> Date Modified </th>\n</thead>\n<tbody>\n";
 
-	sendSizeAndLastChange(d, oss); // extract the info about file size and last access
+	sendSizeAndLastChange(d, oss, path); // extract the info about file size and last access
 	oss << "</tbody>\n</table>\n</body>\n</html>\n";
 	*errcode = 0;
 	std::string result = oss.str().c_str();
