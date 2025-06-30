@@ -227,17 +227,6 @@ bool	Server::reading_data(int fd)
 		close_msg(fd, "Bad request", 1, -1);
 		return 1;
 	}
-	{
-		std::cerr << "Error in request: " << std::endl;
-		if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 15\r\nConnection: close\r\n\r\n400 Bad Request", 83, 0) < 0)
-		{
-			std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-			close_msg(fd, "Failed to send error response", 1, -1);
-			return 1;
-		}
-		close_msg(fd, "Bad request", 1, -1);
-		return 1;
-	}
 	if (!_socket_states[fd].is_ready())
 	{
 		std::cerr << "Error: Somehow, the socket was NOT ready.\n State was :" << _socket_states[fd].get_state() << std::endl; //added by me (LEOOOOO), goes there when POST
