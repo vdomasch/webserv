@@ -12,6 +12,7 @@ enum RequestState
 	RECEIVING_BODY,
 	COMPLETE,
 	ERROR,
+	RESPONDING,
 	RESPONDED
 };
 
@@ -26,6 +27,7 @@ class	HttpRequest
 		bool			_is_error_request;
 		bool			_autoindex;
 		bool			_is_php_cgi;
+		size_t			_response_sent;
 		std::string		_server_name;
 		std::string		_location_name;
 		std::string		_location_root;

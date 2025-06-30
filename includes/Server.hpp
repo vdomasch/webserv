@@ -42,7 +42,7 @@ class Server
 		void		shutdown_all_sockets();
 		std::string	get_server_name(int fd);
 		void		clean_sockets();
-		bool		reading_data(int fd);
+		int		reading_data(int fd);
 		bool		is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound);
 		bool		client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config);
 

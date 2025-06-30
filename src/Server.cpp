@@ -199,7 +199,7 @@ std::string Server::get_server_name(int fd)
 	return ""; 
 }
 
-bool	Server::reading_data(int fd)
+int	Server::reading_data(int fd)
 {
 	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read;
@@ -218,14 +218,14 @@ bool	Server::reading_data(int fd)
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error in request: " << std::endl;
-		if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 15\r\nConnection: close\r\n\r\n400 Bad Request", 83, 0) < 0)
-		{
-			std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-			close_msg(fd, "Failed to send error response", 1, -1);
-			return 1;
-		}
-		close_msg(fd, "Bad request", 1, -1);
-		return 1;
+		//if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 15\r\nConnection: close\r\n\r\n400 Bad Request", 83, 0) < 0)
+		//{
+		//	std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+		//	close_msg(fd, "Failed to send error response", 1, -1);
+		//	return 1;
+		//}
+		//close_msg(fd, "Bad request", 1, -1);
+		return 2;
 	}
 	if (!_socket_states[fd].is_ready())
 	{
@@ -235,14 +235,14 @@ bool	Server::reading_data(int fd)
 	if (_socket_states[fd].get_method().empty())
 	{
 		std::cerr << "Error: No method found in request" << std::endl;
-		if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 15\r\nConnection: close\r\n\r\n400 Bad Request", 83, 0) < 0)
-		{
-			std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-			close_msg(fd, "Failed to send error response", 1, -1);
-			return 1;
-		}
-		close_msg(fd, "Bad request", 1, -1);
-		return 1;
+		//if (send(fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 15\r\nConnection: close\r\n\r\n400 Bad Request", 83, 0) < 0)
+		//{
+		//	std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+		//	close_msg(fd, "Failed to send error response", 1, -1);
+		//	return 1;
+		//}
+		//close_msg(fd, "Bad request", 1, -1);
+		return 2;
 	}
 	return 0;
 }
@@ -291,7 +291,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 	}
 	if (reading_data(fd))
-		return;
+		return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 	if (_socket_states[fd].get_state() == RECEIVING_BODY || _socket_states[fd].get_state() == COMPLETE)
 	{
 		try { 
@@ -299,13 +299,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			if (client_body_size_too_large(_socket_states[fd], http_config))
 			{
 				std::cerr << "Error: Client body size too large" << std::endl;
-				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), false);
+				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
 			}
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Error finding matching location: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
 		}
 	}
 
@@ -337,13 +337,9 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	
 	std::string response = _socket_states[fd].get_response();
 
-	if (send(fd, response.c_str(), response.size(), 0) < 0)
-	{
-		std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-		close_msg(fd, "Failed to send response", 1, -1);
-		return;
-	}
-	_socket_states[fd].set_state(RESPONDED);
+	_socket_states[fd].set_response(response);
+	_socket_states[fd]._response_sent = 0;
+	_socket_states[fd].set_state(RESPONDING);
 	
 	if (!_socket_states[fd].getKeepAlive())
 		close_msg(fd, "Connection closed (no keep-alive)", 0, 0);
@@ -361,7 +357,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		timeout.tv_sec = SELECT_TIMEOUT_SEC;
 		timeout.tv_usec = SELECT_TIMEOUT_USEC;
 
-		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, NULL, NULL, &timeout) < 0)
+		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, &_socket_data.ready_writesockets, NULL, &timeout) < 0)
 		{
 			if (errno == EINTR) continue;
 			std::cerr << "Select failed: " << strerror(errno) << std::endl;
@@ -383,7 +379,29 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					if (_socket_states[i].is_finished())
 						_socket_states[i] = HttpRequest();
 					handle_client_request(http_config, i);
+				}
+			}
 
+			if (FD_ISSET(i, &_socket_data.ready_writesockets))
+			{
+				HttpRequest &req = _socket_states[i];
+				const std::string &resp = req.get_response();
+				ssize_t sent = send(i, resp.c_str() + req._response_sent, resp.size() - req._response_sent, 0);
+				if (sent <= 0)
+				{
+					close_msg(i, "Error sending response", 1, -1);
+					_socket_states.erase(i);
+					continue ;
+				}
+				req._response_sent += sent;
+				if (req._response_sent == resp.size())
+				{
+					req.set_state(RESPONDED);
+					if (!req.getKeepAlive())
+					{
+						close_msg(i, "Connection closed (no keep-alive)", 0, 0);
+						_socket_states.erase(i);
+					}
 				}
 			}
 
@@ -423,6 +441,14 @@ void	Server::clean_sockets()
 					_socket_states.erase(i);
 				}
 			}
+		}
+		FD_ZERO(&_socket_data.ready_writesockets);
+		for (std::map<int, HttpRequest>::iterator it = _socket_states.begin(); it != _socket_states.end(); ++it)
+		{
+			int fd = it->first;
+			HttpRequest &req = it->second;
+			if (!req.get_response().empty() && req.get_state() == RESPONDING)
+				FD_SET(fd, &_socket_data.ready_writesockets);
 		}
 }
 
