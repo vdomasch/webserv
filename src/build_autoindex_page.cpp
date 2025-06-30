@@ -114,7 +114,7 @@ std::string getParentHref(const std::string& path)
 
 static void	setupHTMLpageStyle(std::ostringstream &oss)
 {
-	oss << "<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
+	oss << "<!DOCTYPE html>\n<html>\n<head>\n<meta name=\"color-scheme\" content=\"light dark\">\n";
 	oss << "<style>body{font-family:monospace;}table{width:100%;}td{padding:4px;}";
 	oss << "div {\nmargin-bottom: 10px;\npadding-bottom: 10px; display: block;\n}\n";
 	oss << "h1 {\nborder-bottom: 1px solid #c0c0c0;\npadding-bottom: 10px;\nmargin-bottom: 10px;\nwhite-space: nowrap;\n}\n";
