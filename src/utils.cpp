@@ -89,13 +89,31 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	req.set_response(res.generate_response(req._is_php_cgi));
 }
 
+std::string build_html_body(std::string code)
+{
+	std::string body = "<html>";
+	body += "	<head>";
+	body += "		<meta charset=\"UTF-8\">";
+	body += "		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+	body += "		<link rel=\"icon\" type=\"image/x-icon\" href=\"/icons/favicon.ico\">";
+	body += "		<link rel=\"stylesheet\" href=\"/assets/css_files/styles.css\">";
+	body += "		<title>" + code + " " + message_status(code) + "</title>";
+	body += "	</head>";
+	body += "	<body><section class=\"block\"><h1>" + code + " " + message_status(code) + "</h1>";
+	body += "	<p>Webserv encountered an error while processing your request.</p>";
+	body += "	<p>Please check the server configuration or contact the administrator.</p>";
+	body += "	</section></body>";
+	body += "</html>";
+	return body;
+}
+
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
 {
 	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
 	if (error_uri.empty() || req._is_error_request)
 	{
 		std::cout << "No error page specified, sending default." << std::endl;
-		return "<html><body><h1>" + code + " " +  message_status(code) + "</h1></body></html>";
+		return build_html_body(code);
 	}
 	req.set_target(error_uri);
 	req._is_error_request = true;
@@ -106,7 +124,7 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 	if (req.get_response().empty())
 	{
 		std::cerr << "Error: No response from server" << std::endl;
-		return "<html><body><h1>500 Internal Server Error</h1></body></html>";
+		return build_html_body("500");
 	}
 	else if (req.get_response().find("\r\n\r\n") != std::string::npos)
 		return req.get_response().substr(req.get_response().find("\r\n\r\n") + 4);

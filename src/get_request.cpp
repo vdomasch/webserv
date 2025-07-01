@@ -19,8 +19,18 @@ std::string	get_content_type(const std::string& path)
 	return "application/octet-stream";
 }
 
-std::string	try_index_file(std::string path, const std::string &index)
+std::string	try_index_file(std::string path, HttpRequest& req, ServerConfig &server)
 {
+	std::string index = server.get_map_server().find("index")->second;
+
+	std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find(req._location_name);
+	if (it_loc != server.get_location_list().end())
+	{
+		std::map<std::string, std::string> &map = it_loc->second.get_map_location();
+		if (map.find("index") != map.end())
+			index = map.find("index")->second;
+	}
+
 	int errcode = 0;
 	if (path.empty())
 		return "";
@@ -67,8 +77,8 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	else if (req._location_name == "/cgi-bin/")
 		req._autoindex = false;
 
-	std::string path_no_index = root + /*remove_prefix(target, req._location_name)*/ target; // Supprimer le préfixe location du target
-	std::string file_path = try_index_file(path_no_index, server.get_location_list().find(req._location_name)->second.get_index()); // Si le target finit par '/', on essaie un fichier index
+	std::string path_no_index = root + target;
+	std::string file_path = try_index_file(path_no_index, req, server);
 	
 
 	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
