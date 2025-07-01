@@ -76,7 +76,12 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 		res.add_header("Connection", "keep-alive");
 	else
 		res.add_header("Connection", "close");
-	try { res.add_header("Content-Length", convert<std::string>(body.size())); }
+	try {
+		size_t content_len = body.size();
+		if (req._is_php_cgi)
+			content_len -= body.find("\r\n\r\n") + 4;
+		res.add_header("Content-Length", convert<std::string>(content_len));
+	}
 	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
 	
 	try { req.set_status_code(convert<int>(status_code)); }
