@@ -36,7 +36,7 @@ static std::string	displayCorrectFileSize(const char * filename)
 	float size = static_cast<float>(posSize);
 	int i = 0;
 	const char* units[] = {" B", " kB", " MB", " GB"};
-	while (size >= 1024.0 && i < 3) // 3 is the last index of units
+	while (size >= 1024.0 && i < 3)
 	{
 		size /= 1024;
 		++i;
@@ -93,7 +93,7 @@ static void	storeFolderContent(t_fd_data *d, int *errcode)
 
 	struct dirent *pDirent;
 	errno = 0;
-	while ((pDirent = readdir(pDir)) != NULL) // can fail, we check ernoo when null is found,and set ernoo to 0 before first call
+	while ((pDirent = readdir(pDir)) != NULL)
 	{
 		std::string fname(pDirent->d_name );
 		

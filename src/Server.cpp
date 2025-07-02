@@ -308,7 +308,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		else
 		{
-			// Méthode non autorisée
 			std::cerr << "Method not allowed: " << method << std::endl;
 			HttpResponse res;
 			res.set_status("405", "Method Not Allowed");

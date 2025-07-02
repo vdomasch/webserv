@@ -21,12 +21,12 @@ CGIContent::~CGIContent()
 	this->_cgi_env_map.clear();
 }
 
-void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi) // string for now, replace by iterator of whatever struct we use
+void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi)
 {	
 	std::string	script_name_var;
 	size_t		pos;
 
-	pos = cgi_path.find("/cgi-bin"); // i guess the name could change ??? to check
+	pos = cgi_path.find("/cgi-bin");
 	script_name_var = cgi_path.substr(pos);
 	_cgi_path = cgi_path;
 
@@ -155,22 +155,3 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 
 	return (result);
 }
-
-
-
-
-
-// PARENT                         CHILD
-// +---------------------+         +---------------------+
-// |                     |         |                     |
-// |  pipe_in[1] (write) |-------->|  STDIN_FILENO (0)   |
-// |                     |         |   (from pipe_in[0]) |
-// |                     |         |                     |
-// |  pipe_out[0] (read) |<--------|  STDOUT_FILENO (1)  |
-// |                     |         |   (to pipe_out[1])  |
-// +---------------------+         +---------------------+
-
-// Direction:
-// - Parent writes to pipe_in[1] ---> Child reads from pipe_in[0] (via dup2'd STDIN)
-// - Child writes to pipe_out[1] ---> Parent reads from pipe_out[0] (via dup2'd STDOUT)
-

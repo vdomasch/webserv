@@ -35,8 +35,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "DELETE");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
-	//std::string filename = remove_prefix(target, req._location_name);
-	std::string path = root + target;//filename;
+	std::string path = root + target;
 
 	if (!is_authorized_path(path, server.get_authorized_paths()))
 	{

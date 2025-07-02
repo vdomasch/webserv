@@ -181,10 +181,8 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string head, body;
 	parse_post_body(req, head, body);
 
-	std::string filename = /*remove_prefix(*/create_filename(root, head)/*, req._location_name)*/;
-	//if (req._location_name.find("upload") == std::string::npos)
-	//	root += "uploads/";
-	std::string file_path = root + filename; // Chemin complet du fichier
+	std::string filename = create_filename(root, head);
+	std::string file_path = root + filename; // Full path of file
 
 	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
 	{
