@@ -26,12 +26,10 @@ Server::Server()
 	_method_map["GET"] = &get_request;
 	_method_map["POST"] = &post_request;
 	_method_map["DELETE"] = &delete_request;
-	_socket_data.serverFolder = "";
 	_socket_data.requestedFilePath = "";
 	_socket_data.max_fd = -1;
 	_socket_data.Content_Length = "default";
 	_socket_data.Content_Type = "default";
-	_socket_data.is_binaryContent = false;
 }
 
 Server::~Server() {}
