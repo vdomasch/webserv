@@ -4,7 +4,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
 	std::string	CGIBody;
 	std::string	method;
-	int			CGI_body_size;
 
 	method = req.get_method();
 
@@ -15,7 +14,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method, req._is_php_cgi);
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
-	CGIBody = d.cg.grabCGIBody(CGI_body_size);
+	CGIBody = d.cg.grabCGIBody();
 	if (d.cg.get_exitcode() == -1)
 	{
 		*errcode = 500;

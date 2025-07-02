@@ -132,7 +132,7 @@ int	CGIContent::sendCGIBody(std::string body)
 }
 
 
-std::string 	CGIContent::grabCGIBody(int	&bodySize)
+std::string 	CGIContent::grabCGIBody()
 {
 	std::string	result;
 	char		buffer[CGI_BUFFERSIZE] = {0};
@@ -149,12 +149,10 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 		std::cerr << "Error: Read error ! \n";
 		close(this->pipe_out[0]);
 		this->_exitcode = -1;
-		bodySize = 0;
 		return("");
 	}
 	
 	close(this->pipe_out[0]);
-	bodySize = result.length();
 
 	return (result);
 }
