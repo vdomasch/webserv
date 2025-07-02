@@ -148,6 +148,9 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 	if (bytes_read < 0) {
 		std::cerr << "Error: Read error ! \n";
 		close(this->pipe_out[0]);
+		this->_exitcode = -1;
+		bodySize = 0;
+		return("");
 	}
 	
 	close(this->pipe_out[0]);

@@ -100,7 +100,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		{
 			fd_data.requestedFilePath = path_no_index;
 			fd_data.serverFolder = server.get_map_server()["root"];
-			fd_data.response_len = 0;
 			fd_data.folderContent.clear();
 			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
 			if (body.empty())

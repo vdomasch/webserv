@@ -22,7 +22,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		return ("");
 	}
 	
-
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
 	int exit_code = WEXITSTATUS(status);
@@ -32,7 +31,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		*errcode = 400;
 		return ("");
 	}
-	d.response_len = CGI_body_size;
 	*errcode = 0;
 	return CGIBody;
 }

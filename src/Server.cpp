@@ -29,7 +29,6 @@ Server::Server()
 	_socket_data.serverFolder = "";
 	_socket_data.requestedFilePath = "";
 	_socket_data.max_fd = -1;
-	_socket_data.response_len = 0;
 	_socket_data.Content_Length = "default";
 	_socket_data.Content_Type = "default";
 	_socket_data.is_binaryContent = false;

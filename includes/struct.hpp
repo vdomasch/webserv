@@ -25,7 +25,6 @@ typedef struct s_fd_data
 	std::string			Content_Type;		// right now, is used for POST requests (var is passed to env)
 	std::string			Content_Length;		// right now, is used for POST requests (var is passed to env)
 	std::string			QueryString;		// Used when a GET request is called on a CGI script (var is passed to env)
-	unsigned int		response_len;		// Was previously content_len, is used only for the response header right now.
 	bool				is_binaryContent;	//used for the final send, to know is we need to send binaryContent;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;
