@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
+	<link rel="stylesheet" href="/assets/css_files/styles.css" />
+	<title>Download</title>
+</head>
+<body>
+	<section class="title">
+		<a href="/">
+			<h1 class="title">Webserv</h1>
+		</a>
+	</section>
+
+	<section class="block">
+		<h2>Download a file</h2>
+
+		<label for="downloadPath">Path of the file to download:</label><br />
+		<input type="text" id="downloadPath" placeholder="/my/path.txt" size="40" /><br /><br />
+
+		<button onclick="downloadFile()">Download</button>
+
+		<p id="result"></p>
+
+		<script>
+		function downloadFile() {
+		    const path = document.getElementById("downloadPath").value;
+
+		    if (!path) {
+		        document.getElementById("result").innerText = "❌ Please provide a file path.";
+		        return;
+		    }
+
+		    // Create a temporary <a> to trigger download
+		    const link = document.createElement("a");
+		    link.href = path;
+		    link.download = path.split("/").pop(); // use filename from path
+		    document.body.appendChild(link);
+		    link.click();
+		    document.body.removeChild(link);
+
+		    document.getElementById("result").innerText = `⬇️ Attempting to download: ${path}`;
+		}
+		</script>
+	</section>
+</body>
+</html>
