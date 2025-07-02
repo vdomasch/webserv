@@ -111,10 +111,7 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 {
 	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
 	if (error_uri.empty() || req._is_error_request)
-	{
-		std::cout << "No error page specified, sending default." << std::endl;
 		return build_html_body(code);
-	}
 	req.set_target(error_uri);
 	req._is_error_request = true;
 	req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex);

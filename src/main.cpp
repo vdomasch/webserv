@@ -37,13 +37,16 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 
 int main(int argc, char **argv)
 {
-	if (argc != 2)
+	HTTPConfig http_config;
+	if (argc == 1)
+		http_config.set_filename("configs/server.conf");
+	else if (argc != 2)
 	{
-		std::cerr << "Error: Please execute as ./Webserv \"config_file_name\"!" << std::endl;
+		std::cerr << "Error: Please execute as ./webserv \"config_file_name\"!" << std::endl;
 		return (1);
 	}
-	HTTPConfig http_config;
-	http_config.set_filename(argv[1]);
+	else
+		http_config.set_filename(argv[1]);
 	if (http_config.parse_http())
 		return (1);
 

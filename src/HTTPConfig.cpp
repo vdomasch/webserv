@@ -95,13 +95,15 @@ bool	HTTPConfig::parse_http()
 {
 	ServerConfig server_temp;
 
-
 	std::string line;
 	std::string current_location_path;
 	std::ifstream infile(_filename.c_str());
 	if (!infile.is_open())
 	{
-		std::cerr << "Error: Failed to open filename '" << _filename.c_str() << "'!" << std::endl;
+		if (_filename == "configs/server.conf")
+			std::cerr << "Error: Failed to open default config file, please execute as ./webserv \"config_file_name\"!" << std::endl;
+		else
+			std::cerr << "Error: Failed to open filename '" << _filename.c_str() << "'!" << std::endl;
 		return (true);
 	}
 	while (std::getline(infile, line)) {
