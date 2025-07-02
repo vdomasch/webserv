@@ -18,30 +18,35 @@
 		<h2>Download a file</h2>
 
 		<label for="downloadPath">Path of the file to download:</label><br />
-		<input type="text" id="downloadPath" placeholder="/my/path.txt" size="40" /><br /><br />
-
+		<input type="text" id="downloadPath" placeholder="/file.txt" />
 		<button onclick="downloadFile()">Download</button>
-
 		<p id="result"></p>
 
 		<script>
 		function downloadFile() {
 		    const path = document.getElementById("downloadPath").value;
-
+		    const result = document.getElementById("result");
+		
 		    if (!path) {
-		        document.getElementById("result").innerText = "❌ Please provide a file path.";
+		        result.innerText = "❌ Please provide a file path.";
 		        return;
 		    }
-
-		    // Create a temporary <a> to trigger download
-		    const link = document.createElement("a");
-		    link.href = path;
-		    link.download = path.split("/").pop(); // use filename from path
-		    document.body.appendChild(link);
-		    link.click();
-		    document.body.removeChild(link);
-
-		    document.getElementById("result").innerText = `⬇️ Attempting to download: ${path}`;
+		
+		    fetch(path, { method: "GET" })
+		        .then(r => {
+		            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+		            // Start download
+		            const a = document.createElement("a");
+		            a.href = path;
+		            a.download = path.split("/").pop();
+		            document.body.appendChild(a);
+		            a.click();
+		            document.body.removeChild(a);
+		            result.innerText = `⬇️ Downloading ${path}`;
+		        })
+		        .catch(err => {
+		            result.innerText = `❌ File not found: ${err.message}`;
+		        });
 		}
 		</script>
 	</section>
