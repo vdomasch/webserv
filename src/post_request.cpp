@@ -185,6 +185,11 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	}
 	else if (req._location_name == "/cgi-bin/")
 		req._autoindex = false;
+	else if (target.find("cgi-bin/") != std::string::npos)
+	{
+		std::cerr << "Error: No CGI location" << std::endl;
+		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
+	}
 
 	std::string head, body;
 	parse_post_body(req, head, body);
