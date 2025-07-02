@@ -9,7 +9,7 @@ CGIContent::CGIContent()
 	this->_cgi_env.clear();
 	this->_env_storage.clear();
 	this->_argv_storage.clear();
-	this->_exitcode = -42;
+	this->_exitcode = 0;
 	this->pipe_in[0] = -42;
 	this->pipe_in[1] = -42;
 	this->pipe_out[0] = -42;
