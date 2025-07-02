@@ -82,10 +82,10 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 			content_len -= body.find("\r\n\r\n") + 4;
 		res.add_header("Content-Length", convert<std::string>(content_len));
 	}
-	catch (std::exception &e) { std::cerr << "Error converting size: " << e.what() << std::endl; }
+	catch (std::exception &e) { std::cerr << "Error: Converting size failed" << std::endl; }
 	
 	try { req.set_status_code(convert<int>(status_code)); }
-	catch (std::exception &e) { std::cerr << "Error converting status code: " << e.what() << std::endl; }
+	catch (std::exception &e) { std::cerr << "Error: Converting status code" << std::endl; }
 	req.set_response(res.generate_response(req._is_php_cgi));
 }
 

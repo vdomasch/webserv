@@ -114,7 +114,7 @@ void	Server::launch_server(HTTPConfig &http_config)
 
 			if (is_conflicting_binding(ip, str_port, _ip_port_bound))
 			{
-				std::cerr << "Conflict: Cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
+				std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
 				continue;
 			}
 
@@ -217,7 +217,7 @@ int	Server::reading_data(int fd)
 	} while (bytes_read > 0);
 	if (_socket_states[fd].has_error())
 	{
-		std::cerr << "Error in request: " << std::endl;
+		std::cerr << "Error: Error in request" << std::endl;
 		return 2;
 	}
 	if (!_socket_states[fd].is_ready())
@@ -272,7 +272,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Error getting server name: " << e.what() << std::endl;
+			std::cerr << "Error: Getting server name: " << e.what() << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
 		}
 	}
@@ -290,7 +290,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Error finding matching location: " << e.what() << std::endl;
+			std::cerr << "Error: Location not found" << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
 		}
 	}
@@ -308,7 +308,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		else
 		{
-			std::cerr << "Method not allowed: " << method << std::endl;
+			std::cerr << "Error: Method not allowed: " << method << std::endl;
 			HttpResponse res;
 			res.set_status("405", "Method Not Allowed");
 			res.set_body("405 Method Not Allowed");
@@ -336,7 +336,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 		if (select(_socket_data.max_fd + 1, &_socket_data.ready_readsockets, &_socket_data.ready_writesockets, NULL, &timeout) < 0)
 		{
 			if (errno == EINTR) continue;
-			std::cerr << "Select failed: " << strerror(errno) << std::endl;
+			std::cerr << "Error: Select failed: " << strerror(errno) << std::endl;
 			break;
 		}
 		unsigned long now = time(NULL);
@@ -388,7 +388,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				{
 					if (send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 19\r\nConnection: close\r\n\r\n408 Request Timeout", 91, 0) < 0)
 					{
-						std::cerr << "Error sending timeout response: " << strerror(errno) << std::endl;
+						std::cerr << "Error: Timeout" << std::endl;
 						close_msg(i, "Failed to send timeout response", 1, -1);
 						_socket_states.erase(i);
 						continue;
@@ -419,7 +419,7 @@ void	Server::clean_sockets()
 				socklen_t len = sizeof(error);
 				if (getsockopt(i, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
 				{
-					std::cerr << "getsockopt failed for fd " << i << ": " << strerror(errno) << std::endl;
+					std::cerr << "Error: Socket option failed for fd " << i << ": " << strerror(errno) << std::endl;
 					close_msg(i, "Cleaning invalid socket", 1, 0);
 					_socket_states.erase(i);
 				}

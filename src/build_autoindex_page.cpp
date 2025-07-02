@@ -141,7 +141,6 @@ static void	setupHTMLpageStyle(std::ostringstream &oss)
 
 std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 {
-	std::cout << "Building index page for path: " << path << std::endl;
 	std::ostringstream	oss;
 	storeFolderContent(d, errcode);
 	if (*errcode == FAILEDSYSTEMCALL)

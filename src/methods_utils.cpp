@@ -22,7 +22,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	int exit_code = WEXITSTATUS(status);
 	if (exit_code != 0)
 	{
-		std::cerr << "Ptit flop: child exited with code " << exit_code << std::endl;
+		std::cerr << "Error: Ptit flop: child exited with code " << exit_code << std::endl;
 		*errcode = 400;
 		return ("");
 	}

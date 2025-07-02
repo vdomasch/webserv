@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		std::cerr << "Please execute as ./Webserv \"config_file_name\"!" << std::endl;
+		std::cerr << "Error: Please execute as ./Webserv \"config_file_name\"!" << std::endl;
 		return (1);
 	}
 	HTTPConfig http_config;
