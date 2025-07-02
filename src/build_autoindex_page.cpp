@@ -88,8 +88,11 @@ static void	storeFolderContent(t_fd_data *d, int *errcode)
 {
 	DIR *pDir;
 	pDir = opendir (d->requestedFilePath.c_str());
-	if (pDir == NULL) 
+	if (pDir == NULL)
+	{
 		*errcode = FAILEDSYSTEMCALL;
+		return ;
+	}
 
 	struct dirent *pDirent;
 	errno = 0;
