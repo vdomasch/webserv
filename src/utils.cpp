@@ -109,6 +109,11 @@ std::string build_html_body(std::string code)
 
 std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, HttpRequest& req, t_fd_data& fd_data)
 {
+	if (req._location_name.empty() || req._server_name.empty())
+	{
+		std::cerr << "Error: Location or server name is empty" << std::endl;
+		return build_html_body(code);
+	}
 	std::string error_uri = find_error_page(code, req._location_name, req._server_name, http_config);
 	if (error_uri.empty() || req._is_error_request)
 		return build_html_body(code);
