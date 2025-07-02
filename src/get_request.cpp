@@ -117,7 +117,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::ifstream file(file_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
-		std::cerr << "Error: opening file: " << file_path << std::endl;
+		std::cerr << "Error: Opening file: " << file_path << std::endl;
 		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	std::ostringstream content;

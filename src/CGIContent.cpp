@@ -70,13 +70,13 @@ void 	CGIContent::executeCGI()
 {	
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
-		std::cerr << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "\033[31mError: Pipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
 		this->_exitcode = -1;
 		return ;
 	}
 	if (pipe(this->pipe_out))
 	{
-		std::cerr << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "\033[31mError: Pipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
 		this->_exitcode = -1;
 		return ;
 	}
@@ -93,7 +93,7 @@ void 	CGIContent::executeCGI()
 		close(pipe_out[1]);
 		
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
-		std::cerr << "EXECVE FAILED !\r\n";
+		std::cerr << "Error: Execve failed !\r\n";
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
 		// and is waiting to be read using pipe_out[0] (which is the read end of the pipe)
@@ -102,7 +102,7 @@ void 	CGIContent::executeCGI()
 	}
 	else if (this->cgi_forkfd == -1)
 	{
-		std::cerr << "\033[Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "\033[Error: Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
 		this->_exitcode = -1;
 		return ;
 	}
@@ -122,7 +122,7 @@ int	CGIContent::sendCGIBody(std::string body)
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {
-			std::cerr << "CGI Write failed !" << std::endl;
+			std::cerr << "Error: CGI Write failed !" << std::endl;
 			return (-1);
 		}
 		total_written += written;
@@ -146,7 +146,7 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 		total_read += bytes_read;
 	}
 	if (bytes_read < 0) {
-		std::cerr << "Read error ! \n";
+		std::cerr << "Error: Read error ! \n";
 		close(this->pipe_out[0]);
 	}
 	

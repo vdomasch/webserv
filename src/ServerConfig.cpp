@@ -34,7 +34,7 @@ size_t	ServerConfig::get_client_max_body_size()
 		try { client_max_body_size = convert<ssize_t>(it->second); }
 		catch (std::exception &e) { return (std::cerr << "Error: client_max_body_size is not a number!" << std::endl, 0); }
 		if (client_max_body_size < 0)
-			return (std::cerr << "Error: client_max_body_size is negative!" << std::endl, 0);
+			return (std::cerr << "Error: Client_max_body_size is negative!" << std::endl, 0);
 	}
 	return client_max_body_size;
 }
@@ -243,7 +243,7 @@ bool	ServerConfig::handle_listen(std::istringstream &iss, std::map<std::string, 
 	{
 		if (value.find_first_not_of("0123456789;:.") != std::string::npos)
 		{
-			std::cerr << "Error: listen value '" << value << "' is invalid!" << std::endl;
+			std::cerr << "Error: Listen value '" << value << "' is invalid!" << std::endl;
 			return 1;
 		}
 		else if (value.find_first_of(":") != std::string::npos)
@@ -284,7 +284,7 @@ bool	ServerConfig::handle_listen_ip_port(std::string &value)
 	std::string port_value;
 	if (value.length() < 12)
 	{
-		std::cerr << "Error: value '" << value << "' is invalid for keyword listen, format is 'x.x.x.x:xxxx'!" << std::endl;
+		std::cerr << "Error: Value '" << value << "' is invalid for keyword listen, format is 'x.x.x.x:xxxx'!" << std::endl;
 		return 1;
 	}
 	if (value.find_first_of(":") != value.find_last_of(":"))
@@ -307,7 +307,7 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 {
 	if (value.length() > 6 || std::atol(value.c_str()) > 65535 || std::atol(value.c_str()) < 1024)
 	{
-		std::cerr << "Error: value '" << value << "' is invalid for keyword listen!" << std::endl;
+		std::cerr << "Error: Value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
 	}
 	if (_ip_and_ports_association.count(value))
@@ -339,21 +339,21 @@ bool	ServerConfig::handle_host(std::string value)
 	value_tmp.erase(0, 4);
 	if (value_tmp.find(".") == std::string::npos)
 	{
-		std::cerr << "Error: value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
+		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
 		return 1;
 	}
 	ip_1.assign(value_tmp, 0, value_tmp.find("."));
 	value_tmp.erase(0, value_tmp.find(".") + 1);
 	if (value_tmp.find(".") == std::string::npos)
 	{
-		std::cerr << "Error: value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
+		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
 		return 1;
 	}
 	ip_2.assign(value_tmp, 0, value_tmp.find("."));
 	value_tmp.erase(0, value_tmp.find(".") + 1);
 	if (value_tmp.find(".") != std::string::npos)
 	{
-		std::cerr << "Error: value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
+		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
 		return 1;
 	}
 	ip_3.assign(value_tmp);

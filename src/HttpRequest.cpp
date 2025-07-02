@@ -105,7 +105,7 @@ void	HttpRequest::parse_headers()
 	std::istringstream req_line(line);
 	if (!(req_line >> _method >> _target >> _http_version))
 	{
-		std::cerr << "Invalid request line: " << line << std::endl;
+		std::cerr << "Error: Invalid request line: " << line << std::endl;
 		_state = ERROR;
 		_status_code = 400;
 		return;
@@ -125,7 +125,7 @@ void	HttpRequest::parse_headers()
 
 	if (_http_version != "HTTP/1.1")
 	{
-		std::cerr << "Unsupported HTTP version: " << _http_version << std::endl;
+		std::cerr << "Error: Unsupported HTTP version: " << _http_version << std::endl;
 		_state = ERROR;
 		_status_code = 505;
 		return;
@@ -150,7 +150,7 @@ void	HttpRequest::parse_headers()
 	{
 		try { _content_length = convert<size_t>(_headers_map["Content-Length"]); }
 		catch (const std::exception &e)	{
-			std::cerr << "Error converting Content-Length: " << e.what() << std::endl;
+			std::cerr << "Error: Converting Content-Length: " << e.what() << std::endl;
 			_state = ERROR;
 			_status_code = 400;
 			return;

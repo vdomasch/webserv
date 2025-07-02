@@ -136,7 +136,7 @@ bool	create_directories(ServerConfig& server, std::string path)
 				continue;
 			else
 			{
-				std::cerr << "Failed to create directory: " << current << std::endl;
+				std::cerr << "Error: Failed to create directory: " << current << std::endl;
 				return false;
             }
 		}
