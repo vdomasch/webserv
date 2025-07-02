@@ -46,6 +46,7 @@ class CGIContent
 		void			executeCGI();
 		std::string		grabCGIBody(int	&bodySize);
 		int				sendCGIBody(std::string body);
+		int				get_exitcode();
 
 };
 

@@ -168,10 +168,18 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
-		if (body.empty() && errcode == 400)
+		if (body.empty())
 		{
-			std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
-			return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
+			if (errcode == 400)
+			{
+				std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
+				return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
+			}
+			if (errcode == 500)
+			{
+				std::cerr << "Error: System call failed " << target << std::endl;
+				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
+			}
 		}
 		return (build_response(req, "200", body, req.getKeepAlive()));
 	}

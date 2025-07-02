@@ -29,7 +29,7 @@
 
 
 # define SERV_PORT 8080
-# define BUFFER_SIZE 100000 /// to change, must be 1024
+# define BUFFER_SIZE 100000
 # define IS_INDEXDIR 60
 # define IS_EXISTINGFILE 61
 # define IS_DIRECTORY 62

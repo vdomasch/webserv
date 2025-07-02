@@ -71,13 +71,13 @@ void 	CGIContent::executeCGI()
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
 		std::cerr << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
-		this->_exitcode = -1; // to change
+		this->_exitcode = -1;
 		return ;
 	}
 	if (pipe(this->pipe_out))
 	{
 		std::cerr << "\033[31mPipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
-		this->_exitcode = -1; // to change
+		this->_exitcode = -1;
 		return ;
 	}
 
@@ -103,7 +103,7 @@ void 	CGIContent::executeCGI()
 	else if (this->cgi_forkfd == -1)
 	{
 		std::cerr << "\033[Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
-		this->_exitcode = -1; // to change
+		this->_exitcode = -1;
 		return ;
 	}
 	else
@@ -155,3 +155,5 @@ std::string 	CGIContent::grabCGIBody(int	&bodySize)
 
 	return (result);
 }
+
+int	CGIContent::get_exitcode()	{ return _exitcode; }

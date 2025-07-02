@@ -16,6 +16,12 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	d.cg.executeCGI();
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(CGI_body_size);
+	if (d.cg.get_exitcode())
+	{
+		*errcode = 500;
+		return ("");
+	}
+	
 
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
