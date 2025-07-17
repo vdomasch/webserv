@@ -1,3 +1,0 @@
-TO DO:
-	GET must be allowed if allow_methods isn't specified
-	If allow_methods is specified, only the one declared are accepted
