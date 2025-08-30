@@ -1,5 +1,7 @@
 #include "webserv.hpp"
 
+int	stock_childpid(int pid, bool replace); //!
+
 std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
 	std::string	CGIBody;
@@ -12,7 +14,9 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.Content_Type, d.Content_Length, method, req._is_php_cgi);
 	else if (method == "GET")
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method, req._is_php_cgi);
+
 	d.cg.executeCGI();
+
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody();
 	if (d.cg.get_exitcode() == -1)
@@ -23,9 +27,13 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	
 	int status = 0;
 	waitpid(d.cg.cgi_forkfd, &status, 0);
+	alarm(0); //!
+	int	child_timeout = stock_childpid(0, false); //!
 	int exit_code = WEXITSTATUS(status);
-	if (exit_code != 0)
+	if (exit_code != 0 || child_timeout == -42)
 	{
+		if (child_timeout == -42)
+			stock_childpid(0, true);
 		std::cerr << "Error: Ptit flop: child exited with code " << exit_code << std::endl;
 		*errcode = 400;
 		return ("");

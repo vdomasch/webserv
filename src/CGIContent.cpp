@@ -1,6 +1,8 @@
 #include "CGIContent.hpp"
 #include "HTTPConfig.hpp"
 
+int	stock_childpid(int pid, bool replace); //!
+
 CGIContent::CGIContent()
 {
 	this->_cgi_path = "default";
@@ -82,7 +84,8 @@ void 	CGIContent::executeCGI()
 	}
 
 	this->cgi_forkfd = fork();
-	
+	stock_childpid(this->cgi_forkfd, true); //! 
+
 	if (this->cgi_forkfd == 0)
 	{
 		dup2(pipe_in[0], STDIN_FILENO);
@@ -110,6 +113,7 @@ void 	CGIContent::executeCGI()
 	{
 		close(pipe_in[0]);    // Parent doesn't read from pipe_in
     	close(pipe_out[1]);   // Parent doesn't write to pipe_out
+		alarm(5); //!
 	}
 }
 

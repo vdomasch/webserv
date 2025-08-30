@@ -14,6 +14,27 @@ bool g_running = true;
 
 void handle_signal(int signum) { if (signum) { g_running = false; } }
 
+int	stock_childpid(int pid, bool replace) //!
+{
+	static int	saved_pid = 0;
+
+	if (replace == true)
+		saved_pid = pid;
+	return (saved_pid);
+}
+
+void	handle_child_timeout(int signum) //!
+{
+	(void)signum;
+
+	int child_pid = stock_childpid(0, false);
+	if (child_pid > 0) {
+		kill(child_pid, SIGKILL);
+		std::cerr << "Child process was killed due to timeout\n" << "\n";
+		stock_childpid(-42, true);
+	}
+}
+
 Server::Server()
 {
 	FD_ZERO(&_socket_data.saved_readsockets);
@@ -135,6 +156,7 @@ void	Server::launch_server(HTTPConfig &http_config)
 
 	signal(SIGINT, handle_signal);
 	signal(SIGTSTP, handle_signal);
+	signal(SIGALRM, handle_child_timeout); //! 
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
@@ -202,15 +224,17 @@ int	Server::reading_data(int fd)
 	ssize_t bytes_read;
 	do {
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
+
+		
 		if (bytes_read < 0)
-			;
+		;
 		if (bytes_read == 0)
 		{
 			close_msg(fd, "Client Disconnected", 0, 0);
 			return 1;
 		}
 		if (bytes_read > 0)
-			_socket_states[fd].append_data(std::string(buffer, bytes_read));
+		_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
 	if (_socket_states[fd].has_error())
 	{

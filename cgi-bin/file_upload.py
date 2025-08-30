@@ -26,6 +26,12 @@ form = cgi.FieldStorage()
 def uploadNewFile():
 
 
+
+	cpt = 1
+
+	while 1:
+		cpt = cpt + 1
+
 	fileitem = form['myFilePicker']
 	if fileitem.filename:
 		# log("File was uploaded: " + str(fileitem.filename))
