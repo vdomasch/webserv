@@ -113,6 +113,11 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		if (handle_root(iss, _map_location))
 			return 1;
 	}
+	else if (key == "return")
+	{
+		if (handle_return(iss, _map_location))
+			return 1;
+	}
 	else if (key == "cgi_path")
 	{
 		if (handle_cgi_path(iss, _map_location))

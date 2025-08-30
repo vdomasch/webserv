@@ -52,6 +52,28 @@ bool	is_error_page_code(std::string code)
 	return false;
 }
 
+bool is_code_between_300_and_599(std::string code)
+{
+	if (code.size() > 3)
+		return false;
+	long value = atol(code.c_str());
+	if (value < 300 || value > 599)
+		return false;
+	return true;
+}
+
+bool is_path_valid(std::string value)
+{
+	if (value.at(0) != '/' && value.find("http://") != 0)
+		return false;
+	if (value.at(0) != '/')
+		value.erase(0, 7);
+	for (size_t i = 0; i < value.size(); i++)
+		if (!isalnum(value.at(i)) && std::string("-/_~.").find(value.at(i)) == std::string::npos)
+			return false;
+	return true;
+}
+
 bool	is_page_extension(std::string name)
 {
 	size_t code_size = name.length();
@@ -288,3 +310,48 @@ bool	handle_root(std::istringstream &iss, std::map<std::string, std::string> &_c
 	_current_map["root"] = value;
 	return 0;
 }
+
+bool	handle_return(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+{
+	std::string value;
+	int count = 0;
+	std::string code;
+	while (iss >> value)
+	{
+		if (!iss.eof() && value.find(";") != std::string::npos)
+		{
+			std::cerr << "Error: There are values after ';' for keyword return!" << std::endl;
+			return 1;
+		}
+		if (iss.eof() && value.find(";") == std::string::npos)
+		{
+			std::cerr << "Error: Semicolon is missing for keyword: return!" << std::endl;
+			return 1;
+		}
+		if (!is_valid_to_clean_semicolon(value))
+			return 1;
+		value = clean_semicolon(value);
+		if (count == 0)
+			code = value;
+		count++;
+	}
+	if (count > 2)
+	{
+		std::cerr << "Error: There are too many values for keyword return!" << std::endl;
+		return 1;
+	}
+	if (!is_code_between_300_and_599(code))
+	{
+		std::cerr << "Error: Code is invalid!" << std::endl;
+		return 1;
+	}
+	if (!is_path_valid(value))
+	{
+		std::cerr << "Error: Path is not a valid URI!" << std::endl;
+		return 1;
+	}
+	code += value;
+	_current_map["return"] = code;
+	return 0;
+}
+

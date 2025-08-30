@@ -132,7 +132,6 @@ bool	HTTPConfig::parse_http()
 				if (server_temp.select_current_location_to_check_gci(current_location_path))
 					return 1;
 			}
-				
 		}
 		else if (is_server(key))
 		{
