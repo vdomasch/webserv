@@ -69,11 +69,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		body = handleCGI(req, fd_data, &errcode);
 		if (body.empty())
 		{
-			if (errcode == 400)
-			{
-				std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
-				return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
-			}
 			if (errcode == 500)
 			{
 				std::cerr << "Error: System call failed " << target << std::endl;
@@ -87,7 +82,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	else if (target.find("cgi-bin/") != std::string::npos)
 	{
 		std::cerr << "Error: No CGI location" << std::endl;
-		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	std::string path_no_index = root + target;
 	std::string file_path = try_index_file(path_no_index, req, server);

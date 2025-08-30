@@ -35,7 +35,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		if (child_timeout == -42)
 			stock_childpid(0, true);
 		std::cerr << "Error: Ptit flop: child exited with code " << exit_code << std::endl;
-		*errcode = 400;
+		*errcode = 500;
 		return ("");
 	}
 	*errcode = 0;
@@ -137,5 +137,11 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 		return "405";
 	}
 	return "";
+}
+
+bool file_exists(const std::string& filename)
+{
+	std::ifstream file(filename.c_str());
+	return file.good();
 }
 
