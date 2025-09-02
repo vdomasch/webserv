@@ -57,10 +57,10 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string target = req.get_target();
 	ServerConfig &server = find_current_server(http_config, req._server_name);
 
-	std::map<std::string, std::string>& map_server = server.get_map_server();
-	std::map<std::string, std::string>::iterator it = map_server.find("return");
-	if (it != map_server.end())
-		build_response(req, it->second.substr(0, 3), "", req.getKeepAlive());
+	//std::map<std::string, std::string>& map_server = server.get_map_server();
+	//std::map<std::string, std::string>::iterator it = map_server.find("return");
+	//if (it != map_server.end())
+	//	build_response(req, it->second.substr(0, 3), "", req.getKeepAlive());
 
 	std::string root = req._location_root;
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");

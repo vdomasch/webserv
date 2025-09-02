@@ -77,17 +77,24 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 		res.add_header("Connection", "keep-alive");
 	else
 		res.add_header("Connection", "close");
-	try {
-		size_t content_len = body.size();
-		if (req._is_php_cgi)
-			content_len -= body.find("\r\n\r\n") + 4;
-		res.add_header("Content-Length", convert<std::string>(content_len));
+	if (req.get_is_redirection())
+		res.add_header("Location", req.get_redirection());
+	else
+	{
+		try {
+			size_t content_len = body.size();
+			if (req._is_php_cgi)
+				content_len -= body.find("\r\n\r\n") + 4;
+			res.add_header("Content-Length", convert<std::string>(content_len));
+		}
+		catch (std::exception &e) { std::cerr << "Error: Converting size failed" << std::endl; }
 	}
-	catch (std::exception &e) { std::cerr << "Error: Converting size failed" << std::endl; }
-	
+
 	try { req.set_status_code(convert<int>(status_code)); }
 	catch (std::exception &e) { std::cerr << "Error: Converting status code" << std::endl; }
 	req.set_response(res.generate_response(req._is_php_cgi));
+	req._response_sent = 0;
+	req.set_state(RESPONDING);
 }
 
 std::string build_html_body(std::string code)
