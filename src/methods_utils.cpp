@@ -89,6 +89,8 @@ bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const
 		if (server_map.count(method))
 			return true;
 	}
+	if ((method == "POST" || method == "DELETE") && (location_map.count("return") || server.get_map_server().count("return")))
+		return true;
 	return false;	
 }
 
