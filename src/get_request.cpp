@@ -61,7 +61,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 		
-	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
+	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode))
 	{
 		fd_data.QueryString = req.get_query_string();
 		std::string body;
@@ -81,6 +81,11 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 			}
 		}
 		return (build_response(req, "200", body, req.getKeepAlive()));
+	}
+	else if (errcode == 403)
+	{
+		std::cerr << "Error: CGI Extension used is forbidden." << std::endl;
+		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	else if (req._location_name == "/cgi-bin/")
 		req._autoindex = false;

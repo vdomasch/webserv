@@ -145,6 +145,47 @@ bool	create_directories(ServerConfig& server, std::string path)
 	return true;
 }
 
+bool	extension_IsAllowed(ServerConfig &server, std::string target, int *errcode)
+{
+	*errcode = 0;
+	std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find("/cgi-bin/");
+	if (it_loc != server.get_location_list().end())
+	{
+		std::map<std::string, std::string> &map = it_loc->second.get_map_location();
+		if (map.find("cgi_ext") != map.end())
+		{
+			std::string allowed_extensions = map.find("cgi_ext")->second;
+			std::cout << "Allowed extensions : " << allowed_extensions << "\n";
+
+			std::size_t	pos = target.rfind(".");
+			if (pos==std::string::npos)
+			{
+				*errcode = 403;
+				return (false);
+			}
+			std::string	target_ext = target.substr(pos);
+			if (allowed_extensions.find(target_ext) != std::string::npos)
+				return (true);
+			else
+			{
+				*errcode = 403;
+				return (false);
+			}
+		}
+		else // Index "cgi_ext" was NOT found because it wasn't created, which means the "cgi_ext" line is not specified in config file
+		{
+			std::cerr << "Error: \"cgi_ext\" line is missing from cgi_bin location, all extensions are forbidden by default.\n";
+			*errcode = 403;
+			return (false);
+		}
+	}
+
+	if ((target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
+		return (true);
+	else
+		return (false);
+}
+
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 {
 	int errcode = 0;
@@ -159,13 +200,12 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::cerr << "Error validating request context: " << context_status_errcode << std::endl;
 		return (build_response(req, context_status_errcode, displayErrorPage(context_status_errcode, http_config, req, fd_data), req.getKeepAlive()));
 	}
-
-	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
+	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode)) //!
 	{
+		std::string body;
+
 		fd_data.Content_Type = req.get_header("Content-Type");
 		fd_data.Content_Length = req.get_header("Content-Length");
-
-		std::string body;
 
 		body = handleCGI(req, fd_data, &errcode);
 		if (body.empty())
@@ -182,6 +222,11 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 			}
 		}
 		return (build_response(req, "200", body, req.getKeepAlive()));
+	}
+	else if (errcode == 403)
+	{
+		std::cerr << "Error: CGI Extension used is forbidden." << std::endl;
+		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	else if (req._location_name == "/cgi-bin/")
 		req._autoindex = false;

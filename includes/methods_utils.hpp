@@ -20,5 +20,6 @@ bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const
 
 std::string	validate_request_context(std::string &location_name, std::string &root, int &errcode, ServerConfig &server, const std::string &method);
 
+bool	extension_IsAllowed(ServerConfig &server, std::string target, int *errcode);
 
 #endif
