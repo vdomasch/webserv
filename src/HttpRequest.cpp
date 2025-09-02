@@ -79,14 +79,40 @@ bool HttpRequest::check_keep_alive() const
 
 std::string	normalize_path(const std::string &path)
 {
-	std::string normalized = path;
-	if (normalized.empty() || normalized == "/")
-		return "/";
-	if (normalized.at(0) == '/')
-		normalized.erase(0, 1);
-	if (normalized.at(normalized.size() - 1) == '/')
-		normalized.erase(normalized.size() - 1, 1);
-	return normalized;
+    if (path.empty())
+        return "/";
+
+    std::stringstream ss(path);
+    std::string segment;
+    std::vector<std::string> segments;
+    
+    while (std::getline(ss, segment, '/'))
+	{
+        if (segment.empty() || segment == ".")
+            continue; 
+		else if (segment == "..")
+		{
+            if (!segments.empty() && segments.back() != "..")
+                segments.pop_back();
+			else
+                continue;
+        }
+		else
+            segments.push_back(segment);
+    }
+
+    std::string normalized_path;
+    for (size_t i = 0; i < segments.size(); ++i)
+	{
+        normalized_path += segments[i];
+        if (i < segments.size() - 1)
+            normalized_path += "/";
+    }
+
+    if (normalized_path.empty())
+        return "/";
+
+    return normalized_path;
 }
 
 void	HttpRequest::parse_headers()
@@ -120,7 +146,9 @@ void	HttpRequest::parse_headers()
 	else 
 	{
 		_query_string.clear();
+		std::cout << "Target before normalization: '" << _target << "'" << std::endl;
 		_target = normalize_path(_target);
+		std::cout << "Target after normalization: '" << _target << "'" << std::endl;
 	}
 
 	if (_http_version != "HTTP/1.1")

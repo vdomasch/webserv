@@ -120,8 +120,13 @@ std::string	displayErrorPage(const std::string& code, HTTPConfig& http_config, H
 		return build_html_body(code);
 	req.set_target(error_uri);
 	req._is_error_request = true;
-	req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex);
-
+	try { req._location_name = find_location_name_and_set_root(error_uri, req._server, req._location_root, req._autoindex); }
+	catch (std::exception &e)
+	{
+		std::cerr << "Error: Finding location for error page: " << e.what() << std::endl;
+		return build_html_body(code);
+	}
+	
 	get_request(http_config, req, fd_data);
 
 	if (req.get_response().empty())

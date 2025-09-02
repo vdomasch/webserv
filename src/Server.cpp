@@ -311,7 +311,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Error: Location not found" << std::endl;
+			std::cerr << "Error: " << e.what() << std::endl;
 			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
 		}
 	}

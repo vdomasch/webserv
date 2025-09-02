@@ -42,7 +42,8 @@ std::string	try_index_file(std::string path, HttpRequest& req, ServerConfig &ser
 			return path;
 		else if (path.at(path.size() - 1) != '/')
 			path += '/'; // Ensure path ends with a slash for directory
-		path += index; // Append index file to directory path
+		if (check_object_type(path + index, &errcode) == IS_EXISTINGFILE)
+			path += index; // Append index file to directory path
 	}
 	return path;
 }
