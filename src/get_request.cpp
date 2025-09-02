@@ -56,11 +56,15 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string target = req.get_target();
 	ServerConfig &server = find_current_server(http_config, req._server_name);
 
+	std::map<std::string, std::string>& map_server = server.get_map_server();
+	std::map<std::string, std::string>::iterator it = map_server.find("return");
+	if (it != map_server.end())
+		build_response(req, it->second.substr(0, 3), "", req.getKeepAlive());
+
 	std::string root = req._location_root;
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
-		
 	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
 	{
 		fd_data.QueryString = req.get_query_string();
@@ -69,11 +73,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		body = handleCGI(req, fd_data, &errcode);
 		if (body.empty())
 		{
-			if (errcode == 400)
-			{
-				std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
-				return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
-			}
 			if (errcode == 500)
 			{
 				std::cerr << "Error: System call failed " << target << std::endl;
@@ -87,7 +86,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	else if (target.find("cgi-bin/") != std::string::npos)
 	{
 		std::cerr << "Error: No CGI location" << std::endl;
-		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	std::string path_no_index = root + target;
 	std::string file_path = try_index_file(path_no_index, req, server);

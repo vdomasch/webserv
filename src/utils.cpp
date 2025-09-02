@@ -69,6 +69,7 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 	HttpResponse res;
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
+	if (status_code == "")
 	if (!req._is_php_cgi)
 		res.add_header("Content-Type", req.get_content_type());
 
