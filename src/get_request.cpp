@@ -65,6 +65,37 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
+
+	std::string path_no_index = root + target;
+	std::string file_path = try_index_file(path_no_index, req, server);
+	
+	int status = check_object_type(file_path, &errcode);
+	if (status == FILE_NOT_FOUND)
+	{
+		std::cerr << "Error: File not found: " << file_path << std::endl;
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
+	}
+	else if (status == IS_DIRECTORY)
+	{
+		if (!req._autoindex)
+		{
+			std::cerr << "Error: Forbidden request: " << file_path << std::endl;
+			return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
+		}
+		if (req._autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
+		{
+			fd_data.requestedFilePath = path_no_index;
+			fd_data.folderContent.clear();
+			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
+			if (body.empty())
+			{
+				std::cerr << "Error: Failed to build index page for: " << file_path << std::endl;
+				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
+			}
+			return (build_response(req, "200", body, req.getKeepAlive()));
+		}
+	}
+
 	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
 	{
 		fd_data.QueryString = req.get_query_string();
@@ -86,31 +117,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	else if (target.find("cgi-bin/") != std::string::npos)
 	{
 		std::cerr << "Error: No CGI location" << std::endl;
-		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
-	}
-	std::string path_no_index = root + target;
-	std::string file_path = try_index_file(path_no_index, req, server);
-	
-	if (check_object_type(file_path, &errcode) != IS_EXISTINGFILE)
-	{
-		if (!req._autoindex)
-		{
-			std::cerr << "Error: Forbidden request: " << file_path << std::endl;
-			return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
-		}
-		if (req._autoindex && check_object_type(path_no_index, &errcode) == IS_DIRECTORY)
-		{
-			fd_data.requestedFilePath = path_no_index;
-			fd_data.folderContent.clear();
-			std::string body = buildCurrentIndexPage(&fd_data, req.get_target(), &errcode);
-			if (body.empty())
-			{
-				std::cerr << "Error: Failed to build index page for: " << file_path << std::endl;
-				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
-			}
-			return (build_response(req, "200", body, req.getKeepAlive()));
-		}
-		std::cerr << "Error: File not found: " << file_path << std::endl;
 		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
 	}
 

@@ -35,7 +35,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		if (child_timeout == -42)
 			stock_childpid(0, true);
 		std::cerr << "Error: Ptit flop: child exited with code " << exit_code << std::endl;
-		*errcode = 500;
+		*errcode = 400;
 		return ("");
 	}
 	*errcode = 0;
@@ -48,8 +48,8 @@ int	check_object_type(const std::string& path, int *errcode)
 
     if (stat (path.c_str(), &fileinfo) != 0)
 	{
-		*errcode = MISSINGFILE;
-		return (MISSINGFILE);
+		*errcode = FILE_NOT_FOUND;
+		return (FILE_NOT_FOUND);
 	}
 	if (S_ISDIR(fileinfo.st_mode))
         return IS_DIRECTORY;
@@ -89,8 +89,6 @@ bool	check_allowed_methods(ServerConfig &server, LocationConfig &location, const
 		if (server_map.count(method))
 			return true;
 	}
-	if ((method == "POST" || method == "DELETE") && (location_map.count("return") || server.get_map_server().count("return")))
-		return true;
 	return false;	
 }
 
@@ -117,14 +115,9 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 	{
 		if (status == IS_DIRECTORY)
 			return "";
-		else if (status == MISSINGFILE)
-		{
-			std::cerr << "Error: File not found for deletion: " << root << std::endl;
-			return "404";
-		}
 		else if (status == FILE_NOT_FOUND)
 		{
-			std::cerr << "Error: File not found or is not a regular file: " << root << std::endl;
+			std::cerr << "Error: File not found: " << root << std::endl;
 			return "404";
 		}
 		else if (status != IS_EXISTINGFILE)
@@ -139,11 +132,5 @@ std::string	validate_request_context(std::string &location_name, std::string &ro
 		return "405";
 	}
 	return "";
-}
-
-bool file_exists(const std::string& filename)
-{
-	std::ifstream file(filename.c_str());
-	return file.good();
 }
 

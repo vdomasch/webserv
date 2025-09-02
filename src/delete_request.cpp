@@ -37,6 +37,18 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 	std::string path = root + target;
 
+	int status = check_object_type(path, &errcode);
+	if (status == FILE_NOT_FOUND)
+	{
+		std::cerr << "Error: File not found: " << path << std::endl;
+		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
+	}
+	else if (status == IS_DIRECTORY)
+	{
+		std::cerr << "Error: Forbidden request: " << path << std::endl;
+		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
+	}
+
 	if (!is_authorized_path(path, server.get_authorized_paths()))
 	{
 		if (file_exists(path))

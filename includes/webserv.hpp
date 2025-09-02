@@ -36,7 +36,6 @@
 # define FILE_NOT_FOUND 63
 # define IS_CGI 64
 # define FAILEDSYSTEMCALL -1
-# define MISSINGFILE -2
 # define ICOHANDELING 2
 # define GIFHANDELING 3
 # define CSSHANDELING 4
