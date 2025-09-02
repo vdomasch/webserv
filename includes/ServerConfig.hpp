@@ -37,7 +37,6 @@ class ServerConfig
 
 		std::string		get_matching_location(const std::string& target, bool &autoindex);
 
-		bool			select_current_location_to_check_gci(std::string current_location_path);
 		std::string		DEBUG_test();
 
 	private:
