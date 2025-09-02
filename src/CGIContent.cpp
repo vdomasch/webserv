@@ -68,7 +68,7 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 }
 
-void 	CGIContent::executeCGI()
+void 	CGIContent::executeCGI(bool &exec_failed)
 {	
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
@@ -88,6 +88,10 @@ void 	CGIContent::executeCGI()
 
 	if (this->cgi_forkfd == 0)
 	{
+
+		int orig_stdout = dup(STDOUT_FILENO);
+		int orig_stdin = dup(STDIN_FILENO);
+
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_in[0]);
@@ -95,13 +99,20 @@ void 	CGIContent::executeCGI()
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		
+		// _argv[0] = (char*)"/not/a/real/path";
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
 		std::cerr << "Error: Execve failed !\r\n";
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
 		// and is waiting to be read using pipe_out[0] (which is the read end of the pipe)
 		
-		exit(this->_exitcode); // if fails
+		dup2(orig_stdout, STDOUT_FILENO);
+		dup2(orig_stdin, STDIN_FILENO);
+    	close(orig_stdout);
+    	close(orig_stdin);
+
+		g_running = false;
+		exec_failed = true;
 	}
 	else if (this->cgi_forkfd == -1)
 	{

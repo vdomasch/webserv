@@ -155,7 +155,7 @@ bool	extension_IsAllowed(ServerConfig &server, std::string target, int *errcode)
 		if (map.find("cgi_ext") != map.end())
 		{
 			std::string allowed_extensions = map.find("cgi_ext")->second;
-			std::cout << "Allowed extensions : " << allowed_extensions << "\n";
+			// std::cout << "Allowed extensions : " << allowed_extensions << "\n";
 
 			std::size_t	pos = target.rfind(".");
 			if (pos==std::string::npos)
@@ -217,7 +217,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 			}
 			if (errcode == 500)
 			{
-				std::cerr << "Error: System call failed " << target << std::endl;
+				std::cerr << "Error: System call failed" << target << std::endl;
 				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
 			}
 		}

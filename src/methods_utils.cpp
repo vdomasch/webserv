@@ -6,6 +6,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
 	std::string	CGIBody;
 	std::string	method;
+	bool		exec_failed = false;
 
 	method = req.get_method();
 
@@ -15,8 +16,13 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	else if (method == "GET")
 		d.cg.setEnvCGI((req.get_rootpath() +  req.get_target()), d.QueryString, "none", method, req._is_php_cgi);
 
-	d.cg.executeCGI();
-
+	d.cg.executeCGI(exec_failed);
+	if (exec_failed)
+	{
+		alarm(0); //!
+		*errcode = 400;
+		return ("");
+	}
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody();
 
@@ -33,6 +39,12 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	int exit_code = WEXITSTATUS(status);
 	if (exit_code != 0 || child_timeout == -42)
 	{
+		if (exit_code == 42)
+		{
+			std::cerr << "Error: Ptit flop 2: child exited with code " << exit_code << std::endl;
+			*errcode = 500;
+			return ("");
+		}
 		if (child_timeout == -42)
 			stock_childpid(0, true);
 		std::cerr << "Error: Ptit flop: child exited with code " << exit_code << std::endl;

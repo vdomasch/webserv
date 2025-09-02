@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cctype>
 
-
 bool g_running = true;
 
 void handle_signal(int signum) { if (signum) { g_running = false; } }
