@@ -12,8 +12,8 @@ class LocationConfig
 		LocationConfig(std::string path);
 		~LocationConfig();
 
-		bool	parse_location(std::istringstream &iss, std::string key);
-		bool	check_cgi();
+		bool		parse_location(std::istringstream &iss, std::string key);
+		bool		check_cgi();
 		std::string	DEBUG_test();
 
 		std::string							get_root();

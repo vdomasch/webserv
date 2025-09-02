@@ -1,5 +1,6 @@
 # include "parsing_utils.hpp"
 # include "ServerConfig.hpp"
+# include "utils.hpp"
 
 bool	is_valid_to_clean_semicolon(std::string key)
 {
@@ -47,19 +48,9 @@ bool	is_error_page_code(std::string code)
 {
 	int int_code = std::atoi(code.c_str());
 
-	if (code.length() == 3 && int_code >= 400 && int_code <= 599)
+	if (code.length() == 3 && int_code >= 400 && int_code <= 599 && is_code_valid(code))
 		return true;
 	return false;
-}
-
-bool is_code_between_300_and_599(std::string code)
-{
-	if (code.size() > 3)
-		return false;
-	long value = atol(code.c_str());
-	if (value < 300 || value > 599)
-		return false;
-	return true;
 }
 
 bool is_path_valid(std::string value)
@@ -340,7 +331,7 @@ bool	handle_return(std::istringstream &iss, std::map<std::string, std::string> &
 		std::cerr << "Error: There are too many values for keyword return!" << std::endl;
 		return 1;
 	}
-	if (!is_code_between_300_and_599(code))
+	if (!is_code_valid(code))
 	{
 		std::cerr << "Error: Code is invalid!" << std::endl;
 		return 1;
@@ -355,3 +346,10 @@ bool	handle_return(std::istringstream &iss, std::map<std::string, std::string> &
 	return 0;
 }
 
+bool is_code_valid(std::string code)
+{
+	std::map<std::string, std::string> m = make_status_messages();
+	if (m.count(code))
+		return true;
+	return false;
+}

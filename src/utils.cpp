@@ -5,7 +5,7 @@ bool	is_error(int errcode)
 	return (errcode >= 400 && errcode < 600);
 }
 
-static std::map<std::string, std::string> make_status_messages()
+std::map<std::string, std::string> make_status_messages()
 {
 	std::map<std::string, std::string> m;
 	m["200"] = "OK";

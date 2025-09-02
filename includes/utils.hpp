@@ -5,6 +5,8 @@
 
 bool is_error(int errcode);
 
+std::map<std::string, std::string> make_status_messages();
+
 std::string	message_status(const std::string &status);
 
 ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_name);
