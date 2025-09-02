@@ -414,7 +414,6 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 		autoindex = it->second.get_autoindex(autoindex);
 		return "/";
 	}
-	
 	throw std::runtime_error("No suitable location found for target: " + target);
 }
 

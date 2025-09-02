@@ -294,7 +294,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		catch (std::exception &e)
 		{
 			std::cerr << "Error: Getting server name: " << e.what() << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false);
+			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false));
 		}
 	}
 	if (reading_data(fd))
@@ -306,17 +306,36 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			if (client_body_size_too_large(_socket_states[fd], http_config))
 			{
 				std::cerr << "Error: Client body size too large" << std::endl;
-				build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
+				return (build_response(_socket_states[fd], "413", displayErrorPage("413", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 			}
+			if (_socket_states[fd].get_method() == "GET")
+			{
+				std::map<std::string, std::string>& location_map = _socket_states[fd]._server.get_location_list()[_socket_states[fd]._location_name].get_map_location();
+				std::map<std::string, std::string>::iterator it = location_map.find("return");
+				if (it != location_map.end())
+				{
+					_socket_states[fd].set_is_redirection(true);
+					_socket_states[fd].set_redirection(it->second.substr(3, it->second.size() - 3));
+					return (build_response(_socket_states[fd], it->second.substr(0, 3), "", _socket_states[fd].getKeepAlive()));
+				}
+				std::map<std::string, std::string>& map_server = _socket_states[fd]._server.get_map_server();
+				it = map_server.find("return");
+				if (it != map_server.end())
+				{
+					_socket_states[fd].set_is_redirection(true);
+					_socket_states[fd].set_redirection(it->second.substr(3, it->second.size() - 3));
+					return (build_response(_socket_states[fd], it->second.substr(0, 3), "", _socket_states[fd].getKeepAlive()));
+				}
+			}
+
+
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Error: Location not found" << std::endl;
-			build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive());
+			std::cerr << "Error: " << e.what() << std::endl;
+			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 		}
 	}
-
-
 
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 

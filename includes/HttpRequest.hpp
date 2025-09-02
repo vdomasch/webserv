@@ -45,6 +45,7 @@ class	HttpRequest
 		bool			getKeepAlive() const;
 		bool			get_is_multipart() const;
 		bool			get_is_server_socket() const;
+		bool			get_is_redirection() const;
 		int				get_status_code() const;
 		ssize_t			get_content_length() const;
 		std::string		get_response() const;
@@ -56,6 +57,7 @@ class	HttpRequest
 		std::string		get_content_type() const;
 		std::string		get_rootpath() const;
 		std::string		get_query_string() const;
+		std::string		get_redirection() const;
 		unsigned long	get_time() const;
 		RequestState	get_state() const;
 
@@ -67,6 +69,8 @@ class	HttpRequest
 		void	set_content_type(const std::string& type);
 		void	set_time(unsigned long t);
 		void	set_rootpath(const std::string& rootpath);
+		void	set_is_redirection(bool value);
+		void	set_redirection(const std::string& uri);
 
 	private:
 		bool		_is_server_socket;
@@ -78,6 +82,7 @@ class	HttpRequest
 		std::string	_query_string;
 		std::string	_http_version;
 		std::string	_rootpath;
+		std::string _redirection;
 		std::map<std::string, std::string>	_headers_map;
 
 		RequestState	_state;
@@ -85,6 +90,7 @@ class	HttpRequest
 		bool			_header_parsed;
 		bool			_keep_alive;
 		bool			_is_multipart;
+		bool			_is_redirection;
 		int				_status_code;
 		unsigned long	_last_time;
 		std::string		_response;

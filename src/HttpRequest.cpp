@@ -79,14 +79,40 @@ bool HttpRequest::check_keep_alive() const
 
 std::string	normalize_path(const std::string &path)
 {
-	std::string normalized = path;
-	if (normalized.empty() || normalized == "/")
-		return "/";
-	if (normalized.at(0) == '/')
-		normalized.erase(0, 1);
-	if (normalized.at(normalized.size() - 1) == '/')
-		normalized.erase(normalized.size() - 1, 1);
-	return normalized;
+    if (path.empty())
+        return "/";
+
+    std::stringstream ss(path);
+    std::string segment;
+    std::vector<std::string> segments;
+    
+    while (std::getline(ss, segment, '/'))
+	{
+        if (segment.empty() || segment == ".")
+            continue; 
+		else if (segment == "..")
+		{
+            if (!segments.empty() && segments.back() != "..")
+                segments.pop_back();
+			else
+                continue;
+        }
+		else
+            segments.push_back(segment);
+    }
+
+    std::string normalized_path;
+    for (size_t i = 0; i < segments.size(); ++i)
+	{
+        normalized_path += segments[i];
+        if (i < segments.size() - 1)
+            normalized_path += "/";
+    }
+
+    if (normalized_path.empty())
+        return "/";
+
+    return normalized_path;
 }
 
 void	HttpRequest::parse_headers()
@@ -190,6 +216,7 @@ bool	HttpRequest::has_error() const			{ return (_state == ERROR || is_error(_sta
 bool			HttpRequest::get_is_server_socket() const	{ return _is_server_socket; }
 bool			HttpRequest::getKeepAlive() const			{ return _keep_alive; }
 bool			HttpRequest::get_is_multipart() const		{ return _is_multipart; }
+bool			HttpRequest::get_is_redirection() const		{ return _is_redirection; }
 int				HttpRequest::get_status_code() const		{ return _status_code; }
 ssize_t			HttpRequest::get_content_length() const		{ return _content_length; }
 std::string		HttpRequest::get_response() const			{ return _response; }
@@ -200,6 +227,7 @@ std::string		HttpRequest::get_boundary() const			{ return _boundary; }
 std::string		HttpRequest::get_content_type() const		{ return _content_type; }
 std::string 	HttpRequest::get_body() const				{ return _body;}
 std::string		HttpRequest::get_query_string() const		{ return _query_string; }
+std::string		HttpRequest::get_redirection() const		{ return _redirection; }
 unsigned long	HttpRequest::get_time() const				{ return _last_time; };
 RequestState	HttpRequest::get_state() const				{ return _state; }
 std::string HttpRequest::get_header(const std::string& key) const
@@ -213,7 +241,7 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 ////////// SETTERS ///////////
 
-void	HttpRequest::set_is_server_socket(bool is_server_sock)		{ _is_server_socket = is_server_sock; }
+void	HttpRequest::set_is_server_socket(bool is_server_sock)	{ _is_server_socket = is_server_sock; }
 void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
 void	HttpRequest::set_status_code(int code)					{ _state = ERROR, _status_code = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
@@ -221,6 +249,8 @@ void	HttpRequest::set_rootpath(const std::string& rootpath)	{ _rootpath = rootpa
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
 void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = type; }
 void	HttpRequest::set_time(unsigned long t) 					{ _last_time = t; };
+void	HttpRequest::set_is_redirection(bool value)				{ _is_redirection = value; }
+void	HttpRequest::set_redirection(const std::string& uri)		{ _redirection = uri; }
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {

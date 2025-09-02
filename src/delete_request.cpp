@@ -51,7 +51,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 
 	if (!is_authorized_path(path, server.get_authorized_paths()))
 	{
-		if (file_exists(path))
+		if (status == IS_EXISTINGFILE)
 		{
 			std::cerr << "Error: Unauthorized DELETE request for path: " << path << std::endl;
 			return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
