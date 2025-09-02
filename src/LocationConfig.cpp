@@ -9,9 +9,8 @@ LocationConfig::LocationConfig()
 	_location_directives[4] = "rewrite";
 	_location_directives[5] = "autoindex";
 	_location_directives[6] = "allow_methods";
-	_location_directives[7] = "return";
-	_location_directives[8] = "cgi_path";
-	_location_directives[9] = "cgi_ext";
+	_location_directives[7] = "cgi_ext";
+	_location_directives[8] = "return";
 }
 
 LocationConfig::LocationConfig(std::string path)
@@ -23,9 +22,8 @@ LocationConfig::LocationConfig(std::string path)
 	_location_directives[4] = "rewrite";
 	_location_directives[5] = "autoindex";
 	_location_directives[6] = "allow_methods";
-	_location_directives[7] = "cgi_path";
-	_location_directives[8] = "cgi_ext";
-	_location_directives[9] = "return";
+	_location_directives[7] = "cgi_ext";
+	_location_directives[8] = "return";
 
 	_map_location["path"] = path;
 }
@@ -118,11 +116,6 @@ bool	LocationConfig::parse_location(std::istringstream &iss, std::string key)
 		if (handle_return(iss, _map_location))
 			return 1;
 	}
-	else if (key == "cgi_path")
-	{
-		if (handle_cgi_path(iss, _map_location))
-			return 1;
-	}
 	else if (key == "cgi_ext")
 	{
 		if (handle_cgi_ext(iss, _map_location))
@@ -169,52 +162,39 @@ std::string	LocationConfig::DEBUG_test()
 	return str;
 }
 
-bool	LocationConfig::check_cgi()
+static bool	is_cgi_extension_valid(std::string str)
 {
-	if (_map_location.count("cgi_path") != _map_location.count("cgi_ext"))
+	if (str.find(".php") != std::string::npos)
 	{
-		if (_map_location.count("cgi_path") == 0)
-			std::cerr << "Error: Missing cgi_path!" << std::endl;
-		else
-			std::cerr << "Error: Missing cgi_ext!" << std::endl;
-		return 1;
+		if (str == ".php" || str == ".php;")
+			return true;
 	}
-	return 0;
+	else if (str.find(".py") != std::string::npos)
+	{
+		if (str == ".py" || str == ".py;")
+			return true;
+	}
+	return false;
 }
 
-bool	LocationConfig::handle_cgi_path(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
+static bool	is_cgi_extension_double_declared(std::string ext, std::string stream)
 {
-	std::string value;
-	if (!(iss >> value))
+	if (ext.find(".py;") != std::string::npos)
 	{
-		std::cerr << "Error: Keyword cgi_path has no value!" << std::endl;
-		return 1;
-	}	
-	if (_current_map.count("cgi_path"))
-	{
-		std::cerr << "Error: Keyword cgi_path already set!" << std::endl;
-		return 1;
+		if (stream.find(".py") != std::string::npos)
+			return true;
 	}
-	if (!is_valid_to_clean_semicolon(value))
-		return 1;
-	if (value.find(";") == std::string::npos)
+	else if (ext.find(".php;") != std::string::npos)
 	{
-		std::cerr << "Error: Semicolon is missing for keyword: cgi_path!" << std::endl;
-		return 1;
+		if (stream.find(".php") != std::string::npos)
+			return true;
 	}
-	value = clean_semicolon(value);
-	if (value.find_first_of("/") == 0 || value.find_last_of("/") == value.length() - 1)
+	else
 	{
-		std::cerr << "Error: Invalid cgi_path value '" << value << "', must not start or end with '/'!" << std::endl;
-		return 1;
+		if (stream.find(ext) != std::string::npos)
+			return true;
 	}
-	_current_map["cgi_path"] = value;
-	if (iss >> value)
-	{
-		std::cerr << "Error: Keyword cgi_path has too many values!" << std::endl;
-		return 1;
-	}
-	return 0;
+	return false;
 }
 
 bool	LocationConfig::handle_cgi_ext(std::istringstream &iss, std::map<std::string, std::string> &_current_map)
@@ -232,11 +212,21 @@ bool	LocationConfig::handle_cgi_ext(std::istringstream &iss, std::map<std::strin
 		return 1;
 	}
 	value = tmp;
+	if (!is_cgi_extension_valid(tmp))
+	{
+		std::cerr << "Error: Invalid extension '" << tmp << "' for cgi_ext!" << std::endl;
+		return 1;
+	}
 	while (iss >> tmp)
 	{
-		if (tmp.at(0) != '.')
+		if (!is_cgi_extension_valid(tmp))
 		{
-			std::cerr << "Error: Invalid cgi_ext value '" << tmp << "'!" << std::endl;
+			std::cerr << "Error: Invalid extension '" << tmp << "' for cgi_ext!" << std::endl;
+			return 1;
+		}
+		else if (is_cgi_extension_double_declared(tmp, value))
+		{
+			std::cerr << "Error: Double declaration of value '" << tmp << "' for cgi_ext!" << std::endl;
 			return 1;
 		}
 		value += " " + tmp;

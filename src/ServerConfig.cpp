@@ -418,13 +418,6 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 	throw std::runtime_error("No suitable location found for target: " + target);
 }
 
-bool	ServerConfig::select_current_location_to_check_gci(std::string current_location_path)
-{
-	if (_location_list[current_location_path].check_cgi())
-		return 1;
-	return 0;
-}
-
 bool	ServerConfig::is_allow_methods_declared(std::map<std::string, std::string> &_current_map)
 {
 	if (_current_map.count("GET") || _current_map.count("POST") || _current_map.count("DELETE"))
