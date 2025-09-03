@@ -310,7 +310,9 @@ bool	ServerConfig::handle_listen_ip_port(std::string &value)
 
 bool	ServerConfig::handle_listen_port(std::string &value)
 {
-	if (value.length() > 6 || std::atol(value.c_str()) > 65535 || std::atol(value.c_str()) < 1024)
+	std::string value_tmp;
+	value_tmp.assign(value, 0, value.find(";"));
+	if (value_tmp.length() > 6 || std::atol(value_tmp.c_str()) > 65535 || std::atol(value_tmp.c_str()) < 1024)
 	{
 		std::cerr << "Error: Value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
@@ -320,8 +322,6 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 		std::cerr << "Error: Port '" << value << "' already set!" << std::endl;
 		return 1;
 	}
-	std::string value_tmp;
-	value_tmp.assign(value, 0, value.find(";"));
 	_listen_ports.push_back(value_tmp);
 	_map_server["listen"] = _listen_ports.begin()->c_str();
 	_ip_and_ports_association[value_tmp] = "0.0.0.0";

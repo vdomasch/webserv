@@ -166,13 +166,25 @@ static bool	is_cgi_extension_valid(std::string str)
 {
 	if (str.find(".php") != std::string::npos)
 	{
-		if (str == ".php" || str == ".php;")
+		if (str == ".php")
 			return true;
+		for (size_t i = 4; i < str.size(); i++)
+		{
+			if (str.at(i) != ';')
+				return false;
+		}
+		return true;
 	}
 	else if (str.find(".py") != std::string::npos)
 	{
-		if (str == ".py" || str == ".py;")
+		if (str == ".py")
 			return true;
+		for (size_t i = 4; i < str.size(); i++)
+		{
+			if (str.at(i) != ';')
+				return false;
+		}
+		return true;
 	}
 	return false;
 }
@@ -236,9 +248,9 @@ bool	LocationConfig::handle_cgi_ext(std::istringstream &iss, std::map<std::strin
 		std::cerr << "Error: Semicolon is missing for keyword: cgi_ext!" << std::endl;
 		return 1;
 	}
-	if (value.find_first_of(";") != value.length() - 1)
+	if (iss.eof() && value.find(";") == std::string::npos)
 	{
-		std::cerr << "Error: Invalid cgi_ext value, semicolon must be only ';' at the end!" << std::endl;
+		std::cerr << "Error: Semicolon is missing for keyword: allow_methods!" << std::endl;
 		return 1;
 	}
 	if (!is_valid_to_clean_semicolon(value))
