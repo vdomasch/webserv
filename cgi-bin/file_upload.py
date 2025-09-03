@@ -25,8 +25,6 @@ form = cgi.FieldStorage()
 
 def uploadNewFile():
 
-
-
 	# cpt = 1
 
 	# while 1:

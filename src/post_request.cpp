@@ -200,7 +200,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::cerr << "Error validating request context: " << context_status_errcode << std::endl;
 		return (build_response(req, context_status_errcode, displayErrorPage(context_status_errcode, http_config, req, fd_data), req.getKeepAlive()));
 	}
-	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode)) //!
+	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode))
 	{
 		std::string body;
 

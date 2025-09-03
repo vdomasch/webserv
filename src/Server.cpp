@@ -22,18 +22,6 @@ int	stock_childpid(int pid, bool replace) //!
 	return (saved_pid);
 }
 
-void	handle_child_timeout(int signum) //!
-{
-	(void)signum;
-
-	int child_pid = stock_childpid(0, false);
-	if (child_pid > 0) {
-		kill(child_pid, SIGKILL);
-		std::cerr << "Child process was killed due to timeout\n" << "\n";
-		stock_childpid(-42, true);
-	}
-}
-
 Server::Server()
 {
 	FD_ZERO(&_socket_data.saved_readsockets);
@@ -155,7 +143,6 @@ void	Server::launch_server(HTTPConfig &http_config)
 
 	signal(SIGINT, handle_signal);
 	signal(SIGTSTP, handle_signal);
-	signal(SIGALRM, handle_child_timeout); //! 
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
