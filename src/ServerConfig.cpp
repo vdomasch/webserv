@@ -211,18 +211,18 @@ std::string ServerConfig::get_root()
 	return (it != _map_server.end()) ? it->second : ""; 
 }
 
-bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_list)
+bool	ServerConfig::duplicate_server(std::map<std::string, std::vector<ServerConfig> > &server_list)
 {
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)
 	{
 		ServerConfig server_temp = ServerConfig(*this, *it);
 		server_temp._map_server["host"] = _ip_and_ports_association[*it];
 		if (server_list.find(server_temp.get_port_number()) == server_list.end())
-			server_list[server_temp.get_port_number()] = server_temp;
-		else if (is_server_name_already_used(server_list, server_temp))
+			server_list[server_temp.get_port_number()].push_back(server_temp);
+		else if (is_server_id_used(server_list, server_temp))
 			return 1;
 		else
-			server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()] = server_temp;
+			server_list[server_temp.get_port_number()].push_back(server_temp);
 	}
 	this->_map_server["host"] = _ip_and_ports_association[this->get_port_number()];
 	_listen_ports.clear();

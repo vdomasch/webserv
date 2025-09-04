@@ -26,7 +26,7 @@ size_t	HTTPConfig::get_client_max_body_size()
 	return client_max_body_size;
 }
 
-std::map<std::string, ServerConfig>& HTTPConfig::get_server_list()	{ return _server_list; }
+std::map<std::string, std::vector<ServerConfig> >& HTTPConfig::get_server_list()	{ return _server_list; }
 std::map<std::string, std::string>&	HTTPConfig::get_http_map() 		{ return _map_http; }
 
 bool HTTPConfig::is_http(std::string key)
@@ -163,11 +163,11 @@ bool	HTTPConfig::parse_http()
 				if (server_temp.duplicate_server(_server_list))
 					return 1;
 				if (_server_list.find(server_temp.get_port_number()) == _server_list.end())
-					_server_list[server_temp.get_port_number()] = server_temp;
-				else if (is_server_name_already_used(_server_list, server_temp))
+					_server_list[server_temp.get_port_number()].push_back(server_temp);
+				else if (is_server_id_used(_server_list, server_temp))
 					return 1;
 				else
-					_server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()] = server_temp;
+					_server_list[server_temp.get_port_number()].push_back(server_temp);
 			}
 		}
 		else if (is_http(key))
@@ -302,23 +302,24 @@ void	HTTPConfig::DEBUG_HTTP_show()
 {
 	std::cout << "DEBUG: show everything contained in servers" << std::endl;
 	std::cout << std::endl;
-	for (std::map<std::string, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+	for (std::map<std::string, std::vector<ServerConfig> >::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
 	{
 		std::cout << "Server port: " << it->first << std::endl;
-		std::cout << it->second.DEBUG_test() << std::endl;
+		for(std::vector<ServerConfig>::iterator it_vect = it->second.begin(); it_vect != it->second.end(); it_vect++)
+			std::cout << it_vect->DEBUG_test() << std::endl;
 	}
 	
-	for (std::map<std::string, ServerConfig>::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
-	{
-		ServerConfig &server = it->second;
-		std::set<std::string> paths = server.get_authorized_paths();
-		std::cout << "Authorized paths for DELETE in server: " << server.get_server_name() << std::endl;
-		std::cout << paths.size() << " authorized paths found." << std::endl;
-		for (std::set<std::string>::iterator it_path = paths.begin(); it_path != paths.end(); ++it_path)
-		{
-			std::cout << "Authorized path for DELETE: " << *it_path << std::endl;
-		}
-	}
+	//for (std::map<std::string, std::vector<ServerConfig> >::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
+	//{
+	//	ServerConfig &server = it->second;
+	//	std::set<std::string> paths = server.get_authorized_paths();
+	//	std::cout << "Authorized paths for DELETE in server: " << server.get_server_name() << std::endl;
+	//	std::cout << paths.size() << " authorized paths found." << std::endl;
+	//	for (std::set<std::string>::iterator it_path = paths.begin(); it_path != paths.end(); ++it_path)
+	//	{
+	//		std::cout << "Authorized path for DELETE: " << *it_path << std::endl;
+	//	}
+	//}
 }
 
 bool	HTTPConfig::are_mandatory_directives_missing(ServerConfig &server_temp)
