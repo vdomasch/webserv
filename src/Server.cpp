@@ -93,7 +93,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 		return (-1);
 	}
 	int opt = 1;
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) == -1)
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 		return close_msg(server_fd, "Failed to set socket options", true, -1);
 	
 	servaddr.sin_family = AF_INET;
@@ -108,7 +108,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 			return close_msg(server_fd, "Invalid IP address in config: " + host_ip, true, -1);
 
 	if (bind(server_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		return close_msg(server_fd, "Failed to bind port" + server.get_port_number(), true, -1);
+		return close_msg(server_fd, "Failed to bind port " + server.get_port_number(), true, -1);
 	if (listen(server_fd, 1024) < 0)
 		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_port_number() , true, -1);
 	return (server_fd);
@@ -281,12 +281,29 @@ bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_c
 	return false; // Body size is within the limit
 }
 
+std::string	Server::get_ip_port(int fd)
+{
+	struct sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+	if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) == -1)
+		throw std::runtime_error("Failed to get socket name");
+	char ip_str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str)) == NULL)
+		throw std::runtime_error("Failed to convert IP address to string");
+	int port = ntohs(addr.sin_port);
+	return std::string(ip_str) + ":" + convert<std::string>(port);
+}
+
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
+	int status = reading_data(fd);
 	if (_socket_states[fd]._server_name.empty())
 	{
 		try { 
+				_socket_states[fd]._ip_port = get_ip_port(fd);
+				std::cout << "Client connected from: " << _socket_states[fd]._ip_port << std::endl;
 		 		_socket_states[fd]._server_name = get_server_name(fd);
+				std::cout << "Server name: " << _socket_states[fd]._server_name << std::endl;
 				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]._server_name);
 				_socket_states[fd]._autoindex = _socket_states[fd]._server.get_autoindex();
 				_socket_states[fd].set_rootpath(_socket_states[fd]._server.get_root());
@@ -297,8 +314,13 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false));
 		}
 	}
-	if (reading_data(fd))
-		return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
+	if (status)
+	{
+		try { std::string code = convert<std::string>(_socket_states[fd].get_status_code());
+			return (build_response(_socket_states[fd], code, displayErrorPage(code, http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
+		}
+		catch(...) { return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive())); }
+	}
 	if (_socket_states[fd].get_state() == RECEIVING_BODY || _socket_states[fd].get_state() == COMPLETE)
 	{
 		try { 
@@ -336,7 +358,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 		}
 	}
-
 	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
 	if (_socket_states[fd].is_ready())
