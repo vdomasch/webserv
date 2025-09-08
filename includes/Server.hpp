@@ -39,7 +39,7 @@ class Server
 		int			reading_data(int fd);
 		bool		is_server_socket(int fd);
 		std::string	get_server_name(int fd);
-		std::string	get_ip_port(int fd);
+		void		get_ip_port(int fd);
 
 		bool		is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound);
 		bool		client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config);

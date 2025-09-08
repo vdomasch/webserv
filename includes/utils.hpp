@@ -9,7 +9,7 @@ std::map<std::string, std::string> make_status_messages();
 
 std::string	message_status(const std::string &status);
 
-ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_name);
+ServerConfig&	find_current_server(HTTPConfig& http_config, HttpRequest& req);
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex);
 

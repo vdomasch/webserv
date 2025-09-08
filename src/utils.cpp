@@ -37,18 +37,35 @@ std::string	message_status(const std::string &status)
 		return "Unknown Status";
 }
 
-ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_name)
+ServerConfig&	find_current_server(HTTPConfig& http_config, HttpRequest& req)
 {
-	std::map<std::string, ServerConfig>& server_list = http_config.get_server_list();
-	std::map<std::string, ServerConfig>::iterator it = server_list.find(server_name);
-	if (it == server_list.end())
+	std::map<std::string, std::vector<ServerConfig> >& server_list = http_config.get_server_list();
+	std::vector<ServerConfig>& servers = server_list[req._port];
+
+
+	ServerConfig best_match;
+	size_t number_of_matches = 0;
+	bool ip_match = false;
+	for (std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
-		server_name = server_name.substr(server_name.find(':') + 1);
-		it = server_list.find(server_name);
-		if (it == server_list.end())
-			throw std::runtime_error("Server not found: " + server_name);
+		if (it->get_server_name() == req._server_name)
+		{
+			if (number_of_matches != 0)
+			{
+				if (ip_match == true && it->get_host_ip() == req._ip)
+					throw std::runtime_error("Multiple servers match the request with same server name and IP: " + req._server_name + " at " + req._ip);
+				else if (it->get_host_ip() == req._ip)
+				{
+					best_match = *it;
+					ip_match = true;
+				}
+			}
+			else
+				best_match = *it;
+			number_of_matches++;
+		}
 	}
-	return it->second;
+	return best_match;
 }
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
