@@ -211,18 +211,18 @@ std::string ServerConfig::get_root()
 	return (it != _map_server.end()) ? it->second : ""; 
 }
 
-bool	ServerConfig::duplicate_server(std::map<std::string, ServerConfig> &server_list)
+bool	ServerConfig::duplicate_server(std::map<std::string, std::vector<ServerConfig> > &server_list)
 {
 	for (std::vector<std::string>::iterator it = ++_listen_ports.begin(); it != _listen_ports.end(); it++)
 	{
 		ServerConfig server_temp = ServerConfig(*this, *it);
 		server_temp._map_server["host"] = _ip_and_ports_association[*it];
 		if (server_list.find(server_temp.get_port_number()) == server_list.end())
-			server_list[server_temp.get_port_number()] = server_temp;
-		else if (is_server_name_already_used(server_list, server_temp))
+			server_list[server_temp.get_port_number()].push_back(server_temp);
+		else if (is_server_id_used(server_list, server_temp))
 			return 1;
 		else
-			server_list[server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()] = server_temp;
+			server_list[server_temp.get_port_number()].push_back(server_temp);
 	}
 	this->_map_server["host"] = _ip_and_ports_association[this->get_port_number()];
 	_listen_ports.clear();
@@ -310,7 +310,9 @@ bool	ServerConfig::handle_listen_ip_port(std::string &value)
 
 bool	ServerConfig::handle_listen_port(std::string &value)
 {
-	if (value.length() > 6 || std::atol(value.c_str()) > 65535 || std::atol(value.c_str()) < 1024)
+	std::string value_tmp;
+	value_tmp.assign(value, 0, value.find(";"));
+	if (value_tmp.length() > 6 || std::atol(value_tmp.c_str()) > 65535 || std::atol(value_tmp.c_str()) < 1024)
 	{
 		std::cerr << "Error: Value '" << value << "' is invalid for keyword listen!" << std::endl;
 		return 1;
@@ -320,8 +322,6 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 		std::cerr << "Error: Port '" << value << "' already set!" << std::endl;
 		return 1;
 	}
-	std::string value_tmp;
-	value_tmp.assign(value, 0, value.find(";"));
 	_listen_ports.push_back(value_tmp);
 	_map_server["listen"] = _listen_ports.begin()->c_str();
 	_ip_and_ports_association[value_tmp] = "0.0.0.0";
@@ -330,58 +330,33 @@ bool	ServerConfig::handle_listen_port(std::string &value)
 
 bool	ServerConfig::handle_host(std::string value)
 {
-	if (value == "0.0.0.0" || value == "127.0.0.1")
-		return 0;
-	if (value.at(0) != '1' || value.at(1) != '2' || value.at(2) != '7' || value.at(3) != '.')
+	std::vector<size_t> ip;
+	size_t tmp;
+	std::string tmp_str;
+	for(int i = 0; i < 4; i++)
 	{
-		std::cerr << "Error: Invalid ip value '" << value << "!" << std::endl;
-		return 1;
+		if ((value.find('.') == std::string::npos && i < 3) || (value.find('.') != std::string::npos && i == 3))
+		{
+			std::cerr << "Error: ip format is invalid!" << std::endl;
+			return 1;
+		}
+		tmp_str = value.substr(0, value.find('.')).c_str();
+		if (tmp_str.size() > 1 && tmp_str.at(0) == '0')
+		{
+			std::cout << "Error: invalide ip value '" << tmp_str << "'!" << std::endl;
+			return 1;
+		}
+		tmp = std::atol(value.substr(0, value.find('.')).c_str());
+		if (tmp > 255)
+		{
+			std::cerr << "Error: ip value '" << tmp << "' is above 255!" << std::endl;
+			return 1;
+		}
+		
+		ip.push_back(tmp);
+		value.erase(0, value.find('.') + 1);
 	}
-	std::string value_tmp = value;
-	std::string ip_1;
-	std::string ip_2;
-	std::string ip_3;
-	value_tmp.erase(0, 4);
-	if (value_tmp.find(".") == std::string::npos)
-	{
-		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
-		return 1;
-	}
-	ip_1.assign(value_tmp, 0, value_tmp.find("."));
-	value_tmp.erase(0, value_tmp.find(".") + 1);
-	if (value_tmp.find(".") == std::string::npos)
-	{
-		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
-		return 1;
-	}
-	ip_2.assign(value_tmp, 0, value_tmp.find("."));
-	value_tmp.erase(0, value_tmp.find(".") + 1);
-	if (value_tmp.find(".") != std::string::npos)
-	{
-		std::cerr << "Error: Value_tmp '" << value << "' is invalid for keyword listen, format is 'x.x.x.x'!" << std::endl;
-		return 1;
-	}
-	ip_3.assign(value_tmp);
-	if (ip_1.length() > 3 || ip_2.length() > 3 || ip_3.length() > 3 || ip_1.length() == 0 || ip_2.length() == 0 || ip_3.length() == 0)
-	{
-		std::cerr << "Error: Invalid ip value '" << value << "', range is from 0 to 255!" << std::endl;
-		return 1;
-	}
-	if (std::atol(ip_1.c_str()) > 255 || std::atol(ip_2.c_str()) > 255 || std::atol(ip_3.c_str()) > 255)
-	{
-		std::cerr << "Error: Invalid ip value '" << value << "', range is from 0 to 255!" << std::endl;
-		return 1;
-	}
-	if (ip_1 == "0" && ip_2 == "0" && ip_3 == "0")
-	{
-		std::cerr << "Error: Invalid ip value, 127.0.0.0 isn't allowed!" << std::endl;
-		return 1;
-	}
-	if (ip_1 == "255" && ip_2 == "255" && ip_3 == "255")
-	{
-		std::cerr << "Error: Invalid ip value, 127.255.255.255 isn't allowed!" << std::endl;
-		return 1;
-	}
+	
 	return 0;
 }
 

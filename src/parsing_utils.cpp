@@ -29,17 +29,20 @@ bool is_keyword(std::string key, std::string pattern)
 	return (false);
 }
 
-bool	is_server_name_already_used(std::map<std::string, ServerConfig> &server_list, ServerConfig &server_temp)
+bool	is_server_id_used(std::map<std::string, std::vector<ServerConfig> > &server_list, ServerConfig &server_temp)
 {
-	if (server_list.find(server_temp.get_server_name() + static_cast<std::string>(":") + server_temp.get_port_number()) != server_list.end())
+	std::map<std::string, std::vector<ServerConfig> >::iterator it_map = server_list.find(server_temp.get_port_number());
+	if (it_map != server_list.end())
 	{
-		std::cerr << "Error: Server name already exists for this port!" << std::endl;
-		return true;
-	}
-	else if (server_list[server_temp.get_port_number()].get_server_name() == server_temp.get_server_name())
-	{
-		std::cerr << "Error: Server name already exists for this port!" << std::endl;
-		return true;
+		for (std::vector<ServerConfig>::iterator it_vect = it_map->second.begin(); it_vect != it_map->second.end(); it_vect++)
+		{
+			if (server_temp.get_port_number() == it_vect->get_port_number() && server_temp.get_server_name() == it_vect->get_server_name())
+			{
+				std::cerr << "Error: ip already exist for server_name '" << server_temp.get_server_name()
+						<< "' and port '" << server_temp.get_port_number() << "'!" << std::endl;
+				return true;
+			}
+		}
 	}
 	return false;
 }
