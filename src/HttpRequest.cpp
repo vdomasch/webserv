@@ -45,7 +45,7 @@ void HttpRequest::append_data(const std::string &data)
 	{
 		if (!was_in_header)
 			_body += data;
-		if (_is_multipart) 
+		if (_is_multipart)
 		{
 			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
 			{
@@ -208,7 +208,8 @@ void	HttpRequest::parse_headers()
 
 bool	HttpRequest::is_ready() const			{ return _state == COMPLETE && !is_error(_status_code); }
 bool	HttpRequest::is_finished() const		{ return _state == RESPONDED; }
-bool	HttpRequest::has_error() const			{ return (_state == ERROR || is_error(_status_code) != 0); } 
+bool	HttpRequest::has_error() const			{ return (_state == ERROR || is_error(_status_code) != 0); }
+void	HttpRequest::print_state_status() const { std::cerr << "State : " <<_state << " | Status : " << _status_code << "\n\n";}  //!
 
 
 /////////// GETTERS ///////////
@@ -243,7 +244,6 @@ std::string HttpRequest::get_header(const std::string& key) const
 
 void	HttpRequest::set_is_server_socket(bool is_server_sock)	{ _is_server_socket = is_server_sock; }
 void	HttpRequest::set_response(const std::string& response)	{ _response = response; }
-void	HttpRequest::set_status_code(int code)					{ _state = ERROR, _status_code = code; }
 void	HttpRequest::set_target(const std::string& target)		{ _target = target; }
 void	HttpRequest::set_rootpath(const std::string& rootpath)	{ _rootpath = rootpath; }
 void	HttpRequest::set_state(enum RequestState value)			{ _state = value; }
@@ -251,6 +251,15 @@ void	HttpRequest::set_content_type(const std::string& type)	{ _content_type = ty
 void	HttpRequest::set_time(unsigned long t) 					{ _last_time = t; };
 void	HttpRequest::set_is_redirection(bool value)				{ _is_redirection = value; }
 void	HttpRequest::set_redirection(const std::string& uri)		{ _redirection = uri; }
+
+void	HttpRequest::set_status_code(int code)					
+{
+	if (code >= 400)
+	{
+		_state = ERROR;
+	}
+	_status_code = code;
+}
 
 std::ostream& operator<<(std::ostream &os, const HttpRequest &req)
 {
