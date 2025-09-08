@@ -53,6 +53,9 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_n
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
+
+	// std::cout << "TARGET IS : (" << target << ")\n\n"; //! 
+	
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	std::string location_name = server.get_matching_location("/" + target, autoindex);
 	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
@@ -61,6 +64,7 @@ std::string find_location_name_and_set_root(const std::string &target, ServerCon
 		root = it_loc->second.get_root();
 	else
 		return "";
+	// std::cout << "loc name ISS : (" << location_name << ")\n\n";
 	return location_name;
 }
 

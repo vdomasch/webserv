@@ -45,6 +45,7 @@ class CGIContent
 		void			setEnvCGI(std::string cgi_path, std::string type, std::string len, std::string method, bool& is_php_cgi);
 		void			executeCGI(bool &exec_failed);
 		std::string		grabCGIBody(int child_pid, int timeout_sec, int &status);
+		// std::string    	grabCGIBody();  //!
 		int				sendCGIBody(std::string body);
 		int				get_exitcode();
 

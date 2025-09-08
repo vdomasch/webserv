@@ -39,6 +39,7 @@ class	HttpRequest
 		bool		is_ready() const;
 		bool		has_error() const;
 		bool		is_finished() const;
+		void		print_state_status() const; //!
 
 
 

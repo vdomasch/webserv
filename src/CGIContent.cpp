@@ -200,4 +200,29 @@ std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 	return result;
 }
 
+// std::string    CGIContent::grabCGIBody()
+// {
+//     std::string    result;
+//     char        buffer[CGI_BUFFERSIZE] = {0};
+//     int            bytes_read = 0;
+//     int            total_read = 0;
+
+
+//     while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
+//     {
+//         result.append(buffer, bytes_read);
+//         total_read += bytes_read;
+//     }
+//     if (bytes_read < 0) {
+//         std::cerr << "Error: Read error ! \n";
+//         close(this->pipe_out[0]);
+//         this->_exitcode = -1;
+//         return("");
+//     }
+    
+//     close(this->pipe_out[0]);
+
+//     return (result);
+// }
+
 int	CGIContent::get_exitcode()	{ return _exitcode; }
