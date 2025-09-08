@@ -116,41 +116,48 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 
 void	Server::launch_server(HTTPConfig &http_config)
 {
-	std::map<std::string, ServerConfig> servers_list = http_config.get_server_list();
+	std::map<std::string, std::vector<ServerConfig> > servers_configs = http_config.get_server_list();
 	sockaddr_in servaddr = sockaddr_in();
 
-	for (std::map<std::string, ServerConfig>::iterator it = servers_list.begin(); it != servers_list.end(); ++it)
+	for (std::map<std::string, std::vector<ServerConfig> >::iterator it_vect = servers_configs.begin(); it_vect != servers_configs.end(); ++it_vect)
 	{
-		ServerConfig server = it->second;
-		int port = server.get_uint_port_number();
+		std::vector<ServerConfig> server_list = it_vect->second;
 
-		if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
+		for (std::vector<ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
 		{
-			std::string ip = server.get_host_ip();
-			std::string str_port = server.get_port_number();
-			std::string key = ip + ":" + str_port;
+			ServerConfig &server = *it;
+		
+		
+								int port = server.get_uint_port_number();
 
-			if (is_conflicting_binding(ip, str_port, _ip_port_bound))
-			{
-				std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
-				continue;
-			}
+								if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
+								{
+									std::string ip = server.get_host_ip();
+									std::string str_port = server.get_port_number();
+									std::string key = ip + ":" + str_port;
 
-			int server_socket = initialize_server(server, servaddr);
-			if (server_socket < 0)
-			{
-				std::cerr << "Error: Failed to initialize server" << std::endl;
-				return;
-			}
-			_ip_port_bound.insert(key);
-			_port_to_socket_map[port] = server_socket;
-			_socket_to_port_map[server_socket] = port;
-			_socket_states[server_socket] = HttpRequest();
-			_socket_states[server_socket].set_is_server_socket(true);
-			FD_SET(server_socket, &_socket_data.saved_readsockets);
-			if (server_socket > _socket_data.max_fd)
-				_socket_data.max_fd = server_socket;
-			std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
+									if (is_conflicting_binding(ip, str_port, _ip_port_bound))
+									{
+										std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
+										continue;
+									}
+
+									int server_socket = initialize_server(server, servaddr);
+									if (server_socket < 0)
+									{
+										std::cerr << "Error: Failed to initialize server" << std::endl;
+										return;
+									}
+									_ip_port_bound.insert(key);
+									_port_to_socket_map[port] = server_socket;
+									_socket_to_port_map[server_socket] = port;
+									_socket_states[server_socket] = HttpRequest();
+									_socket_states[server_socket].set_is_server_socket(true);
+									FD_SET(server_socket, &_socket_data.saved_readsockets);
+									if (server_socket > _socket_data.max_fd)
+										_socket_data.max_fd = server_socket;
+									std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
+								}
 		}
 	}
 
@@ -325,6 +332,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 				std::cout << "Server name: " << _socket_states[fd]._server_name << std::endl;
 		 		//_socket_states[fd]._server_name = get_server_name(fd);
 				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]);
+				//std::cout << "Matched server name: " << _socket_states[fd]._server.get_server_name() << " | " << _socket_states[fd]._server.DEBUG_test() << std::endl;
 				_socket_states[fd]._autoindex = _socket_states[fd]._server.get_autoindex();
 				_socket_states[fd].set_rootpath(_socket_states[fd]._server.get_root());
 		}
@@ -378,7 +386,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 		}
 	}
-	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+	//std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
 	if (_socket_states[fd].is_ready())
 	{

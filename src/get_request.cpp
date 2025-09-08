@@ -55,7 +55,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	int errcode = 0;
 
 	std::string target = req.get_target();
-	ServerConfig &server = find_current_server(http_config, req._server_name);
+	//ServerConfig &server = find_current_server(http_config, req._server_name);
 
 	//std::map<std::string, std::string>& map_server = server.get_map_server();
 	//std::map<std::string, std::string>::iterator it = map_server.find("return");
@@ -63,12 +63,12 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	//	build_response(req, it->second.substr(0, 3), "", req.getKeepAlive());
 
 	std::string root = req._location_root;
-	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "GET");
+	std::string error_code = validate_request_context(req._location_name, root, errcode, req._server, "GET");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 
 		
-	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode))
+	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(req._server, target, &errcode))
 	{
 		fd_data.QueryString = req.get_query_string();
 		std::string body;
@@ -102,7 +102,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
 	}
 	std::string path_no_index = root + target;
-	std::string file_path = try_index_file(path_no_index, req, server);
+	std::string file_path = try_index_file(path_no_index, req, req._server);
 	
 	int status = check_object_type(file_path, &errcode);
 	if (status == FILE_NOT_FOUND)

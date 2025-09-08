@@ -29,10 +29,10 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 
 	std::string target = req.get_target();
 
-	ServerConfig &server = find_current_server(http_config, req._server_name);
+	//ServerConfig &server = find_current_server(http_config, req._server_name);
 
 	std::string root = req._location_root;
-	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "DELETE");
+	std::string error_code = validate_request_context(req._location_name, root, errcode, req._server, "DELETE");
 	if (!error_code.empty())
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 	std::string path = root + target;
@@ -49,7 +49,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 		return (build_response(req, "403", displayErrorPage("403", http_config, req, fd_data), req.getKeepAlive()));
 	}
 
-	if (!is_authorized_path(path, server.get_authorized_paths()))
+	if (!is_authorized_path(path, req._server.get_authorized_paths()))
 	{
 		if (status == IS_EXISTINGFILE)
 		{

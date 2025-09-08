@@ -192,15 +192,15 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string	target = req.get_target();
 	std::string	root = req._location_root;
 
-	ServerConfig &server = find_current_server(http_config, req._server_name);
+	//ServerConfig &server = find_current_server(http_config, req._server_name);
 
-	std::string context_status_errcode = validate_request_context(req._location_name, root, errcode, server, "POST");
+	std::string context_status_errcode = validate_request_context(req._location_name, root, errcode, req._server, "POST");
 	if (!context_status_errcode.empty())
 	{
 		std::cerr << "Error validating request context: " << context_status_errcode << std::endl;
 		return (build_response(req, context_status_errcode, displayErrorPage(context_status_errcode, http_config, req, fd_data), req.getKeepAlive()));
 	}
-	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(server, target, &errcode)) //!
+	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(req._server, target, &errcode)) //!
 	{
 		std::string body;
 
@@ -237,7 +237,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	std::string filename = create_filename(root, head);
 	std::string file_path = root + filename; // Full path of file
 
-	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
+	if (create_directories(req._server, file_path.substr(0, file_path.rfind('/'))) == false)
 	{
 		std::cerr << "Error: Failed to create directories for POST data." << std::endl;
 		return (build_response(req, "500", "Failed to create directories for POST data", req.getKeepAlive()));
