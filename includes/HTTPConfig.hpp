@@ -3,6 +3,12 @@
 
 # include "ServerConfig.hpp"
 
+# ifndef GLOBAL_VARIABLE
+#  define GLOBAL_VARIABLE
+
+extern bool g_running;
+
+# endif
 
 
 class HTTPConfig

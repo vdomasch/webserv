@@ -53,6 +53,9 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, std::string &server_n
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
+
+	// std::cout << "TARGET IS : (" << target << ")\n\n"; //! 
+	
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	std::string location_name = server.get_matching_location("/" + target, autoindex);
 	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
@@ -61,12 +64,15 @@ std::string find_location_name_and_set_root(const std::string &target, ServerCon
 		root = it_loc->second.get_root();
 	else
 		return "";
+	// std::cout << "loc name ISS : (" << location_name << ")\n\n";
 	return location_name;
 }
 
 void	build_response(HttpRequest &req, const std::string &status_code, const std::string &body, bool keep_alive_connection)
 {
 	HttpResponse res;
+
+
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
 	if (status_code == "")
@@ -99,6 +105,7 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 
 std::string build_html_body(std::string code)
 {
+
 	std::string body = "<html>";
 	body += "	<head>";
 	body += "		<meta charset=\"UTF-8\">";
@@ -189,6 +196,5 @@ std::string	find_error_page(const std::string& code, const std::string& location
 	it = map.find(code);
 	if (it != map.end())
 		return it->second;
-
 	return "";
 }
