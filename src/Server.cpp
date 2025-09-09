@@ -80,7 +80,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 		return (-1);
 	}
 	int opt = 1;
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) == -1)
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 		return close_msg(server_fd, "Failed to set socket options", true, -1);
 	
 	servaddr.sin_family = AF_INET;
@@ -95,7 +95,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 			return close_msg(server_fd, "Invalid IP address in config: " + host_ip, true, -1);
 
 	if (bind(server_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
-		return close_msg(server_fd, "Failed to bind port" + server.get_port_number(), true, -1);
+		return close_msg(server_fd, "Failed to bind port " + server.get_port_number(), true, -1);
 	if (listen(server_fd, 1024) < 0)
 		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_port_number() , true, -1);
 	return (server_fd);
@@ -103,41 +103,48 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 
 void	Server::launch_server(HTTPConfig &http_config)
 {
-	std::map<std::string, ServerConfig> servers_list = http_config.get_server_list();
+	std::map<std::string, std::vector<ServerConfig> > servers_configs = http_config.get_server_list();
 	sockaddr_in servaddr = sockaddr_in();
 
-	for (std::map<std::string, ServerConfig>::iterator it = servers_list.begin(); it != servers_list.end(); ++it)
+	for (std::map<std::string, std::vector<ServerConfig> >::iterator it_vect = servers_configs.begin(); it_vect != servers_configs.end(); ++it_vect)
 	{
-		ServerConfig server = it->second;
-		int port = server.get_uint_port_number();
+		std::vector<ServerConfig> server_list = it_vect->second;
 
-		if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
+		for (std::vector<ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
 		{
-			std::string ip = server.get_host_ip();
-			std::string str_port = server.get_port_number();
-			std::string key = ip + ":" + str_port;
+			ServerConfig &server = *it;
+		
+		
+								int port = server.get_uint_port_number();
 
-			if (is_conflicting_binding(ip, str_port, _ip_port_bound))
-			{
-				std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
-				continue;
-			}
+								if (_port_to_socket_map.find(port) == _port_to_socket_map.end())
+								{
+									std::string ip = server.get_host_ip();
+									std::string str_port = server.get_port_number();
+									std::string key = ip + ":" + str_port;
 
-			int server_socket = initialize_server(server, servaddr);
-			if (server_socket < 0)
-			{
-				std::cerr << "Error: Failed to initialize server" << std::endl;
-				return;
-			}
-			_ip_port_bound.insert(key);
-			_port_to_socket_map[port] = server_socket;
-			_socket_to_port_map[server_socket] = port;
-			_socket_states[server_socket] = HttpRequest();
-			_socket_states[server_socket].set_is_server_socket(true);
-			FD_SET(server_socket, &_socket_data.saved_readsockets);
-			if (server_socket > _socket_data.max_fd)
-				_socket_data.max_fd = server_socket;
-			std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
+									if (is_conflicting_binding(ip, str_port, _ip_port_bound))
+									{
+										std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
+										continue;
+									}
+
+									int server_socket = initialize_server(server, servaddr);
+									if (server_socket < 0)
+									{
+										std::cerr << "Error: Failed to initialize server" << std::endl;
+										return;
+									}
+									_ip_port_bound.insert(key);
+									_port_to_socket_map[port] = server_socket;
+									_socket_to_port_map[server_socket] = port;
+									_socket_states[server_socket] = HttpRequest();
+									_socket_states[server_socket].set_is_server_socket(true);
+									FD_SET(server_socket, &_socket_data.saved_readsockets);
+									if (server_socket > _socket_data.max_fd)
+										_socket_data.max_fd = server_socket;
+									std::cout << "\033[3;32m++ Server port " << port << " created on socket " << server_socket << " ++\033[0m\n" << std::endl;
+								}
 		}
 	}
 
@@ -180,29 +187,29 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	_socket_states[client_socket].set_time(time(NULL));
 }
 
-std::string Server::get_server_name(int fd)
-{
-	std::map<int, int>::iterator it = _socket_to_port_map.find(fd);
-	if (it != _socket_to_port_map.end())
-	{
-		int port = it->second;
-		std::string port_str;
-		port_str = convert<std::string>(port);
+//std::string Server::get_server_name(int fd)
+//{
+//	std::map<int, int>::iterator it = _socket_to_port_map.find(fd);
+//	if (it != _socket_to_port_map.end())
+//	{
+//		int port = it->second;
+//		std::string port_str;
+//		port_str = convert<std::string>(port);
 
-		std::string host = _socket_states[fd].get_header("Host");
-		if (host.empty())
-			return port_str;
+//		std::string host = _socket_states[fd].get_header("Host");
+//		if (host.empty())
+//			return port_str;
 
-		std::string host_port = host.substr(host.find(":") + 1);
-		if (host_port.empty())
-			return host + port_str;
-		else if (port_str.find_first_not_of("0123456789") != std::string::npos)
-			throw std::runtime_error("Invalid port number in Host header: " + host_port);
-		else
-			return host;
-	}
-	return ""; 
-}
+//		std::string host_port = host.substr(host.find(":") + 1);
+//		if (host_port.empty())
+//			return host + port_str;
+//		else if (port_str.find_first_not_of("0123456789") != std::string::npos)
+//			throw std::runtime_error("Invalid port number in Host header: " + host_port);
+//		else
+//			return host;
+//	}
+//	return ""; 
+//}
 
 int	Server::reading_data(int fd)
 {
@@ -266,24 +273,67 @@ bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_c
 	return false; // Body size is within the limit
 }
 
+void	Server::get_ip_port(int fd)
+{
+	struct sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+	if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) == -1)
+		throw std::runtime_error("Failed to get socket name");
+	char ip_str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str)) == NULL)
+		throw std::runtime_error("Failed to convert IP address to string");
+	int port = ntohs(addr.sin_port);
+	_socket_states[fd]._ip = std::string(ip_str);
+	_socket_states[fd]._port = convert<std::string>(port);
+}
+
+std::string	extract_server_name(const std::string& host_header, const std::string& port)
+{
+	if (host_header.empty())
+		throw std::runtime_error("Host header is empty");
+
+	std::string server_name = host_header;
+	size_t colon_pos = host_header.find(':');
+	if (colon_pos != std::string::npos)
+	{
+		server_name = host_header.substr(0, colon_pos);
+		std::string host_port = host_header.substr(colon_pos + 1);
+		if (!host_port.empty() && host_port != port)
+			throw std::runtime_error("Port in Host header does not match server port: " + host_port + " != " + port);
+	}
+	return server_name;
+}
+
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
+	int status = reading_data(fd);
 	if (_socket_states[fd]._server_name.empty())
 	{
 		try { 
-		 		_socket_states[fd]._server_name = get_server_name(fd);
-				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]._server_name);
+				get_ip_port(fd);
+				std::cout << "Client connected from port: " << _socket_states[fd]._port << std::endl;
+				std::cout << "Client connected from ip: " << _socket_states[fd]._ip << std::endl;
+				_socket_states[fd]._server_name = extract_server_name(_socket_states[fd].get_header("Host"), _socket_states[fd]._port);
+				std::cout << "Server name: " << _socket_states[fd]._server_name << std::endl;
+		 		//_socket_states[fd]._server_name = get_server_name(fd);
+				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]);
+				//std::cout << "Matched server name: " << _socket_states[fd]._server.get_server_name() << " | " << _socket_states[fd]._server.DEBUG_test() << std::endl;
 				_socket_states[fd]._autoindex = _socket_states[fd]._server.get_autoindex();
 				_socket_states[fd].set_rootpath(_socket_states[fd]._server.get_root());
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Error: Getting server name: " << e.what() << std::endl;
-			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), false));
+			return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), false));
 		}
 	}
-	if (reading_data(fd))
-		return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
+	if (status)
+	{
+		try { std::string code = convert<std::string>(_socket_states[fd].get_status_code());
+			return (build_response(_socket_states[fd], code, displayErrorPage(code, http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
+		}
+		catch(...) { return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive())); }
+	}
 	if (_socket_states[fd].get_state() == RECEIVING_BODY)
 		return ;
 	if (_socket_states[fd].get_state() == COMPLETE)
@@ -314,8 +364,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 					return (build_response(_socket_states[fd], it->second.substr(0, 3), "", _socket_states[fd].getKeepAlive()));
 				}
 			}
-
-
 		}
 		catch (std::exception &e)
 		{
@@ -323,8 +371,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 		}
 	}
-
-	std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
+	//std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
 	if (_socket_states[fd].is_ready())
 	{

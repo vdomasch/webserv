@@ -35,15 +35,18 @@ class Server
 		void		handle_new_connection(int fd, sockaddr_in &servaddr);
 		void		handle_client_request(HTTPConfig &http_config, int fd);
 
-		bool		is_server_socket(int fd);
-		int			close_msg(int fd, const std::string &message, int err, int return_code);
-		void		update_max_fd(int fd);
-		void		shutdown_all_sockets();
-		std::string	get_server_name(int fd);
-		void		clean_sockets();
 		int			reading_data(int fd);
+		bool		is_server_socket(int fd);
+		std::string	get_server_name(int fd);
+		void		get_ip_port(int fd);
+
 		bool		is_conflicting_binding(const std::string& ip, std::string port, const std::set<std::string>& already_bound);
 		bool		client_body_size_too_large(HttpRequest &request, HTTPConfig &http_config);
+
+		void		update_max_fd(int fd);
+		int			close_msg(int fd, const std::string &message, int err, int return_code);
+		void		shutdown_all_sockets();
+		void		clean_sockets();
 
 };
 

@@ -28,6 +28,8 @@ class	HttpRequest
 		bool			_autoindex;
 		bool			_is_php_cgi;
 		size_t			_response_sent;
+		std::string		_ip;
+		std::string		_port;
 		std::string		_server_name;
 		std::string		_location_name;
 		std::string		_location_root;
