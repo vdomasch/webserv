@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-int	stock_childpid(int pid, bool replace); //!
+int	stock_childpid(int pid, bool replace);
 
 CGIContent::CGIContent()
 {
@@ -86,7 +86,7 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 	}
 
 	this->cgi_forkfd = fork();
-	stock_childpid(this->cgi_forkfd, true); //! 
+	stock_childpid(this->cgi_forkfd, true);
 
 	if (this->cgi_forkfd == 0)
 	{
