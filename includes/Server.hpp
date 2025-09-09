@@ -8,7 +8,6 @@
 # include <arpa/inet.h>
 # include <set>
 
-
 class Server
 {
 	public:
@@ -17,11 +16,11 @@ class Server
 		
 		void		launch_server(HTTPConfig &http_config);
 
+		t_fd_data		_socket_data;
 		std::map<int, int>	get_port_to_socket_map() const;
 		std::map<int, int> 	get_socket_to_port_map() const;
 		
 	private:
-		t_fd_data		_socket_data;
 
 		std::set<std::string>																_ip_port_bound;
 		std::map<int, int>																	_port_to_socket_map;

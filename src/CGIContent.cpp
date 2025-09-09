@@ -1,5 +1,7 @@
 #include "CGIContent.hpp"
 #include "HTTPConfig.hpp"
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int	stock_childpid(int pid, bool replace); //!
 
@@ -68,7 +70,7 @@ void 	CGIContent::setEnvCGI(std::string cgi_path, std::string type, std::string 
 
 }
 
-void 	CGIContent::executeCGI()
+void 	CGIContent::executeCGI(bool &exec_failed)
 {	
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
@@ -88,6 +90,10 @@ void 	CGIContent::executeCGI()
 
 	if (this->cgi_forkfd == 0)
 	{
+
+		int orig_stdout = dup(STDOUT_FILENO);
+		int orig_stdin = dup(STDIN_FILENO);
+
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_in[0]);
@@ -95,13 +101,20 @@ void 	CGIContent::executeCGI()
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		
+		// _argv[0] = (char*)"/not/a/real/path";
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
-		std::cerr << "Error: Execve failed !\r\n";
+		std::cerr << "[child process] Error: Execve failed !\r\n";
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
 		// and is waiting to be read using pipe_out[0] (which is the read end of the pipe)
 		
-		exit(this->_exitcode); // if fails
+		dup2(orig_stdout, STDOUT_FILENO);
+		dup2(orig_stdin, STDIN_FILENO);
+    	close(orig_stdout);
+    	close(orig_stdin);
+
+		g_running = false;
+		exec_failed = true;
 	}
 	else if (this->cgi_forkfd == -1)
 	{
@@ -113,7 +126,6 @@ void 	CGIContent::executeCGI()
 	{
 		close(pipe_in[0]);    // Parent doesn't read from pipe_in
     	close(pipe_out[1]);   // Parent doesn't write to pipe_out
-		alarm(5); //!
 	}
 }
 
@@ -136,29 +148,81 @@ int	CGIContent::sendCGIBody(std::string body)
 }
 
 
-std::string 	CGIContent::grabCGIBody()
+std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 {
 	std::string	result;
-	char		buffer[CGI_BUFFERSIZE] = {0};
+	char		buffer[CGI_BUFFERSIZE];
 	int			bytes_read = 0;
-	int			total_read = 0;
 
+	// Set pipe to non-blocking mode
+	int flags = fcntl(this->pipe_out[0], F_GETFL, 0);
+	fcntl(this->pipe_out[0], F_SETFL, flags | O_NONBLOCK);
 
-	while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
+	time_t start = time(0);
+	bool done = false;
+
+	while (!done)
 	{
-		result.append(buffer, bytes_read);
-		total_read += bytes_read;
-	}
-	if (bytes_read < 0) {
-		std::cerr << "Error: Read error ! \n";
-		close(this->pipe_out[0]);
-		this->_exitcode = -1;
-		return("");
-	}
-	
-	close(this->pipe_out[0]);
+		bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE);
+		if (bytes_read > 0) {
+			result.append(buffer, bytes_read);
+		} else if (bytes_read == 0) {
+			//pipe closed-->> no more data
+			done = true;
+			break;
+		} else if (bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+			// no data right now-> keep looping
+		} else {
+			std::cerr << "Error: Read error ! \n";
+			close(this->pipe_out[0]);
+			this->_exitcode = -1;
+			return "";
+		}
 
-	return (result);
+		// is child exited ?
+		pid_t ret = waitpid(child_pid, &status, WNOHANG);
+		if (ret == child_pid) {
+			//yes, read the rest
+			continue;
+		}
+
+		//timeout
+		if (time(0) - start >= timeout_sec) {
+			kill(child_pid, SIGKILL);
+			stock_childpid(-42, true);
+			waitpid(child_pid, &status, 0);
+			done = true;
+			break;
+		}
+	}
+
+	close(this->pipe_out[0]);
+	return result;
 }
+
+// std::string    CGIContent::grabCGIBody()
+// {
+//     std::string    result;
+//     char        buffer[CGI_BUFFERSIZE] = {0};
+//     int            bytes_read = 0;
+//     int            total_read = 0;
+
+
+//     while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
+//     {
+//         result.append(buffer, bytes_read);
+//         total_read += bytes_read;
+//     }
+//     if (bytes_read < 0) {
+//         std::cerr << "Error: Read error ! \n";
+//         close(this->pipe_out[0]);
+//         this->_exitcode = -1;
+//         return("");
+//     }
+    
+//     close(this->pipe_out[0]);
+
+//     return (result);
+// }
 
 int	CGIContent::get_exitcode()	{ return _exitcode; }

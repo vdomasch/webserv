@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cctype>
 
-
 bool g_running = true;
 
 void handle_signal(int signum) { if (signum) { g_running = false; } }
@@ -21,18 +20,6 @@ int	stock_childpid(int pid, bool replace) //!
 	if (replace == true)
 		saved_pid = pid;
 	return (saved_pid);
-}
-
-void	handle_child_timeout(int signum) //!
-{
-	(void)signum;
-
-	int child_pid = stock_childpid(0, false);
-	if (child_pid > 0) {
-		kill(child_pid, SIGKILL);
-		std::cerr << "Child process was killed due to timeout\n" << "\n";
-		stock_childpid(-42, true);
-	}
 }
 
 Server::Server()
@@ -163,7 +150,6 @@ void	Server::launch_server(HTTPConfig &http_config)
 
 	signal(SIGINT, handle_signal);
 	signal(SIGTSTP, handle_signal);
-	signal(SIGALRM, handle_child_timeout); //! 
 	running_loop(http_config, servaddr);
 
 	shutdown_all_sockets();
@@ -234,24 +220,23 @@ int	Server::reading_data(int fd)
 
 		
 		if (bytes_read < 0)
-		;
+			continue ;
 		if (bytes_read == 0)
 		{
-			close_msg(fd, "Client Disconnected", 0, 0);
+			close_msg(fd, "Client Disconnected", 0, 0); //!
 			return 1;
 		}
 		if (bytes_read > 0)
-		_socket_states[fd].append_data(std::string(buffer, bytes_read));
+			_socket_states[fd].append_data(std::string(buffer, bytes_read));
 	} while (bytes_read > 0);
 	if (_socket_states[fd].has_error())
 	{
+		// _socket_states[fd].print_state_status(); //!
 		std::cerr << "Error: Error in request" << std::endl;
 		return 2;
 	}
 	if (!_socket_states[fd].is_ready())
-	{
-		return 1;
-	}
+		return 0;
 	
 	if (_socket_states[fd].get_method().empty())
 	{
@@ -349,7 +334,9 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		catch(...) { return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive())); }
 	}
-	if (_socket_states[fd].get_state() == RECEIVING_BODY || _socket_states[fd].get_state() == COMPLETE)
+	if (_socket_states[fd].get_state() == RECEIVING_BODY)
+		return ;
+	if (_socket_states[fd].get_state() == COMPLETE)
 	{
 		try { 
 			_socket_states[fd]._location_name = find_location_name_and_set_root(_socket_states[fd].get_target(), _socket_states[fd]._server, _socket_states[fd]._location_root, _socket_states[fd]._autoindex);
@@ -377,8 +364,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 					return (build_response(_socket_states[fd], it->second.substr(0, 3), "", _socket_states[fd].getKeepAlive()));
 				}
 			}
-
-
 		}
 		catch (std::exception &e)
 		{
