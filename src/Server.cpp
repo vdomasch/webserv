@@ -217,7 +217,7 @@ int	Server::reading_data(int fd)
 		if (bytes_read == 0)
 		{
 			close_msg(fd, "Client Disconnected", 0, 0); //!
-			return 1;
+			return 0;
 		}
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));

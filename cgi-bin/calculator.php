@@ -68,7 +68,7 @@ if ($n1 !== null && $n2 !== null && $op !== null) {
 
 	if ($n1 == 0 && $n2 == 0 && $op == "+")
 	{
-		$result = "LA TETE A TOTO 0+0";
+		$result = "LA TETE A TOTO ☝️🤓";
 	}
 	else
 	{
@@ -97,7 +97,7 @@ echo "<!DOCTYPE html>
 		<h2>You entered : $n1 $op $n2</h2>
 			<h2>Here is your result !</h2>
 			<div class='responsive-row'>
-				<h2 style='text-align:center;'> --> $result</h2>
+				<h2 style='text-align:center;'> = $result</h2>
 			</div>
 			<a href='/calculator.html' class='responsive-item'>Back to Calculator</a>
 		</section>

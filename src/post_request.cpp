@@ -25,6 +25,8 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "image/webp") return ".webp";
 	if (content_type == "image/jpeg" || content_type == "image/jpg") return ".jpg";
 	if (content_type == "image/x-icon") return ".ico";
+	if (content_type == "video/mp4") return ".mp4";
+	if (content_type == "audio/mpeg") return ".mp3";
 	if (content_type == "application/x-shockwave-flash") return ".swf";
 	if (content_type == "application/x-tar") return ".tar";
 	if (content_type == "application/x-7z-compressed") return ".7z";
@@ -63,28 +65,28 @@ std::string	get_filename(const std::string& head)
 
 std::string create_filename(std::string& root, const std::string& head)
 {
-	int errcode = 0;
+	int		errcode = 0;
+	size_t	cpt = 0;
 	std::string filename = get_filename(head);
 	std::string extension = get_extension(head);
 
-	if (filename.find(extension) == std::string::npos)
-	{
-		std::string file = root + filename;
-		std::string file_ext = file + extension; 
-		if (check_object_type(file, &errcode) == IS_EXISTINGFILE)
-			filename += "_" + get_timestamp() + extension;
-		else if (check_object_type(file_ext, &errcode) == IS_EXISTINGFILE)
-			filename += "_" + get_timestamp();
-		else
-			filename += extension;
-	}
+	if (filename.find(extension) == std::string::npos || extension.empty())
+		return "";
 	else
 	{
 		std::string file = root + filename;
-		if (check_object_type(file, &errcode) == IS_EXISTINGFILE)
-			filename = filename.erase(filename.find(extension)) + "_" + get_timestamp() + extension;
-	}
 
+		std::string filename_tmp = filename;
+		while (check_object_type(root + filename_tmp, &errcode) == IS_EXISTINGFILE)
+		{
+			cpt += 1;
+			std::string cpt_str;
+			try { cpt_str = convert<std::string>(cpt); }
+			catch (...) { return ("");};
+			filename_tmp = filename.substr(0, filename.find(extension)) + "_" + cpt_str + extension;
+		}
+		filename = filename_tmp;
+	}
 	return filename;
 }
 
@@ -233,8 +235,11 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	std::string head, body;
 	parse_post_body(req, head, body);
-
+	
 	std::string filename = create_filename(root, head);
+	if (filename.empty())
+		return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
+
 	std::string file_path = root + filename; // Full path of file
 
 	if (create_directories(server, file_path.substr(0, file_path.rfind('/'))) == false)
