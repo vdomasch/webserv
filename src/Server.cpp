@@ -234,7 +234,6 @@ int	Server::reading_data(int fd)
 	} while (bytes_read > 0 || (_socket_states[fd].get_state() != COMPLETE));
 	if (_socket_states[fd].has_error())
 	{
-		// _socket_states[fd].print_state_status(); //!
 		std::cerr << "Error: Error in request" << std::endl;
 		return 2;
 	}
