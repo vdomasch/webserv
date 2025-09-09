@@ -138,6 +138,9 @@ void	Server::launch_server(HTTPConfig &http_config)
 									_ip_port_bound.insert(key);
 									_port_to_socket_map[port] = server_socket;
 									_socket_to_port_map[server_socket] = port;
+									std::cout << "Binding to " << key << std::endl;
+									std::cout << "Server socket: " << server_socket << std::endl;
+									std::cout << "Port: " << port << std::endl;
 									_socket_states[server_socket] = HttpRequest();
 									_socket_states[server_socket].set_is_server_socket(true);
 									FD_SET(server_socket, &_socket_data.saved_readsockets);
@@ -228,7 +231,7 @@ int	Server::reading_data(int fd)
 		}
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
-	} while (bytes_read > 0);
+	} while (bytes_read > 0 || (_socket_states[fd].get_state() != COMPLETE));
 	if (_socket_states[fd].has_error())
 	{
 		// _socket_states[fd].print_state_status(); //!
@@ -275,10 +278,15 @@ bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_c
 
 void	Server::get_ip_port(int fd)
 {
+	std::cout << "Getting IP and port for fd: " << fd << std::endl;
+	std::cout << "Fd status: " << fcntl(fd, F_GETFL) << std::endl; //!
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
 	if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) == -1)
-		throw std::runtime_error("Failed to get socket name");
+	{
+        perror("getsockname failed"); // This will print the error
+        throw std::runtime_error("Failed to get socket name");
+    }
 	char ip_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str)) == NULL)
 		throw std::runtime_error("Failed to convert IP address to string");
@@ -306,11 +314,12 @@ std::string	extract_server_name(const std::string& host_header, const std::strin
 
 void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 {
+	try { get_ip_port(fd);	}
+	catch (...) { close_msg(fd, "Failed to get client IP and port", 1, -1); }
 	int status = reading_data(fd);
 	if (_socket_states[fd]._server_name.empty())
 	{
 		try { 
-				get_ip_port(fd);
 				std::cout << "Client connected from port: " << _socket_states[fd]._port << std::endl;
 				std::cout << "Client connected from ip: " << _socket_states[fd]._ip << std::endl;
 				_socket_states[fd]._server_name = extract_server_name(_socket_states[fd].get_header("Host"), _socket_states[fd]._port);
@@ -440,7 +449,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				if (sent <= 0)
 				{
 					close_msg(i, "Error sending response", 1, -1);
-					_socket_states.erase(i);
+					//_socket_states.erase(i);
 					continue ;
 				}
 				req._response_sent += sent;
@@ -450,7 +459,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					if (!req.getKeepAlive())
 					{
 						close_msg(i, "Connection closed (no keep-alive)", 0, 0);
-						_socket_states.erase(i);
+						//_socket_states.erase(i);
 						continue;
 					}
 				}
@@ -464,7 +473,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					{
 						std::cerr << "Error: Timeout" << std::endl;
 						close_msg(i, "Failed to send timeout response", 1, -1);
-						_socket_states.erase(i);
+						//_socket_states.erase(i);
 						continue;
 					}
 					if (!_socket_states[i].getKeepAlive())
@@ -473,7 +482,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						close_msg(i, "Error response sent", 1, _socket_states[i].get_status_code());
 				}
 				close_msg(i, "Idle connection closed", 0, 0);
-				_socket_states.erase(i);
+				//_socket_states.erase(i);
 			}
 		}
 	}
@@ -495,7 +504,7 @@ void	Server::clean_sockets()
 				{
 					std::cerr << "Error: Socket option failed for fd " << i << ": " << strerror(errno) << std::endl;
 					close_msg(i, "Cleaning invalid socket", 1, 0);
-					_socket_states.erase(i);
+					//_socket_states.erase(i);
 				}
 			}
 		}
@@ -525,6 +534,7 @@ int Server::close_msg(int fd, const std::string &message, int err, int code)
 		std::cout << "\033[32m" << message << " (fd " << fd << ") - CLOSED\033[0m" << std::endl;
 
 	close(fd);
+	_socket_states.erase(fd);
 	FD_CLR(fd, &_socket_data.saved_readsockets);
 	update_max_fd(fd);
 	return code;
@@ -549,6 +559,7 @@ void	Server::shutdown_all_sockets()
 		{
 			std::cout << "[Shutdown] Closing FD " << fd << std::endl;
 			close(fd);
+			_socket_states.erase(fd);
 		}
 	}
 	FD_ZERO(&_socket_data.saved_readsockets);
@@ -562,6 +573,7 @@ void	Server::shutdown_all_sockets()
 		{
 			std::cout << "[Shutdown] Closing server socket on port " << it->first << std::endl;
 			close(fd);
+			_socket_states.erase(fd);
 			FD_CLR(fd, &_socket_data.saved_readsockets);
 		}
 	}
