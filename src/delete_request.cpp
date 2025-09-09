@@ -27,16 +27,17 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 {
 	int errcode = 0;
 
+
 	std::string target = req.get_target();
-
+	
 	ServerConfig &server = find_current_server(http_config, req._server_name);
-
+	
 	std::string root = req._location_root;
 	std::string error_code = validate_request_context(req._location_name, root, errcode, server, "DELETE");
 	if (!error_code.empty())
-		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
+	return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 	std::string path = root + target;
-
+	
 	if (!is_authorized_path(path, server.get_authorized_paths()))
 	{
 		std::cerr << "Error: Unauthorized DELETE request for path: " << path << std::endl;

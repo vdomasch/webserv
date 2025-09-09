@@ -70,7 +70,6 @@ std::string create_filename(std::string& root, const std::string& head)
 	std::string filename = get_filename(head);
 	std::string extension = get_extension(head);
 
-
 	if (filename.find(extension) == std::string::npos || extension.empty())
 		return "";
 	else
@@ -241,7 +240,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	std::string head, body;
 	parse_post_body(req, head, body);
-
+	
 	std::string filename = create_filename(root, head);
 	if (filename.empty())
 		return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));

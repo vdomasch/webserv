@@ -19,7 +19,7 @@
     		<label for="deletePath">Path of the file to delete:</label><br>
     		<input type="text" id="deletePath" placeholder="/my/path.txt" size="40"><br><br>
 
-    		<button onclick="sendDelete()">Supprimer</button>
+    		<button id="sub" onclick="sendDelete()">Supprimer</button>
 
     		<p id="result"></p>
 
@@ -27,6 +27,12 @@
     		function sendDelete() {
     		    const path = document.getElementById("deletePath").value;
 			
+				if(document.getElementById("deletePath").value==="")
+				{
+					document.getElementById("result").innerText = "🫥 Path cannot be empty !";
+					return ;
+				}
+				
     		    fetch(path, { method: 'DELETE' })
     		    .then(response => {
     		        if (response.status === 204) {

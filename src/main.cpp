@@ -54,6 +54,7 @@ int main(int argc, char **argv)
 
 	Server server;
 	
+	server._socket_data.cg.cgi_forkfd = 0;
 	server.launch_server(http_config);
 	if (server._socket_data.cg.cgi_forkfd == 0)
 		return (42);
