@@ -277,8 +277,8 @@ bool	Server::client_body_size_too_large(HttpRequest &request, HTTPConfig &http_c
 
 void	Server::get_ip_port(int fd)
 {
-	std::cout << "Getting IP and port for fd: " << fd << std::endl;
-	std::cout << "Fd status: " << fcntl(fd, F_GETFL) << std::endl; //!
+	//std::cout << "Getting IP and port for fd: " << fd << std::endl;
+	//std::cout << "Fd status: " << fcntl(fd, F_GETFL) << std::endl; //!
 	struct sockaddr_in addr;
 	socklen_t addr_len = sizeof(addr);
 	if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) == -1)
@@ -319,10 +319,10 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	if (_socket_states[fd]._server_name.empty())
 	{
 		try { 
-				std::cout << "Client connected from port: " << _socket_states[fd]._port << std::endl;
-				std::cout << "Client connected from ip: " << _socket_states[fd]._ip << std::endl;
+				//std::cout << "Client connected from port: " << _socket_states[fd]._port << std::endl;
+				//std::cout << "Client connected from ip: " << _socket_states[fd]._ip << std::endl;
 				_socket_states[fd]._server_name = extract_server_name(_socket_states[fd].get_header("Host"), _socket_states[fd]._port);
-				std::cout << "Server name: " << _socket_states[fd]._server_name << std::endl;
+				//std::cout << "Server name: " << _socket_states[fd]._server_name << std::endl;
 		 		//_socket_states[fd]._server_name = get_server_name(fd);
 				_socket_states[fd]._server = find_current_server(http_config, _socket_states[fd]);
 				//std::cout << "Matched server name: " << _socket_states[fd]._server.get_server_name() << " | " << _socket_states[fd]._server.DEBUG_test() << std::endl;

@@ -40,21 +40,22 @@
 					curatedFilename = file.name.split(' ').join('_');
 					formData.append("myfile", file, "uploads/" + curatedFilename);
 					fetch("/uploads/", {
-						method: "POST",
-						body: formData
+						    method: "POST",
+						    body: formData
 					})
 					.then(response => {
-						return response.text().then(text => {
-							if (response.ok) {
-								document.getElementById("uploadResult").innerText = "✅ File sent. Path : " + text;
-							} else {
-								document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${text}`;
-							}
-							fileInput.value = "";
-						});
+					    if (response.ok) {
+					        return response.text().then(text => {
+					            document.getElementById("uploadResult").innerText = "✅ File sent. Path : " + text;
+					            fileInput.value = "";
+					        });
+					    } else {
+					        document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${response.statusText}`;
+					        fileInput.value = "";
+					    }
 					})
 					.catch(error => {
-						document.getElementById("uploadResult").innerText = "❌ Error network : " + error;
+					    document.getElementById("uploadResult").innerText = "❌ Network Error: " + error;
 					});
 				}
 			</script>
