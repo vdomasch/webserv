@@ -13,7 +13,7 @@ bool g_running = true;
 
 void handle_signal(int signum) { if (signum) { g_running = false; } }
 
-int	stock_childpid(int pid, bool replace) //!
+int	stock_childpid(int pid, bool replace)
 {
 	static int	saved_pid = 0;
 
@@ -383,7 +383,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					handle_client_request(http_config, i);
 				}
 			}
-
 			if (FD_ISSET(i, &_socket_data.ready_writesockets))
 			{
 				HttpRequest &req = _socket_states[i];
@@ -408,11 +407,12 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 			}
 
-			if (!_socket_states[i].get_is_server_socket() && now - _socket_states[i].get_time() > TIMEOUT_SEC)
+			if (!_socket_states[i].get_is_server_socket() && (now - _socket_states[i].get_time() > TIMEOUT_SEC))
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
 				{
-					if (send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 19\r\nConnection: close\r\n\r\n408 Request Timeout", 91, 0) < 0)
+					int res = send(i, "HTTP/1.1 408 Request Timeout\r\nContent-Length: 19\r\nConnection: close\r\n\r\n408 Request Timeout", 91, 0);
+					if ( res < 0)
 					{
 						std::cerr << "Error: Timeout" << std::endl;
 						close_msg(i, "Failed to send timeout response", 1, -1);
