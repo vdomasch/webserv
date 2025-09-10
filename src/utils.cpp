@@ -104,7 +104,6 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, HttpRequest& req)
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
 
-	// std::cout << "TARGET IS : (" << target << ")\n\n"; //! 
 	
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	std::string location_name = server.get_matching_location("/" + target, autoindex);
@@ -114,7 +113,6 @@ std::string find_location_name_and_set_root(const std::string &target, ServerCon
 		root = it_loc->second.get_root();
 	else
 		return "";
-	// std::cout << "loc name ISS : (" << location_name << ")\n\n";
 	return location_name;
 }
 
@@ -125,7 +123,8 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
-	if (status_code == "")
+	// if (status_code == "")
+
 	if (!req._is_php_cgi)
 		res.add_header("Content-Type", req.get_content_type());
 
