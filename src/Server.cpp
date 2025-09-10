@@ -462,7 +462,7 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				}
 			}
 
-			if (!_socket_states[i].get_is_server_socket() && (now - _socket_states[i].get_time() > TIMEOUT_SEC))
+			if (!_socket_states[i].get_is_server_socket() && (_socket_states[i].get_time() < now && now - _socket_states[i].get_time() > TIMEOUT_SEC))
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
 				{
