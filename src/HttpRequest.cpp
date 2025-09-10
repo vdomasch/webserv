@@ -4,9 +4,39 @@
 #include <iostream>
 #include <string>
 
-HttpRequest::HttpRequest():	_is_error_request(false), _autoindex(true), _is_php_cgi(false), _is_server_socket(false),
-							_state(RECEIVING_HEADER), _content_length(0), _header_parsed(false), _keep_alive(true),
-							_is_multipart(false),_is_redirection(false), _status_code(0), _content_type("text/html") //!
+HttpRequest::HttpRequest():	_is_error_request(false),
+							_autoindex(true),
+							_is_php_cgi(false),
+							_response_sent(0),
+							_last_find(0),
+							_ip(""),
+							_port(""),
+							_server_name(""),
+							_location_name(""),
+							_location_root(""),
+							_server(),
+							_is_server_socket(false),
+							_raw_data(""),
+							_body(""),
+							_header(""),
+							_method(""),
+							_target(""),
+							_query_string(""),
+							_http_version(""),
+							_rootpath(""),
+							_redirection(""),
+							_headers_map(),
+							_state(RECEIVING_HEADER),
+							_content_length(0),
+							_header_parsed(false),
+							_keep_alive(true),
+							_is_multipart(false),
+							_is_redirection(false),
+							_status_code(0),
+							_last_time(0),
+							_response(""),
+							_boundary(""),
+							_content_type("text/html")
 {
 	_last_time = time(NULL);
 }
@@ -15,14 +45,14 @@ HttpRequest::~HttpRequest() {}
 
 void HttpRequest::append_data(const std::string &data)
 {
-	
-	_raw_data += data;
 	bool was_in_header = false;
 	if (_state == RECEIVING_HEADER)
 	{
-		size_t pos = _raw_data.find("\r\n\r\n");
+		_raw_data += data;
+		size_t pos = _raw_data.find("\r\n\r\n", _last_find);
 		if (pos != std::string::npos)
 		{
+			_last_find = _raw_data.size() - 4;
 			_header = _raw_data.substr(0, pos);
 			_body = _raw_data.substr(pos + 4);
 			
@@ -47,8 +77,11 @@ void HttpRequest::append_data(const std::string &data)
 			_body += data;
 		if (_is_multipart)
 		{
-			if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
+			size_t pos = _body.find(_boundary + "--", _last_find);
+			//if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
+			if (pos != std::string::npos)
 			{
+				_last_find = _body.size() - _boundary.size() - 2;
 				_state = COMPLETE;
 				_last_time = time(NULL);
 			}
