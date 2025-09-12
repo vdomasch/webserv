@@ -60,11 +60,13 @@ void HttpRequest::append_data(const std::string &data)
 			_header_parsed = true;
 			if (!_is_multipart && _content_length == 0)
 			{
+				_last_find = 0;
 				_state = COMPLETE;
 				_last_time = time(NULL);
 			}
 			else
 			{
+				_last_find = 0;
 				_state = RECEIVING_BODY;
 				_last_time = time(NULL);
 			}
@@ -78,7 +80,6 @@ void HttpRequest::append_data(const std::string &data)
 		if (_is_multipart)
 		{
 			size_t pos = _body.find(_boundary + "--", _last_find);
-			//if (_body.find(_boundary + "--\r\n") != std::string::npos || _body.find(_boundary + "--") != std::string::npos)
 			if (pos != std::string::npos)
 			{
 				_last_find = _body.size() - _boundary.size() - 2;

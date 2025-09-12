@@ -343,7 +343,7 @@ bool	ServerConfig::handle_host(std::string value)
 		tmp_str = value.substr(0, value.find('.')).c_str();
 		if (tmp_str.size() > 1 && tmp_str.at(0) == '0')
 		{
-			std::cout << "Error: invalide ip value '" << tmp_str << "'!" << std::endl;
+			std::cerr << "Error: invalide ip value '" << tmp_str << "'!" << std::endl;
 			return 1;
 		}
 		tmp = std::atol(value.substr(0, value.find('.')).c_str());

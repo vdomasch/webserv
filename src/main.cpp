@@ -85,27 +85,6 @@ int main(int argc, char **argv)
 
 	authorized_delete_paths(http_config);
 
-	std::map<std::string, std::vector<ServerConfig> > map_server = http_config.get_server_list();
-	if (!map_server.empty())
-	{
-		for (std::map<std::string, std::vector<ServerConfig> >::iterator it_map = map_server.begin(); it_map != map_server.end(); ++it_map)
-		{
-			std::vector<ServerConfig> server_list = it_map->second;
-
-			for (std::vector<ServerConfig>::iterator it = server_list.begin(); it != server_list.end(); ++it)
-			{
-				ServerConfig &server = *it;
-
-				(void)server;
-
-				std::set<std::string> authorize = server.get_authorized_paths();
-				
-				for (std::set<std::string>::iterator it_print = authorize.begin(); it_print != authorize.end(); it_print++)
-					std::cout << "Authorized DELETE path: " << *it_print << std::endl;
-			}
-		}
-	}
-
 
 	Server server;
 	

@@ -139,9 +139,6 @@ void	Server::launch_server(HTTPConfig &http_config)
 				_ip_port_bound.insert(key);
 				_port_to_socket_map[port] = server_socket;
 				_socket_to_port_map[server_socket] = port;
-				std::cout << "Binding to " << key << std::endl;
-				std::cout << "Server socket: " << server_socket << std::endl;
-				std::cout << "Port: " << port << std::endl;
 				_socket_states[server_socket] = HttpRequest();
 				_socket_states[server_socket].set_is_server_socket(true);
 				FD_SET(server_socket, &_socket_data.saved_readsockets);
@@ -221,10 +218,10 @@ int	Server::reading_data(int fd)
 	ssize_t bytes_read;
 	do {
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-
+		
 		
 		if (bytes_read < 0)
-			continue ;
+			;
 		if (bytes_read == 0)
 		{
 			close_msg(fd, "Client Disconnected", 0, 0); //!
@@ -232,7 +229,7 @@ int	Server::reading_data(int fd)
 		}
 		if (bytes_read > 0)
 			_socket_states[fd].append_data(std::string(buffer, bytes_read));
-	} while (bytes_read > 0 || (_socket_states[fd].get_state() != COMPLETE));
+	} while (bytes_read > 0 && (_socket_states[fd].get_state() != COMPLETE));
 	if (_socket_states[fd].has_error())
 	{
 		std::cerr << "Error: Error in request" << std::endl;
@@ -425,8 +422,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 			{
 				if (is_server_socket(i))
 				{
-					std::cout << _socket_states[i].get_state() << std::endl;;
-					PRINT_DEBUG
 					handle_new_connection(i, servaddr);
 				}
 				else
@@ -461,7 +456,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					}
 				}
 			}
-
 			if (!_socket_states[i].get_is_server_socket() && (_socket_states[i].get_time() < now && now - _socket_states[i].get_time() > TIMEOUT_SEC))
 			{
 				if (_socket_states[i].get_state() != RESPONDED)
@@ -471,7 +465,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					{
 						std::cerr << "Error: Timeout" << std::endl;
 						close_msg(i, "Failed to send timeout response", 1, -1);
-						//_socket_states.erase(i);
 						continue;
 					}
 					if (!_socket_states[i].getKeepAlive())
@@ -480,7 +473,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 						close_msg(i, "Error response sent", 1, _socket_states[i].get_status_code());
 				}
 				close_msg(i, "Idle connection closed", 0, 0);
-				//_socket_states.erase(i);
 			}
 		}
 	}
