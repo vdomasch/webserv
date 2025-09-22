@@ -19,7 +19,7 @@ int	stock_childpid(int pid, bool replace)
 
 	if (replace == true)
 		saved_pid = pid;
-	return (saved_pid);
+	return saved_pid;
 }
 
 Server::Server()
@@ -77,7 +77,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 	if (server_fd < 0)
 	{
 		std::cerr << "Error: Failed to create socket" << std::endl;
-		return (-1);
+		return -1;
 	}
 	int opt = 1;
 	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
@@ -98,7 +98,7 @@ int	Server::initialize_server(ServerConfig &server, sockaddr_in &servaddr)
 		return close_msg(server_fd, "Failed to bind port " + server.get_port_number(), true, -1);
 	if (listen(server_fd, 1024) < 0)
 		return close_msg(server_fd, "Failed to listen on " + host_ip + ":" + server.get_port_number() , true, -1);
-	return (server_fd);
+	return server_fd;
 }
 
 void	Server::launch_server(HTTPConfig &http_config)
@@ -188,37 +188,12 @@ void Server::handle_new_connection(int fd, sockaddr_in &servaddr)
 	_socket_states[client_socket].set_time(time(NULL));
 }
 
-//std::string Server::get_server_name(int fd)
-//{
-//	std::map<int, int>::iterator it = _socket_to_port_map.find(fd);
-//	if (it != _socket_to_port_map.end())
-//	{
-//		int port = it->second;
-//		std::string port_str;
-//		port_str = convert<std::string>(port);
-
-//		std::string host = _socket_states[fd].get_header("Host");
-//		if (host.empty())
-//			return port_str;
-
-//		std::string host_port = host.substr(host.find(":") + 1);
-//		if (host_port.empty())
-//			return host + port_str;
-//		else if (port_str.find_first_not_of("0123456789") != std::string::npos)
-//			throw std::runtime_error("Invalid port number in Host header: " + host_port);
-//		else
-//			return host;
-//	}
-//	return ""; 
-//}
-
 int	Server::reading_data(int fd)
 {
 	char buffer[BUFFER_SIZE] = {0};
 	ssize_t bytes_read;
 	do {
 		bytes_read = recv(fd, buffer, BUFFER_SIZE, 0);
-		
 		
 		if (bytes_read < 0)
 			;
@@ -373,7 +348,6 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 			return (build_response(_socket_states[fd], "404", displayErrorPage("404", http_config, _socket_states[fd], _socket_data), _socket_states[fd].getKeepAlive()));
 		}
 	}
-	//std::map<std::string, ServerConfig> server_list = http_config.get_server_list();
 
 	if (_socket_states[fd].is_ready())
 	{
@@ -441,7 +415,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 				if (sent <= 0)
 				{
 					close_msg(i, "Error sending response", 1, -1);
-					//_socket_states.erase(i);
 					continue ;
 				}
 				req._response_sent += sent;
@@ -451,7 +424,6 @@ void Server::running_loop(HTTPConfig &http_config, sockaddr_in &servaddr)
 					if (!req.getKeepAlive())
 					{
 						close_msg(i, "Connection closed (no keep-alive)", 0, 0);
-						//_socket_states.erase(i);
 						continue;
 					}
 				}
@@ -494,7 +466,6 @@ void	Server::clean_sockets()
 				{
 					std::cerr << "Error: Socket option failed for fd " << i << ": " << strerror(errno) << std::endl;
 					close_msg(i, "Cleaning invalid socket", 1, 0);
-					//_socket_states.erase(i);
 				}
 			}
 		}

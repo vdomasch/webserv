@@ -16,24 +16,12 @@ std::string	get_content_extension(const std::string& content_type)
 	if (content_type == "text/html") return ".html";
 	if (content_type == "text/plain") return ".txt";
 	if (content_type == "text/css") return ".css";
-	//if (content_type == "text/xml") return ".xml";
-	//if (content_type == "application/javascript" || content_type == "application/x-javascript") return ".js";
-	//if (content_type == "application/xml") return ".xml";
-	//if (content_type == "application/x-www-form-urlencoded") return ".url"; 
 	if (content_type == "image/gif") return ".gif";
 	if (content_type == "image/png") return ".png";
-	//if (content_type == "image/webp") return ".webp";
 	if (content_type == "image/jpeg" || content_type == "image/jpg") return ".jpg";
 	if (content_type == "image/x-icon") return ".ico";
 	if (content_type == "video/mp4") return ".mp4";
 	if (content_type == "audio/mpeg") return ".mp3";
-	//if (content_type == "application/x-shockwave-flash") return ".swf";
-	//if (content_type == "application/x-tar") return ".tar";
-	//if (content_type == "application/x-7z-compressed") return ".7z";
-	//if (content_type == "application/x-rar-compressed") return ".rar";
-	//if (content_type == "application/pdf") return ".pdf";
-	//if ((content_type == "application/octet-stream" && content_type.find("zip") != std::string::npos) || content_type == "application/x-zip-compressed" || content_type == "application/zip") return ".zip";
-	//if (content_type == "application/octet-stream") return ".bin";
 	return "";
 }
 
@@ -158,35 +146,34 @@ bool	extensionIsAllowed(ServerConfig &server, std::string target, int *errcode)
 		if (map.find("cgi_ext") != map.end())
 		{
 			std::string allowed_extensions = map.find("cgi_ext")->second;
-			// std::cout << "Allowed extensions : " << allowed_extensions << "\n";
 
 			std::size_t	pos = target.rfind(".");
 			if (pos==std::string::npos)
 			{
 				*errcode = 403;
-				return (false);
+				return false;
 			}
 			std::string	target_ext = target.substr(pos);
 			if (allowed_extensions.find(target_ext) != std::string::npos)
-				return (true);
+				return true;
 			else
 			{
 				*errcode = 403;
-				return (false);
+				return false;
 			}
 		}
-		else // Index "cgi_ext" was NOT found because it wasn't created, which means the "cgi_ext" line is not specified in config file
+		else
 		{
-			std::cerr << "Error: \"cgi_ext\" line is missing from cgi_bin location, all extensions are forbidden by default.\n";
+			std::cerr << "Error: \"cgi_ext\" line is missing from cgi_bin location, all extensions are forbidden by default." << std::endl;
 			*errcode = 403;
-			return (false);
+			return false;
 		}
 	}
 
 	if ((target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
@@ -194,8 +181,6 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	int errcode = 0;
 	std::string	target = req.get_target();
 	std::string	root = req._location_root;
-
-	//ServerConfig &server = find_current_server(http_config, req._server_name);
 
 	std::string context_status_errcode = validate_request_context(req._location_name, root, errcode, req._server, "POST");
 	if (!context_status_errcode.empty())
@@ -238,7 +223,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 	if (filename.empty())
 		return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
 
-	std::string file_path = root + filename; // Full path of file
+	std::string file_path = root + filename;
 
 	if (create_directories(req._server, file_path.substr(0, file_path.rfind('/'))) == false)
 	{

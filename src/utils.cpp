@@ -41,34 +41,6 @@ std::string	message_status(const std::string &status)
 
 ServerConfig&	find_current_server(HTTPConfig& http_config, HttpRequest& req)
 {
-	//std::map<std::string, std::vector<ServerConfig> >& server_list = http_config.get_server_list();
-	//std::vector<ServerConfig>& servers = server_list[req._port];
-
-
-	//ServerConfig best_match;
-	//size_t number_of_matches = 0;
-	//bool ip_match = false;
-	//for (std::vector<ServerConfig>::iterator it = servers.begin(); it != servers.end(); ++it)
-	//{
-	//	if (it->get_server_name() == req._server_name)
-	//	{
-	//		if (number_of_matches != 0)
-	//		{
-	//			if (ip_match == true && it->get_host_ip() == req._ip)
-	//				throw std::runtime_error("Multiple servers match the request with same server name and IP: " + req._server_name + " at " + req._ip);
-	//			else if (it->get_host_ip() == req._ip)
-	//			{
-	//				best_match = *it;
-	//				ip_match = true;
-	//			}
-	//		}
-	//		else
-	//			best_match = *it;
-	//		number_of_matches++;
-	//	}
-	//}
-	//return best_match;
-
 	 // Find the list of all servers configured for the request's port
     std::map<std::string, std::vector<ServerConfig> >& port_servers = http_config.get_server_list();
     std::vector<ServerConfig>& servers = port_servers[req._port]; // Convert port to string for map key
@@ -125,7 +97,6 @@ void	build_response(HttpRequest &req, const std::string &status_code, const std:
 
 	res.set_status(status_code, message_status(status_code));
 	res.set_body(body);
-	// if (status_code == "")
 
 	if (!req._is_php_cgi)
 		res.add_header("Content-Type", req.get_content_type());
@@ -209,11 +180,9 @@ std::string	find_error_page(const std::string& code, const std::string& location
 	std::map<std::string, std::string>::iterator it;
 
 	std::map<std::string, std::vector<ServerConfig> > server_list = http.get_server_list();
-	//std::map<std::string, ServerConfig>::iterator it_serv = server_list.find(server_name);
 
 	if (!location_name.empty())
 	{
-		//std::map<std::string, LocationConfig>::iterator it_loc = it_serv->second.get_location_list().find(location_name);
 		std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find(location_name);
 		if (it_loc != server.get_location_list().end())
 		{
@@ -224,31 +193,10 @@ std::string	find_error_page(const std::string& code, const std::string& location
 		}
 	}
 
-	//if (it_serv == server_list.end())
-	//{
-	//	std::string server_default_name = server_name.substr(server_name.find(':') + 1);
-	//	it_serv = server_list.find(server_default_name);
-	//	if (it_serv != server_list.end())
-	//	{
-	//		std::map<std::string, std::string>& map = it_serv->second.get_map_server();
-	//		it = map.find(code);
-	//		if (it != map.end())
-	//			return it->second;
-	//	}
-	//}
-	//else
-	//{
-	//	std::map<std::string, std::string>& map = it_serv->second.get_map_server();
-	//	std::map<std::string, std::string>::iterator it = map.find(code);
-	//	if (it != map.end())
-	//		return it->second;
-	//}
-
 	std::map<std::string, std::string>& map_server = server.get_map_server();
 	it = map_server.find(code);
 	if (it != map_server.end())
 		return it->second;
-
 
 	std::map<std::string, std::string> map = http.get_http_map();
 	it = map.find(code);

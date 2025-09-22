@@ -1,4 +1,5 @@
 #include "webserv.hpp"
+# include <sys/wait.h>
 
 int	stock_childpid(int pid, bool replace);
 
@@ -28,19 +29,19 @@ std::string	handleCgiErrorCode(int &errcode, std::string &target)
 	{
 		case 404:
 			std::cerr << "Error: Script not found for " << target << std::endl;
-			return ("404");
+			return "404";
 		case 500:
 			std::cerr << "Error: System call failed for " << target << std::endl;
-			return ("500");
+			return "500";
 		case 502:
 			std::cerr << "Error: Bad Gateway for " << target << std::endl;
-			return ("502");
+			return "502";
 		case 504:
 			std::cerr << "Error: Script timed out for " << target << std::endl;
-			return ("504");
+			return "504";
 		default:
 			std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
-			return ("400");
+			return "400";
 	}
 }
 
@@ -62,30 +63,35 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	if (exec_failed)
 	{
 		*errcode = 400;
-		return ("");
+		return "";
+	}
+	if (d.cg.get_exitcode() == -1)
+	{
+		*errcode = 500;
+		return "";
 	}
 	d.cg.sendCGIBody(req.get_body());
-	CGIBody = d.cg.grabCGIBody(d.cg.cgi_forkfd, 5, status); //5 sec timeout
+	CGIBody = d.cg.grabCGIBody(d.cg.cgi_forkfd, 5, status);
 	
 	if (d.cg.get_exitcode() == -1)
 	{
 		*errcode = 500;
-		return ("");
+		return "";
 	}
 	waitpid(d.cg.cgi_forkfd, &status, 0);
-	int	child_timeout = stock_childpid(0, false); // get the pid back
+	int	child_timeout = stock_childpid(0, false);
 	int exit_code = WEXITSTATUS(status);
 	if (child_timeout == -42)
 	{
 		std::cerr << "Error: Child process timed out !" << std::endl;
 		stock_childpid(0, true);
 		*errcode = 504;
-		return ("");
+		return "";
 	}
 	if (exit_code != 0)
 	{
 		child_set_errcode(exit_code, *errcode);
-		return ("");
+		return "";
 	}
 	*errcode = 0;
 	return CGIBody;
@@ -98,7 +104,7 @@ int	check_object_type(const std::string& path, int *errcode)
     if (stat (path.c_str(), &fileinfo) != 0)
 	{
 		*errcode = FILE_NOT_FOUND;
-		return (FILE_NOT_FOUND);
+		return FILE_NOT_FOUND;
 	}
 	if (S_ISDIR(fileinfo.st_mode))
         return IS_DIRECTORY;

@@ -45,13 +45,11 @@
 					})
 					.then(response => {
 					    if (response.ok) {
-					        // If the response is successful, you might still want to show the full text
 					        return response.text().then(text => {
 					            document.getElementById("uploadResult").innerText = "✅ File sent. Path : " + text;
 					            fileInput.value = "";
 					        });
 					    } else {
-					        // If the response is an error, this is the key change
 					        document.getElementById("uploadResult").innerText = `❌ Error ${response.status} : ${response.statusText}`;
 					        fileInput.value = "";
 					    }

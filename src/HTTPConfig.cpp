@@ -17,11 +17,16 @@ size_t	HTTPConfig::get_client_max_body_size()
 	if (it != _map_http.end() && it->second != "UNSET")
 	{
 		try { client_max_body_size = convert<ssize_t>(it->second); }
-		catch (std::exception &e) {
-			return (std::cerr << "Error: Client_max_body_size is not a number!" << std::endl, 0);
+		catch (std::exception &e)
+		{
+			std::cerr << "Error: Client_max_body_size is not a number!" << std::endl;
+			return 0;
 		}
 		if (client_max_body_size < 0)
-			return (std::cerr << "Error: Client_max_body_size is negative!" << std::endl, 0);
+		{
+			std::cerr << "Error: Client_max_body_size is negative!" << std::endl;
+			return 0;
+		}
 	}
 	return client_max_body_size;
 }
@@ -104,7 +109,7 @@ bool	HTTPConfig::parse_http()
 			std::cerr << "Error: Failed to open default config file, please execute as ./webserv \"config_file_name\"!" << std::endl;
 		else
 			std::cerr << "Error: Failed to open filename '" << _filename.c_str() << "'!" << std::endl;
-		return (true);
+		return true;
 	}
 	while (std::getline(infile, line)) {
         std::istringstream iss(line);  
@@ -300,8 +305,7 @@ bool	HTTPConfig::is_location_valid(std::istringstream &iss)
 
 void	HTTPConfig::DEBUG_HTTP_show()
 {
-	std::cout << "DEBUG: show everything contained in servers" << std::endl;
-	std::cout << std::endl;
+	std::cout << "DEBUG: show everything contained in servers\n" << std::endl;
 	for (std::map<std::string, std::vector<ServerConfig> >::iterator it = _server_list.begin(); it != _server_list.end(); ++it)
 	{
 		std::cout << "Server port: " << it->first << std::endl;
@@ -317,7 +321,7 @@ void	HTTPConfig::DEBUG_HTTP_show()
 	//	std::cout << paths.size() << " authorized paths found." << std::endl;
 	//	for (std::set<std::string>::iterator it_path = paths.begin(); it_path != paths.end(); ++it_path)
 	//	{
-	//		std::cout << "Authorized path for DELETE: " << *it_path << std::endl;
+	//		std::cout << "DEBUG: Authorized path for DELETE: " << *it_path << std::endl;
 	//	}
 	//}
 }

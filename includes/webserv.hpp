@@ -10,20 +10,13 @@
 # include "utils.hpp"
 
 # include <iostream>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
 # include <fstream>
-# include <sys/stat.h>
 # include <sstream>
 # include <vector>
 # include <algorithm>
-# include <dirent.h>
 # include <cmath>
 # include <map>
 # include <string>
-# include <sys/types.h>
-# include <sys/wait.h>
 # include <set>
 # include <ctime>
 

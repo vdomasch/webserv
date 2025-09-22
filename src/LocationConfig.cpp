@@ -71,9 +71,16 @@ size_t	LocationConfig::get_client_max_body_size()
 	if (it != _map_location.end())
 	{
 			try { client_max_body_size = convert<ssize_t>(it->second); }
-			catch (std::exception &e) { return (std::cerr << "Error: Client_max_body_size is not a number!" << std::endl, 0); }
+			catch (std::exception &e)
+			{
+				std::cerr << "Error: Client_max_body_size is not a number!" << std::endl;
+				return 0;
+			}
 			if (client_max_body_size < 0)
-				return (std::cerr << "Error: Client_max_body_size is negative!" << std::endl, 0);
+			{
+				std::cerr << "Error: Client_max_body_size is negative!" << std::endl;
+				return 0;
+			}
 	}
 	return client_max_body_size;
 }

@@ -27,10 +27,7 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
 {
 	int errcode = 0;
 
-
 	std::string target = req.get_target();
-
-	//ServerConfig &server = find_current_server(http_config, req._server_name);
 
 	std::string root = req._location_root;
 	std::string error_code = validate_request_context(req._location_name, root, errcode, req._server, "DELETE");
@@ -69,12 +66,12 @@ void	delete_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_dat
     	if (errno == ENOENT)
 		{
     	    std::cerr << "Error: File in unauthorized location not found" << path << std::endl;
-			return build_response(req, "404", displayErrorPage("4", http_config, req, fd_data), req.getKeepAlive());
+			return (build_response(req, "404", displayErrorPage("4", http_config, req, fd_data), req.getKeepAlive()));
     	}
 		else
 		{
     	    std::cerr << "Error deleting file: " << path << std::endl;
-    		return build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive());
+    		return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
 		}	
 	}
 

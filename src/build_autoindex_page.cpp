@@ -27,7 +27,7 @@ static std::ifstream::pos_type	filesize(const char *filename)
 	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
 	if (in.is_open())
 		return in.tellg(); 
-	return (0);
+	return 0;
 }
 
 static std::string	displayCorrectFileSize(const char * filename)
@@ -42,7 +42,7 @@ static std::string	displayCorrectFileSize(const char * filename)
 		++i;
 	}
 	std::ostringstream oss;
-	size = std::floor(size * 10 + 0.5f) / 10.0f; // round to one decimal place
+	size = std::floor(size * 10 + 0.5f) / 10.0f; // round to one decimal
 	oss << size << units[i];
 	return oss.str();
 }
@@ -147,7 +147,7 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	std::ostringstream	oss;
 	storeFolderContent(d, errcode);
 	if (*errcode == FAILEDSYSTEMCALL)
-		return ("");
+		return "";
 
 	setupHTMLpageStyle(oss);
 
@@ -166,5 +166,5 @@ std::string	buildCurrentIndexPage(t_fd_data *d, std::string path, int *errcode)
 	*errcode = 0;
 	std::string result = oss.str().c_str();
 	d->folderContent.clear();
-	return (result);
+	return result;
 }

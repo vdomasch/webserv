@@ -25,8 +25,8 @@ std::string	clean_semicolon(std::string text)
 bool is_keyword(std::string key, std::string pattern)
 {
 	if (key == pattern || key.empty() || key == "}")
-		return (true);
-	return (false);
+		return true;
+	return false;
 }
 
 bool	is_server_id_used(std::map<std::string, std::vector<ServerConfig> > &server_list, ServerConfig &server_temp)

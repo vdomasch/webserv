@@ -18,6 +18,7 @@ CGIContent::CGIContent()
 	this->pipe_in[1] = -42;
 	this->pipe_out[0] = -42;
 	this->pipe_out[1] = -42;
+	this->cgi_forkfd = 0;
 }
 
 CGIContent::~CGIContent()
@@ -74,13 +75,15 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 {	
 	if (pipe(this->pipe_in))  //pipe_in[0] is read end of pipe, pipe_in[1] is to write to it 
 	{
-		std::cerr << "\033[31mError: Pipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "Error: Pipe failed ... Womp Womp ..." << std::endl;
 		this->_exitcode = -1;
 		return ;
 	}
 	if (pipe(this->pipe_out))
 	{
-		std::cerr << "\033[31mError: Pipe failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "Error: Pipe failed ... Womp Womp ..." << std::endl;
+		close(pipe_in[0]);
+		close(pipe_in[1]);
 		this->_exitcode = -1;
 		return ;
 	}
@@ -101,9 +104,9 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		
-		// _argv[0] = (char*)"/not/a/real/path";
+		_argv[0] = (char*)"/not/a/real/path";
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
-		std::cerr << "[child process] Error: Execve failed !\r\n";
+		std::cerr << "[child process] Error: Execve failed !" << std::endl;
 		exec_failed = true;
 		g_running = false;
 
@@ -118,7 +121,11 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 	}
 	else if (this->cgi_forkfd == -1)
 	{
-		std::cerr << "\033[Error: Fork failed ... Womp Womp ...\033[0m\n\n" << std::endl;
+		std::cerr << "Error: Fork failed ... Womp Womp ..." << std::endl;
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+		close(pipe_out[0]);
+		close(pipe_out[1]);
 		this->_exitcode = -1;
 		return ;
 	}
@@ -139,12 +146,12 @@ int	CGIContent::sendCGIBody(std::string body)
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {
 			std::cerr << "Error: CGI Write failed !" << std::endl;
-			return (-1);
+			return -1;
 		}
 		total_written += written;
 	}
 	close(pipe_in[1]);	// Signal EOF to child
-	return (0);
+	return 0;
 }
 
 
@@ -164,30 +171,29 @@ std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 	while (!done)
 	{
 		bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE);
-		if (bytes_read > 0) {
+		if (bytes_read > 0)
+		{
 			result.append(buffer, bytes_read);
-		} else if (bytes_read == 0) {
-			//pipe closed-->> no more data
+		}
+		else if (bytes_read == 0)
+		{
 			done = true;
 			break;
-		} else if (bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-			// no data right now-> keep looping
-		} else {
-			std::cerr << "Error: Read error ! \n";
+		}
+		else if (!(bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)))
+		{
+			std::cerr << "Error: Read error !" << std::endl;
 			close(this->pipe_out[0]);
 			this->_exitcode = -1;
 			return "";
 		}
 
-		// is child exited ?
 		pid_t ret = waitpid(child_pid, &status, WNOHANG);
-		if (ret == child_pid) {
-			//yes, read the rest
+		if (ret == child_pid)
 			continue;
-		}
 
-		//timeout
-		if (time(0) - start >= timeout_sec) {
+		if (time(0) - start >= timeout_sec)
+		{
 			kill(child_pid, SIGKILL);
 			stock_childpid(-42, true);
 			waitpid(child_pid, &status, 0);
