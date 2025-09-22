@@ -104,6 +104,8 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 		// _argv[0] = (char*)"/not/a/real/path";
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
 		std::cerr << "[child process] Error: Execve failed !\r\n";
+		exec_failed = true;
+		g_running = false;
 
 		// by this point, the output of the CGI script was written to pipe_out[1] (the write end of the pipe), since it was designated as the STDOUT_FILENO
 		// and is waiting to be read using pipe_out[0] (which is the read end of the pipe)
@@ -113,8 +115,6 @@ void 	CGIContent::executeCGI(bool &exec_failed)
     	close(orig_stdout);
     	close(orig_stdin);
 
-		g_running = false;
-		exec_failed = true;
 	}
 	else if (this->cgi_forkfd == -1)
 	{
@@ -199,30 +199,5 @@ std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 	close(this->pipe_out[0]);
 	return result;
 }
-
-// std::string    CGIContent::grabCGIBody()
-// {
-//     std::string    result;
-//     char        buffer[CGI_BUFFERSIZE] = {0};
-//     int            bytes_read = 0;
-//     int            total_read = 0;
-
-
-//     while ((bytes_read = read(this->pipe_out[0], buffer, CGI_BUFFERSIZE)) > 0)
-//     {
-//         result.append(buffer, bytes_read);
-//         total_read += bytes_read;
-//     }
-//     if (bytes_read < 0) {
-//         std::cerr << "Error: Read error ! \n";
-//         close(this->pipe_out[0]);
-//         this->_exitcode = -1;
-//         return("");
-//     }
-    
-//     close(this->pipe_out[0]);
-
-//     return (result);
-// }
 
 int	CGIContent::get_exitcode()	{ return _exitcode; }

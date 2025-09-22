@@ -148,7 +148,7 @@ bool	create_directories(ServerConfig& server, std::string path)
 	return true;
 }
 
-bool	extension_IsAllowed(ServerConfig &server, std::string target, int *errcode)
+bool	extensionIsAllowed(ServerConfig &server, std::string target, int *errcode)
 {
 	*errcode = 0;
 	std::map<std::string, LocationConfig>::iterator it_loc = server.get_location_list().find("/cgi-bin/");
@@ -203,7 +203,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		std::cerr << "Error validating request context: " << context_status_errcode << std::endl;
 		return (build_response(req, context_status_errcode, displayErrorPage(context_status_errcode, http_config, req, fd_data), req.getKeepAlive()));
 	}
-	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(req._server, target, &errcode)) //!
+	if (req._location_name == "/cgi-bin/" && extensionIsAllowed(req._server, target, &errcode))
 	{
 		std::string body;
 
@@ -213,11 +213,8 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		body = handleCGI(req, fd_data, &errcode);
 		if (body.empty())
 		{
-			if (errcode == 500)
-			{
-				std::cerr << "Error: System call failed" << target << std::endl;
-				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
-			}
+			std::string err = handleCgiErrorCode(errcode, target);
+			return (build_response(req, err, displayErrorPage(err, http_config, req, fd_data), req.getKeepAlive()));
 		}
 		return (build_response(req, "200", body, req.getKeepAlive()));
 	}

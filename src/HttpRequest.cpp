@@ -243,7 +243,7 @@ void	HttpRequest::parse_headers()
 bool	HttpRequest::is_ready() const			{ return _state == COMPLETE && !is_error(_status_code); }
 bool	HttpRequest::is_finished() const		{ return _state == RESPONDED; }
 bool	HttpRequest::has_error() const			{ return (_state == ERROR || is_error(_status_code) != 0); }
-void	HttpRequest::print_state_status() const { std::cerr << "State : " <<_state << " | Status : " << _status_code << "\n\n";}  //!
+// void	HttpRequest::print_state_status() const { std::cerr << "State : " <<_state << " | Status : " << _status_code << "\n\n";}
 
 
 /////////// GETTERS ///////////

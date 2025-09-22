@@ -22,6 +22,8 @@ std::map<std::string, std::string> make_status_messages()
 	m["408"] = "Request Timeout";
 	m["413"] = "Content Too Large";
 	m["500"] = "Internal Server Error";
+	m["502"] = "Bad Gateway";
+	m["504"] = "Gateway Timeout";
 	m["505"] = "HTTP Version Not Supported";
 	return m;
 }

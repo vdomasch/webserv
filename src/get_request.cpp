@@ -68,7 +68,7 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		return (build_response(req, error_code, displayErrorPage(error_code, http_config, req, fd_data), req.getKeepAlive()));
 
 		
-	if (req._location_name == "/cgi-bin/" && extension_IsAllowed(req._server, target, &errcode))
+	if (req._location_name == "/cgi-bin/" && extensionIsAllowed(req._server, target, &errcode))
 	{
 		fd_data.QueryString = req.get_query_string();
 		std::string body;
@@ -76,16 +76,8 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		body = handleCGI(req, fd_data, &errcode);
 		if (body.empty())
 		{
-			if (errcode == 400)
-			{
-				std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
-				return (build_response(req, "400", displayErrorPage("400", http_config, req, fd_data), req.getKeepAlive()));
-			}
-			if (errcode == 500)
-			{
-				std::cerr << "Error: System call failed " << target << std::endl;
-				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
-			}
+			std::string err = handleCgiErrorCode(errcode, target);
+			return (build_response(req, err, displayErrorPage(err, http_config, req, fd_data), req.getKeepAlive()));
 		}
 		return (build_response(req, "200", body, req.getKeepAlive()));
 	}

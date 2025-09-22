@@ -41,6 +41,7 @@
 # define CSSHANDELING 4
 # define PNGHANDELING 5
 # define JPGHANDELING 6
+# define CHILD_EXIT 42
 
 # define TIMEOUT_SEC 5
 # define SELECT_TIMEOUT_USEC 500000

@@ -27,6 +27,9 @@ static void	authorized_delete_paths(HTTPConfig& http_config)
 	//				if (!location_root.empty())
 	//				{
 	//					location_root += "uploads/";
+	//					location_root += "uploads/";
+	//					location_root += "uploads/";
+	//					location_root += "uploads/";
 	//					server.add_authorized_paths(location_root);
 	//				}
 	//			}
@@ -91,6 +94,6 @@ int main(int argc, char **argv)
 	server._socket_data.cg.cgi_forkfd = 0;
 	server.launch_server(http_config);
 	if (server._socket_data.cg.cgi_forkfd == 0)
-		return (42);
+		return (CHILD_EXIT);
 	return (0);
 }

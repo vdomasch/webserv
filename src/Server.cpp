@@ -224,7 +224,7 @@ int	Server::reading_data(int fd)
 			;
 		if (bytes_read == 0)
 		{
-			close_msg(fd, "Client Disconnected", 0, 0); //!
+			close_msg(fd, "Client Disconnected", 0, 0);
 			return 0;
 		}
 		if (bytes_read > 0)
@@ -315,7 +315,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 	try { get_ip_port(fd);	}
 	catch (...) { close_msg(fd, "Failed to get client IP and port", 1, -1); }
 	int status = reading_data(fd);
-	if (_socket_states[fd]._server_name.empty())
+	if (_socket_states[fd]._server_name.empty() && _socket_states[fd].get_state() > RECEIVING_HEADER)
 	{
 		try { 
 				_socket_states[fd]._server_name = extract_server_name(_socket_states[fd].get_header("Host"), _socket_states[fd]._port);
@@ -325,7 +325,7 @@ void	Server::handle_client_request(HTTPConfig &http_config, int fd)
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Error: Getting server name: " << e.what() << std::endl;
+			std::cerr << "Warning: Getting server name: " << e.what() << std::endl;
 			return (build_response(_socket_states[fd], "400", displayErrorPage("400", http_config, _socket_states[fd], _socket_data), false));
 		}
 	}

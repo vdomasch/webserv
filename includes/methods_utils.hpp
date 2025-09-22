@@ -20,6 +20,8 @@ bool		check_allowed_methods(ServerConfig &server, LocationConfig &location, cons
 
 std::string	validate_request_context(std::string &location_name, std::string &root, int &errcode, ServerConfig &server, const std::string &method);
 
-bool		extension_IsAllowed(ServerConfig &server, std::string target, int *errcode);
+bool		extensionIsAllowed(ServerConfig &server, std::string target, int *errcode);
+
+std::string	handleCgiErrorCode(int &errcode, std::string &target);
 
 #endif

@@ -1,6 +1,48 @@
 #include "webserv.hpp"
 
-int	stock_childpid(int pid, bool replace); //!
+int	stock_childpid(int pid, bool replace);
+
+void	child_set_errcode(int exit_code, int &errcode)
+{
+	if (exit_code == CHILD_EXIT)
+	{
+		errcode = 500;
+		return ;
+	}
+	if (exit_code == 1)
+	{
+		errcode = 502;
+		return ;
+	}
+	if (exit_code == 2)
+	{
+		errcode = 404;
+		return ;
+	}
+	errcode = 400;
+}
+
+std::string	handleCgiErrorCode(int &errcode, std::string &target)
+{
+	switch (errcode)
+	{
+		case 404:
+			std::cerr << "Error: Script not found for " << target << std::endl;
+			return ("404");
+		case 500:
+			std::cerr << "Error: System call failed for " << target << std::endl;
+			return ("500");
+		case 502:
+			std::cerr << "Error: Bad Gateway for " << target << std::endl;
+			return ("502");
+		case 504:
+			std::cerr << "Error: Script timed out for " << target << std::endl;
+			return ("504");
+		default:
+			std::cerr << "Error: Failed to handle CGI for: " << target << std::endl;
+			return ("400");
+	}
+}
 
 std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 {
@@ -24,7 +66,6 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	}
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(d.cg.cgi_forkfd, 5, status); //5 sec timeout
-	// CGIBody = d.cg.grabCGIBody(); //5 sec timeout
 
 	if (d.cg.get_exitcode() == -1)
 	{
@@ -34,18 +75,16 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	waitpid(d.cg.cgi_forkfd, &status, 0);
 	int	child_timeout = stock_childpid(0, false); // get the pid back
 	int exit_code = WEXITSTATUS(status);
-	if (exit_code != 0 || child_timeout == -42)
+	if (child_timeout == -42)
 	{
-		if (exit_code == 42)
-		{
-			std::cerr << "Error: Ptit flop : child exited with code " << exit_code << std::endl;
-			*errcode = 500;
-			return ("");
-		}
-		if (child_timeout == -42)
-			stock_childpid(0, true);
 		std::cerr << "Error: Child process timed out !" << std::endl;
-		*errcode = 400;
+		stock_childpid(0, true);
+		*errcode = 504;
+		return ("");
+	}
+	if (exit_code != 0)
+	{
+		child_set_errcode(exit_code, *errcode);
 		return ("");
 	}
 	*errcode = 0;
