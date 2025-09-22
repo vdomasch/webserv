@@ -35,7 +35,6 @@
 		    fetch(path, { method: "GET" })
 		        .then(r => {
 		            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-		            // Start download
 		            const a = document.createElement("a");
 		            a.href = path;
 		            a.download = path.split("/").pop();

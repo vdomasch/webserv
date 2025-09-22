@@ -211,7 +211,7 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		fd_data.Content_Length = req.get_header("Content-Length");
 
 		body = handleCGI(req, fd_data, &errcode);
-		if (body.empty())
+		if (body.empty() && errcode)
 		{
 			std::string err = handleCgiErrorCode(errcode, target);
 			return (build_response(req, err, displayErrorPage(err, http_config, req, fd_data), req.getKeepAlive()));

@@ -18,11 +18,11 @@ typedef struct s_fd_data
 	fd_set		ready_writesockets;
 	fd_set		saved_readsockets;
 	fd_set		saved_writesockets;
-	std::string	requestedFilePath;	// obtained after analyse_request, is the splitted version of the GET of POST request to isolate the file name, is used to determine the size of file for Content-Lenght
+	std::string	requestedFilePath;	
 
-	std::string			Content_Type;		// right now, is used for POST requests (var is passed to env)
-	std::string			Content_Length;		// right now, is used for POST requests (var is passed to env)
-	std::string			QueryString;		// Used when a GET request is called on a CGI script (var is passed to env)
+	std::string			Content_Type;
+	std::string			Content_Length;
+	std::string			QueryString;
 	std::vector<char> 	binaryContent;
 	std::vector<dirent>	folderContent;
 	CGIContent			cg;

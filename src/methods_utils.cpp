@@ -66,7 +66,7 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	}
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(d.cg.cgi_forkfd, 5, status); //5 sec timeout
-
+	
 	if (d.cg.get_exitcode() == -1)
 	{
 		*errcode = 500;
