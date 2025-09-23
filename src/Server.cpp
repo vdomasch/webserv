@@ -490,7 +490,7 @@ void	Server::update_max_fd(int fd)
 int Server::close_msg(int fd, const std::string &message, int err, int code)
 {
 	if (err)
-		std::cerr << "\033[31m" << message << " (fd " << fd << ") - ERROR " << code << "\033[0m" << std::endl;
+		std::cerr << "\033[31m" << message << " (fd " << fd << ")" << "\033[0m" << std::endl;
 	else
 		std::cout << "\033[32m" << message << " (fd " << fd << ") - CLOSED\033[0m" << std::endl;
 
