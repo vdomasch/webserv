@@ -126,7 +126,6 @@ void	Server::launch_server(HTTPConfig &http_config)
 				if (is_conflicting_binding(ip, str_port, _ip_port_bound))
 				{
 					std::cerr << "Error: conflict: cannot bind to " << key << " because it overlaps with an existing binding." << std::endl;
-					shutdown_all_sockets();
 					return;
 				}
 
