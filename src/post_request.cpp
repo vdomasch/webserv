@@ -75,7 +75,6 @@ std::string create_filename(std::string& root, const std::string& head)
 		}
 		filename = filename_tmp;
 	}
-	std::cout << "Upload filename: " << filename << std::endl;
 	return filename;
 }
 
@@ -241,6 +240,6 @@ void	post_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 
 	std::ostringstream response_body;
 	response_body << req.get_target().substr(0, req.get_target().rfind('/', req.get_target().size() - 2) + 1) + filename;
-
+	std::cout << "Upload file: " << filename << std::endl;
 	build_response(req, "201", response_body.str(), req.getKeepAlive());
 }

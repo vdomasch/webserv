@@ -380,13 +380,11 @@ std::string ServerConfig::get_matching_location(const std::string& target, bool 
 		const std::string& loc_path = it->first;
 		if (target_copy.compare(0, loc_path.size(), loc_path) == 0 && loc_path.size() > max_len)
 		{
-			
 			best_match = loc_path;
 			max_len = loc_path.size();
 			autoindex = it->second.get_autoindex(autoindex);
 		}
 	}
-
 	if (!best_match.empty())
 		return best_match;
 

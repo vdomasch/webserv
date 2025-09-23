@@ -60,7 +60,6 @@ int main(int argc, char **argv)
 
 	authorized_delete_paths(http_config);
 
-
 	Server server;
 	
 	server.launch_server(http_config);

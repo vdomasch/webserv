@@ -77,8 +77,6 @@ ServerConfig&	find_current_server(HTTPConfig& http_config, HttpRequest& req)
 
 std::string find_location_name_and_set_root(const std::string &target, ServerConfig &server, std::string &root, bool& autoindex)
 {
-
-	
 	std::map<std::string, LocationConfig>::iterator it_loc;
 	std::string location_name = server.get_matching_location("/" + target, autoindex);
 	std::map<std::string, LocationConfig>& location_list = server.get_location_list();
