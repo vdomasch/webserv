@@ -115,30 +115,6 @@ void	get_request(HTTPConfig &http_config, HttpRequest &req, t_fd_data &fd_data)
 		}
 	}
 
-	if (req._location_name == "/cgi-bin/" && (target.find(".py") != std::string::npos || target.find(".php") != std::string::npos))
-	{
-		fd_data.QueryString = req.get_query_string();
-		std::string body;
-
-		body = handleCGI(req, fd_data, &errcode);
-		if (body.empty())
-		{
-			if (errcode == 500)
-			{
-				std::cerr << "Error: System call failed " << target << std::endl;
-				return (build_response(req, "500", displayErrorPage("500", http_config, req, fd_data), req.getKeepAlive()));
-			}
-		}
-		return (build_response(req, "200", body, req.getKeepAlive()));
-	}
-	else if (req._location_name == "/cgi-bin/")
-		req._autoindex = false;
-	else if (target.find("cgi-bin/") != std::string::npos)
-	{
-		std::cerr << "Error: No CGI location" << std::endl;
-		return (build_response(req, "404", displayErrorPage("404", http_config, req, fd_data), req.getKeepAlive()));
-	}
-
 	std::ifstream file(file_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 	{

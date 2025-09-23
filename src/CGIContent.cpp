@@ -104,7 +104,7 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 		close(pipe_out[0]);
 		close(pipe_out[1]);
 		
-		_argv[0] = (char*)"/not/a/real/path";
+		// _argv[0] = (char*)"/not/a/real/path";
 		this->_exitcode = execve(_argv[0], &_argv[0], &_cgi_env[0]);
 		std::cerr << "[child process] Error: Execve failed !" << std::endl;
 		exec_failed = true;
