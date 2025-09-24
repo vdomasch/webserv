@@ -5,6 +5,14 @@
 
 int	stock_childpid(int pid, bool replace);
 
+void handle_CGI_signal(int signal)
+{
+    if (signal == SIGPIPE)
+	{
+		stock_childpid(1, true);
+	}
+}
+
 CGIContent::CGIContent()
 {
 	this->_cgi_path = "default";
@@ -88,6 +96,8 @@ void 	CGIContent::executeCGI(bool &exec_failed)
 		return ;
 	}
 
+	signal(SIGPIPE, handle_CGI_signal);
+
 	this->cgi_forkfd = fork();
 	stock_childpid(this->cgi_forkfd, true);
 
@@ -142,6 +152,8 @@ int	CGIContent::sendCGIBody(std::string body)
 
 	while (total_written < body.size()) 
 	{
+		if (stock_childpid(0, false) == 1)
+			return -1;
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {

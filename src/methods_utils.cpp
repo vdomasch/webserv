@@ -79,9 +79,15 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 		return "";
 	}
 	waitpid(d.cg.cgi_forkfd, &status, 0);
-	int	child_timeout = stock_childpid(0, false);
+	int	child_code = stock_childpid(0, false);
 	int exit_code = WEXITSTATUS(status);
-	if (child_timeout == -42)
+	if (child_code == 1)
+	{
+		stock_childpid(0, true);
+		*errcode = 502;
+		return "";
+	}
+	if (child_code == -42)
 	{
 		std::cerr << "Error: Child process timed out !" << std::endl;
 		stock_childpid(0, true);
