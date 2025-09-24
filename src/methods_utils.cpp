@@ -73,12 +73,13 @@ std::string	handleCGI(HttpRequest& req, t_fd_data &d, int *errcode)
 	d.cg.sendCGIBody(req.get_body());
 	CGIBody = d.cg.grabCGIBody(d.cg.cgi_forkfd, 5, status);
 	
+	waitpid(d.cg.cgi_forkfd, &status, 0);
 	if (d.cg.get_exitcode() == -1)
 	{
+		close(d.cg.pipe_out[0]);
 		*errcode = 500;
 		return "";
 	}
-	waitpid(d.cg.cgi_forkfd, &status, 0);
 	int	child_timeout = stock_childpid(0, false);
 	int exit_code = WEXITSTATUS(status);
 	if (child_timeout == -42)

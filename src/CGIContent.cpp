@@ -143,8 +143,10 @@ int	CGIContent::sendCGIBody(std::string body)
 	while (total_written < body.size()) 
 	{
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
+		
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
 		if (written <= 0) {
+			close(pipe_in[1]);	// Signal EOF to child
 			std::cerr << "Error: CGI Write failed !" << std::endl;
 			return -1;
 		}
@@ -163,6 +165,13 @@ std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 
 	// Set pipe to non-blocking mode
 	int flags = fcntl(this->pipe_out[0], F_GETFL, 0);
+	if (flags == -1)
+	{
+		std::cerr << "Error: fcntl failed !" << std::endl;
+		this->_exitcode = -1;
+		return "";
+	}
+
 	fcntl(this->pipe_out[0], F_SETFL, flags | O_NONBLOCK);
 
 	time_t start = time(0);
@@ -183,7 +192,6 @@ std::string	CGIContent::grabCGIBody(int child_pid, int timeout_sec, int &status)
 		else if (!(bytes_read == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)))
 		{
 			std::cerr << "Error: Read error !" << std::endl;
-			close(this->pipe_out[0]);
 			this->_exitcode = -1;
 			return "";
 		}
