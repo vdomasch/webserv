@@ -153,7 +153,10 @@ int	CGIContent::sendCGIBody(std::string body)
 	while (total_written < body.size()) 
 	{
 		if (stock_childpid(0, false) == 1)
+		{
+			close(pipe_in[1]);
 			return -1;
+		}
 		// write body to pipe_in[1], so that it can be grabbed by pipe_in[0] in the child (dupped as stdin)
 		
 		ssize_t written = write(pipe_in[1], body.data() + total_written, body.size() - total_written);
