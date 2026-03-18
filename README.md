@@ -1,6 +1,3 @@
-Work in progress – This project is currently under development.
-
-
 Ce projet est un serveur HTTP C++ développé à partir de zéro dans le cadre du programme 42.
 Il prend en charge HTTP/1.1, gère plusieurs clients à l’aide d’E/S non bloquantes et de select(), et implémente des méthodes comme GET, POST et DELETE, ainsi que des blocs de serveur et d’emplacements configurables inspirés par Nginx.
 Ce projet est réalisé en collaboration avec Benjamin HUMEAU (https://github.com/Ibaos) et Oxigety (https://github.com/Oxigety).
